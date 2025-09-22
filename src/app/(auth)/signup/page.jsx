@@ -1,16 +1,28 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import axios from "axios";
 
 export default function SignupPage() {
   const router = useRouter();
+  const { data: session, status } = useSession();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (status === "loading") return; // Still loading
+    
+    if (session) {
+      console.log("User already authenticated, redirecting to dashboard");
+      router.push("/dashboard");
+    }
+  }, [session, status, router]);
 
   const onSubmit = async (e) => {
     e.preventDefault();
@@ -22,6 +34,24 @@ export default function SignupPage() {
       alert(err.response?.data?.error || "Something went wrong");
     }
   };
+
+  // Show loading while checking authentication
+  if (status === "loading") {
+    return (
+      <div className="flex flex-col items-center justify-center h-screen bg-white">
+        <div className="text-lg">Checking authentication...</div>
+      </div>
+    );
+  }
+
+  // Don't render signup form if already authenticated (will redirect)
+  if (session) {
+    return (
+      <div className="flex flex-col items-center justify-center h-screen bg-white">
+        <div className="text-lg">Redirecting to dashboard...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col items-center justify-center h-screen bg-white">

@@ -1,25 +1,29 @@
 import prisma from "@/lib/prisma";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 
-export async function GET() {
-  const session = await getServerSession(authOptions);
-  if (!session) return Response.json({ error: "Unauthorized" }, { status: 401 });
-
-  const employees = await prisma.employees.findMany();
+export async function GET(req) {
+  // Get employees - can filter by status using query params
+  const { searchParams } = new URL(req.url);
+  const activeOnly = searchParams.get('activeOnly') === 'true';
+  
+  const whereClause = activeOnly ? { status: 'ACTIVE' } : {};
+  
+  const employees = await prisma.employees.findMany({
+    where: whereClause,
+    orderBy: { fullName: 'asc' }
+  });
+  
   return Response.json(employees);
 }
 
 export async function POST(req) {
-  const session = await getServerSession(authOptions);
-  if (!session) return Response.json({ error: "Unauthorized" }, { status: 401 });
-
+  // Create new employee
   const body = await req.json();
   const newEmployee = await prisma.employees.create({
     data: {
       fullName: body.fullName,
       email: body.email,
       status: "ACTIVE",
+    //   userId: "dummy", // placeholder, adjust if using Users table
       designation: "Employee",
     },
   });
@@ -27,30 +31,36 @@ export async function POST(req) {
 }
 
 export async function PUT(req) {
-  const session = await getServerSession(authOptions);
-  if (!session) return Response.json({ error: "Unauthorized" }, { status: 401 });
-
+  // Update employee
   const body = await req.json();
 
   if (!body.employeeId) {
     return Response.json({ error: "Employee ID is required" }, { status: 400 });
   }
 
+  // Prepare update data - only include fields that are provided
+  const updateData = {};
+  if (body.fullName !== undefined) updateData.fullName = body.fullName;
+  if (body.email !== undefined) updateData.email = body.email;
+  if (body.status !== undefined) {
+    // Validate status value
+    if (!['ACTIVE', 'INACTIVE', 'SUSPENDED'].includes(body.status)) {
+      return Response.json({ error: "Invalid status. Must be ACTIVE, INACTIVE, or SUSPENDED" }, { status: 400 });
+    }
+    updateData.status = body.status;
+  }
+  if (body.designation !== undefined) updateData.designation = body.designation;
+
   const updated = await prisma.employees.update({
     where: { employeeId: body.employeeId },
-    data: {
-      fullName: body.fullName,
-      email: body.email,
-    },
+    data: updateData,
   });
 
   return Response.json(updated);
 }
 
 export async function DELETE(req) {
-  const session = await getServerSession(authOptions);
-  if (!session) return Response.json({ error: "Unauthorized" }, { status: 401 });
-
+  // Delete employee
   const body = await req.json();
 
   if (!body.employeeId) {

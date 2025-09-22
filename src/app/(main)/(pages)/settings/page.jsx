@@ -40,13 +40,7 @@ export default function SettingsPage() {
   };
 
 
-  if (!session) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <p className="text-black">You must be logged in</p>
-      </div>
-    );
-  }
+  // Authentication is handled by the server-side layout
 
   return (
     <div className="max-w-6xl mx-auto p-6">

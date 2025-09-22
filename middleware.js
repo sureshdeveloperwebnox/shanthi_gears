@@ -13,8 +13,21 @@ export default withAuth(
           return true;
         }
         
-        // Require token for all other pages
-        return !!token;
+        // Check for next-auth.session-token cookie first
+        const sessionToken = req.cookies.get("next-auth.session-token");
+        if (sessionToken) {
+          console.log("Middleware: Session token found, allowing access to", req.nextUrl.pathname);
+          return true;
+        }
+        
+        // If no session token cookie, check for token
+        if (token) {
+          console.log("Middleware: Token found, allowing access to", req.nextUrl.pathname);
+          return true;
+        }
+        
+        console.log("Middleware: No session token or token, blocking access to", req.nextUrl.pathname);
+        return false;
       },
     },
   }

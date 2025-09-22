@@ -1,12 +1,10 @@
 import { NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { PrismaClient } from "@prisma/client";
+
+const prisma = new PrismaClient();
 
 // GET all assignments
 export async function GET() {
-  const session = await getServerSession(authOptions);
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   try {
     const assignments = await prisma.employeeTerritories.findMany({
       include: {
@@ -23,24 +21,48 @@ export async function GET() {
 
 // CREATE assignment
 export async function POST(req) {
-  const session = await getServerSession(authOptions);
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   try {
     const { employeeId, territoryId } = await req.json();
 
-    // prevent duplicate
-    const exists = await prisma.employeeTerritories.findFirst({
+    // Check if employee exists and is active
+    const employee = await prisma.employees.findUnique({
+      where: { employeeId }
+    });
+    
+    if (!employee) {
+      return NextResponse.json({ error: "Employee not found" }, { status: 404 });
+    }
+    
+    if (employee.status !== 'ACTIVE') {
+      return NextResponse.json({ 
+        error: `Cannot assign territory to ${employee.status.toLowerCase()} employee: ${employee.fullName}` 
+      }, { status: 400 });
+    }
+
+    // prevent duplicate assignment for same employee
+    const existingAssignment = await prisma.employeeTerritories.findFirst({
       where: { employeeId, territoryId: Number(territoryId) },
     });
-    if (exists) {
+    if (existingAssignment) {
       return NextResponse.json({ error: "Assignment already exists" }, { status: 400 });
+    }
+
+    // prevent territory being assigned to multiple employees
+    const territoryAssignment = await prisma.employeeTerritories.findFirst({
+      where: { territoryId: Number(territoryId) },
+      include: { employee: true }
+    });
+    if (territoryAssignment) {
+      return NextResponse.json({ 
+        error: `Territory is already assigned to ${territoryAssignment.employee.fullName}` 
+      }, { status: 400 });
     }
 
     const newAssignment = await prisma.employeeTerritories.create({
       data: {
         employeeId,
         territoryId: Number(territoryId),
-        assignedAt: new Date(),
+        assignedAt: new Date(), // Add the required assignedAt field
       },
       include: {
         employee: true,
@@ -57,10 +79,23 @@ export async function POST(req) {
 
 // UPDATE assignment
 export async function PUT(req) {
-  const session = await getServerSession(authOptions);
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   try {
     const { id, employeeId, territoryId } = await req.json();
+
+    // Check if employee exists and is active
+    const employee = await prisma.employees.findUnique({
+      where: { employeeId }
+    });
+    
+    if (!employee) {
+      return NextResponse.json({ error: "Employee not found" }, { status: 404 });
+    }
+    
+    if (employee.status !== 'ACTIVE') {
+      return NextResponse.json({ 
+        error: `Cannot assign territory to ${employee.status.toLowerCase()} employee: ${employee.fullName}` 
+      }, { status: 400 });
+    }
 
     const updatedAssignment = await prisma.employeeTerritories.update({
       where: { id },
@@ -83,8 +118,6 @@ export async function PUT(req) {
 
 // DELETE assignment
 export async function DELETE(req) {
-  const session = await getServerSession(authOptions);
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   try {
     const { id } = await req.json();
 
