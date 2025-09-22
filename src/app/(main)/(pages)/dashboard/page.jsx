@@ -103,7 +103,9 @@ export default function DashboardPage() {
       console.log('Fetched complaints for trends:', complaints);
 
       // Process data for dashboard
-      const activeEmployees = employees.filter(emp => emp.status === 'ACTIVE').length;
+      const activeEmployees = Array.isArray(employees) 
+        ? employees.filter(emp => emp.status === 'ACTIVE').length 
+        : 0;
       
       // Get recent complaints (last 9 for better grid layout)
       const recentComplaints = Array.isArray(complaints) 
@@ -111,13 +113,17 @@ export default function DashboardPage() {
         : [];
 
       // Territory distribution
-      const territoryDistribution = territories.map(territory => {
-        const assignmentCount = assignments.filter(a => a.territoryId === territory.territoryId).length;
-        return {
-          name: territory.territoryName,
-          count: assignmentCount
-        };
-      });
+      const territoryDistribution = Array.isArray(territories) 
+        ? territories.map(territory => {
+            const assignmentCount = Array.isArray(assignments) 
+              ? assignments.filter(a => a.territoryId === territory.territoryId).length
+              : 0;
+            return {
+              name: territory.territoryName,
+              count: assignmentCount
+            };
+          })
+        : [];
 
       // Process complaint trends
       const complaintTrends = processComplaintTrends(complaints);
@@ -125,15 +131,15 @@ export default function DashboardPage() {
 
       setStats({
         totalComplaints: Array.isArray(complaints) ? complaints.length : 0,
-        totalTerritories: territories.length,
-        totalEmployees: employees.length,
+        totalTerritories: Array.isArray(territories) ? territories.length : 0,
+        totalEmployees: Array.isArray(employees) ? employees.length : 0,
         activeEmployees,
         recentComplaints,
         territoryDistribution,
         employeeStats: [
           { status: 'Active', count: activeEmployees },
-          { status: 'Inactive', count: employees.filter(emp => emp.status === 'INACTIVE').length },
-          { status: 'Suspended', count: employees.filter(emp => emp.status === 'SUSPENDED').length }
+          { status: 'Inactive', count: Array.isArray(employees) ? employees.filter(emp => emp.status === 'INACTIVE').length : 0 },
+          { status: 'Suspended', count: Array.isArray(employees) ? employees.filter(emp => emp.status === 'SUSPENDED').length : 0 }
         ],
         complaintTrends
       });
