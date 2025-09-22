@@ -1,27 +1,9 @@
 import { NextResponse } from "next/server";
-
-// WordPress API Configuration
-const WORDPRESS_API_BASE = process.env.WORDPRESS_API_URL || 'https://your-wordpress-site.com/wp-json/wp/v2';
-const WORDPRESS_USERNAME = process.env.WORDPRESS_USERNAME;
-const WORDPRESS_PASSWORD = process.env.WORDPRESS_PASSWORD;
-
-// Helper function to authenticate with WordPress
-const getWordPressAuth = () => {
-  if (WORDPRESS_USERNAME && WORDPRESS_PASSWORD) {
-    const credentials = btoa(`${WORDPRESS_USERNAME}:${WORDPRESS_PASSWORD}`);
-    return {
-      'Authorization': `Basic ${credentials}`,
-      'Content-Type': 'application/json'
-    };
-  }
-  return {
-    'Content-Type': 'application/json'
-  };
-};
+import prisma from "@/lib/prisma";
 
 // CORS headers function
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*', // or your WordPress domain
+  'Access-Control-Allow-Origin': 'https://wordpress-1401173-5868949.cloudwaysapps.com',
   'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type, Authorization',
 };
@@ -32,129 +14,212 @@ export async function OPTIONS() {
 }
 
 // GET all complaints
-export async function GET() {
-
+export async function GET(req) {
   try {
-    const response = await fetch(`${WORDPRESS_API_BASE}/complaints?_embed&per_page=100&orderby=date&order=desc`, {
-      method: 'GET',
-      headers: getWordPressAuth(),
+    console.log('GET /api/complaints - Fetching complaints from database...');
+    
+    // Fetch complaints from local database with territory information
+    const complaints = await prisma.complaints.findMany({
+      include: {
+        territory: true
+      },
+      orderBy: {
+        createdAt: 'desc'
+      }
     });
 
-    if (!response.ok) throw new Error(`WordPress API error: ${response.status}`);
+    console.log(`Found ${complaints.length} complaints in database`);
 
-    const wordpressComplaints = await response.json();
-
-    const complaints = wordpressComplaints.map(complaint => ({
-      complaintId: complaint.id.toString(),
-      contactPersonName: complaint.acf?.contact_person_name || complaint.title?.rendered || '',
-      mailId: complaint.acf?.email || '',
-      mobileNumber: complaint.acf?.mobile_number || '',
-      companyName: complaint.acf?.company_name || '',
-      territoryId: complaint.acf?.territory_id || 1,
-      gearboxSerialNumber: complaint.acf?.gearbox_serial_number || '',
-      dateOfCommissioning: complaint.acf?.date_of_commissioning || complaint.date,
-      complaintDate: complaint.date,
-      applicationDetails: complaint.content?.rendered || complaint.acf?.application_details || '',
-      natureOfComplaintWithPhotos: complaint.acf?.nature_of_complaint || '',
-      inputMotorDetailsKw: parseFloat(complaint.acf?.input_motor_details_kw || '0'),
-      inputOutputConnectionDetails: complaint.acf?.input_output_connection_details || '',
-      oilLevelDetails: complaint.acf?.oil_level_details || '',
-      gradeOfOilUsed: complaint.acf?.grade_of_oil_used || '',
-      conditionOfOil: complaint.acf?.condition_of_oil || '',
-      conditionOfBreather: complaint.acf?.condition_of_breather || '',
-      sedimentInOilBottom: complaint.acf?.sediment_in_oil_bottom || '',
-      alignmentInputOutput: complaint.acf?.alignment_input_output || '',
-      runningHoursPerDay: parseInt(complaint.acf?.running_hours_per_day || '0'),
-      startStopPerDay: parseInt(complaint.acf?.start_stop_per_day || '0'),
-      dismantledBeforeFailure: complaint.acf?.dismantled_before_failure || '',
-      ambientConditions: complaint.acf?.ambient_conditions || '',
-      loadSpectrum: complaint.acf?.load_spectrum || '',
-      forcedLubricationPhotos: complaint.acf?.forced_lubrication_photos || '',
-      conditionOfOtherParts: complaint.acf?.condition_of_other_parts || '',
-      lubricationCheckDetails: complaint.acf?.lubrication_check_details || '',
-      inputSpeedDetails: complaint.acf?.input_speed_details || '',
-      failureHistoryDetails: complaint.acf?.failure_history_details || '',
-      createdAt: complaint.date,
-      updatedAt: complaint.modified,
+    // Transform database data to match frontend expectations
+    const transformedComplaints = complaints.map(complaint => ({
+      complaintId: complaint.complaintId,
+      contactPersonName: complaint.contactPersonName,
+      mailId: complaint.mailId,
+      mobileNumber: complaint.mobileNumber,
+      companyName: complaint.companyName,
+      territoryId: complaint.territoryId,
       territory: {
-        territoryId: complaint.acf?.territory_id || 1,
-        territoryName: complaint.acf?.territory_name || 'Unknown Territory'
-      }
+        territoryName: complaint.territory.territoryName
+      },
+      gearboxSerialNumber: complaint.gearboxSerialNumber,
+      dateOfCommissioning: complaint.dateOfCommissioning,
+      complaintDate: complaint.complaintDate,
+      applicationDetails: complaint.applicationDetails,
+      natureOfComplaintWithPhotos: complaint.natureOfComplaintWithPhotos,
+      inputMotorDetailsKw: complaint.inputMotorDetailsKw,
+      inputOutputConnectionDetails: complaint.inputOutputConnectionDetails,
+      oilLevelDetails: complaint.oilLevelDetails,
+      gradeOfOilUsed: complaint.gradeOfOilUsed,
+      conditionOfOil: complaint.conditionOfOil,
+      conditionOfBreather: complaint.conditionOfBreather,
+      sedimentInOilBottom: complaint.sedimentInOilBottom,
+      alignmentInputOutput: complaint.alignmentInputOutput,
+      runningHoursPerDay: complaint.runningHoursPerDay,
+      startStopPerDay: complaint.startStopPerDay,
+      dismantledBeforeFailure: complaint.dismantledBeforeFailure,
+      ambientConditions: complaint.ambientConditions,
+      loadSpectrum: complaint.loadSpectrum,
+      forcedLubricationPhotos: complaint.forcedLubricationPhotos,
+      conditionOfOtherParts: complaint.conditionOfOtherParts,
+      lubricationCheckDetails: complaint.lubricationCheckDetails,
+      inputSpeedDetails: complaint.inputSpeedDetails,
+      failureHistoryDetails: complaint.failureHistoryDetails,
+      createdAt: complaint.createdAt,
+      updatedAt: complaint.updatedAt
     }));
 
-    return NextResponse.json(complaints);
-
-  } catch (error) {
-    console.error('Error fetching complaints from WordPress:', error);
-    return NextResponse.json({ error: 'Failed to fetch complaints from WordPress' }, { status: 500 });
+    console.log(`Returning ${transformedComplaints.length} transformed complaints`);
+    return NextResponse.json(transformedComplaints, { headers: corsHeaders });
+  } catch (err) {
+    console.error('Error fetching complaints from database:', err);
+    return NextResponse.json(
+      { error: 'Failed to fetch complaints', details: err.message },
+      { status: 500, headers: corsHeaders }
+    );
   }
 }
 
-// POST new complaint
+// POST new complaint - receives data from WordPress form
 export async function POST(req) {
-
   try {
     const body = await req.json();
-console.log(body);
+    console.log('Received complaint data from WordPress:', body);
 
-    const wordpressData = {
-      title: `Complaint - ${body.contactPersonName} - ${body.companyName}`,
-      content: body.applicationDetails || '',
-      status: 'publish',
-      fields: {
-        contact_person_name: body.contactPersonName,
-        email: body.mailId,
-        mobile_number: body.mobileNumber,
-        company_name: body.companyName,
-        territory_id: body.territoryId,
-        gearbox_serial_number: body.gearboxSerialNumber,
-        date_of_commissioning: body.dateOfCommissioning,
-        complaint_date: body.complaintDate || new Date().toISOString(),
-        application_details: body.applicationDetails,
-        nature_of_complaint: body.natureOfComplaintWithPhotos,
-        input_motor_details_kw: body.inputMotorDetailsKw,
-        input_output_connection_details: body.inputOutputConnectionDetails,
-        oil_level_details: body.oilLevelDetails,
-        grade_of_oil_used: body.gradeOfOilUsed,
-        condition_of_oil: body.conditionOfOil,
-        condition_of_breather: body.conditionOfBreather,
-        sediment_in_oil_bottom: body.sedimentInOilBottom,
-        alignment_input_output: body.alignmentInputOutput,
-        running_hours_per_day: body.runningHoursPerDay,
-        start_stop_per_day: body.startStopPerDay,
-        dismantled_before_failure: body.dismantledBeforeFailure,
-        ambient_conditions: body.ambientConditions,
-        load_spectrum: body.loadSpectrum,
-        forced_lubrication_photos: body.forcedLubricationPhotos,
-        condition_of_other_parts: body.conditionOfOtherParts,
-        lubrication_check_details: body.lubricationCheckDetails,
-        input_speed_details: body.inputSpeedDetails,
-        failure_history_details: body.failureHistoryDetails,
-      }
+    // Map WordPress form field names to database field names
+    const mappedData = {
+      // Basic contact information
+      contactPersonName: body.contact_person_name || body.contactPersonName || '',
+      mailId: body.email || body.mailId || body.mail_id || '',
+      mobileNumber: body.mobile_number || body.mobileNumber || '',
+      companyName: body.company_name || body.companyName || '',
+      
+      // Territory (assuming it comes as territory name, we'll need to find the ID)
+      territoryName: body.territory_name || body.territoryName || '',
+      territoryId: body.territory_id || body.territoryId || null,
+      
+      // Gearbox details
+      gearboxSerialNumber: body.gearbox_serial_number || body.gearboxSerialNumber || '',
+      dateOfCommissioning: body.date_of_commissioning || body.dateOfCommissioning || null,
+      complaintDate: body.complaint_date || body.complaintDate || new Date(),
+      
+      // Application and complaint details
+      applicationDetails: body.application_details || body.applicationDetails || '',
+      natureOfComplaintWithPhotos: body.nature_of_complaint || body.natureOfComplaintWithPhotos || '',
+      
+      // Motor and connection details
+      inputMotorDetailsKw: body.input_motor_details_kw || body.inputMotorDetailsKw || 0,
+      inputOutputConnectionDetails: body.input_output_connection_details || body.inputOutputConnectionDetails || '',
+      
+      // Oil and lubrication details
+      oilLevelDetails: body.oil_level_details || body.oilLevelDetails || '',
+      gradeOfOilUsed: body.grade_of_oil_used || body.gradeOfOilUsed || '',
+      conditionOfOil: body.condition_of_oil || body.conditionOfOil || '',
+      conditionOfBreather: body.condition_of_breather || body.conditionOfBreather || '',
+      sedimentInOilBottom: body.sediment_in_oil_bottom || body.sedimentInOilBottom || '',
+      
+      // Alignment and operational details
+      alignmentInputOutput: body.alignment_input_output || body.alignmentInputOutput || '',
+      runningHoursPerDay: body.running_hours_per_day || body.runningHoursPerDay || 0,
+      startStopPerDay: body.start_stop_per_day || body.startStopPerDay || 0,
+      
+      // Failure and maintenance details
+      dismantledBeforeFailure: body.dismantled_before_failure || body.dismantledBeforeFailure || '',
+      ambientConditions: body.ambient_conditions || body.ambientConditions || '',
+      loadSpectrum: body.load_spectrum || body.loadSpectrum || '',
+      forcedLubricationPhotos: body.forced_lubrication_photos || body.forcedLubricationPhotos || '',
+      conditionOfOtherParts: body.condition_of_other_parts || body.conditionOfOtherParts || '',
+      lubricationCheckDetails: body.lubrication_check_details || body.lubricationCheckDetails || '',
+      inputSpeedDetails: body.input_speed_details || body.inputSpeedDetails || '',
+      failureHistoryDetails: body.failure_history_details || body.failureHistoryDetails || ''
     };
 
-    // const response = await fetch(`${WORDPRESS_API_BASE}/complaints`, {
-    //   method: 'POST',
-    //   headers: getWordPressAuth(),
-    //   body: JSON.stringify(wordpressData),
-    // });
+    // Validate required fields
+    if (!mappedData.contactPersonName || !mappedData.mailId || !mappedData.companyName) {
+      return NextResponse.json(
+        { error: 'Missing required fields: contact_person_name, email, company_name' },
+        { status: 400, headers: corsHeaders }
+      );
+    }
 
-    // if (!response.ok) throw new Error(`WordPress API error: ${response.status}`);
+    // Find territory ID if territory name is provided
+    let finalTerritoryId = mappedData.territoryId;
+    if (!finalTerritoryId && mappedData.territoryName) {
+      const territory = await prisma.territories.findFirst({
+        where: {
+          territoryName: {
+            contains: mappedData.territoryName,
+            mode: 'insensitive'
+          }
+        }
+      });
+      finalTerritoryId = territory?.territoryId;
+    }
 
-    // const newComplaint = await response.json();
+    // Use the first territory if none found
+    if (!finalTerritoryId) {
+      const firstTerritory = await prisma.territories.findFirst();
+      finalTerritoryId = firstTerritory?.territoryId;
+    }
 
-    // return NextResponse.json({
-    //   complaintId: newComplaint.id.toString(),
-    //   message: 'Complaint created successfully in WordPress',
-    //   wordpressId: newComplaint.id,
-    //   wordpressLink: newComplaint.link
-    // });
-    return NextResponse.json({
-      complaintId: 1
+    if (!finalTerritoryId) {
+      return NextResponse.json(
+        { error: 'No territory found. Please ensure territories exist in the database.' },
+        { status: 400, headers: corsHeaders }
+      );
+    }
+
+    // Create new complaint in database
+    const newComplaint = await prisma.complaints.create({
+      data: {
+        contactPersonName: mappedData.contactPersonName,
+        mailId: mappedData.mailId,
+        mobileNumber: mappedData.mobileNumber,
+        companyName: mappedData.companyName,
+        territoryId: parseInt(finalTerritoryId),
+        gearboxSerialNumber: mappedData.gearboxSerialNumber,
+        dateOfCommissioning: mappedData.dateOfCommissioning ? new Date(mappedData.dateOfCommissioning) : new Date(),
+        complaintDate: mappedData.complaintDate ? new Date(mappedData.complaintDate) : new Date(),
+        applicationDetails: mappedData.applicationDetails,
+        natureOfComplaintWithPhotos: mappedData.natureOfComplaintWithPhotos,
+        inputMotorDetailsKw: parseFloat(mappedData.inputMotorDetailsKw) || 0,
+        inputOutputConnectionDetails: mappedData.inputOutputConnectionDetails,
+        oilLevelDetails: mappedData.oilLevelDetails,
+        gradeOfOilUsed: mappedData.gradeOfOilUsed,
+        conditionOfOil: mappedData.conditionOfOil,
+        conditionOfBreather: mappedData.conditionOfBreather,
+        sedimentInOilBottom: mappedData.sedimentInOilBottom,
+        alignmentInputOutput: mappedData.alignmentInputOutput,
+        runningHoursPerDay: parseInt(mappedData.runningHoursPerDay) || 0,
+        startStopPerDay: parseInt(mappedData.startStopPerDay) || 0,
+        dismantledBeforeFailure: mappedData.dismantledBeforeFailure,
+        ambientConditions: mappedData.ambientConditions,
+        loadSpectrum: mappedData.loadSpectrum,
+        forcedLubricationPhotos: mappedData.forcedLubricationPhotos,
+        conditionOfOtherParts: mappedData.conditionOfOtherParts,
+        lubricationCheckDetails: mappedData.lubricationCheckDetails,
+        inputSpeedDetails: mappedData.inputSpeedDetails,
+        failureHistoryDetails: mappedData.failureHistoryDetails
+      }
     });
 
+    console.log('Created new complaint:', newComplaint.complaintId);
+
+    return NextResponse.json({
+      success: true,
+      complaintId: newComplaint.complaintId,
+      message: 'Complaint created successfully',
+      data: newComplaint
+    }, { headers: corsHeaders });
+
   } catch (error) {
-    console.error('Error creating complaint in WordPress:', error);
-    return NextResponse.json({ error: 'Failed to create complaint in WordPress' }, { status: 500 });
+    console.error('Error creating complaint in database:', error);
+    return NextResponse.json(
+      { 
+        success: false,
+        error: 'Failed to create complaint', 
+        details: error.message 
+      }, 
+      { status: 500, headers: corsHeaders }
+    );
   }
 }

@@ -16,9 +16,23 @@ export async function OPTIONS() {
 // GET all territories
 export async function GET() {
   try {
+    // Check if database is configured
+    if (!process.env.DATABASE_URL) {
+      console.log('DATABASE_URL not set, returning mock territories...');
+      const mockTerritories = [
+        { territoryId: 1, territoryName: "North Zone", createdAt: "2024-01-01T00:00:00.000Z" },
+        { territoryId: 2, territoryName: "South Zone", createdAt: "2024-01-01T00:00:00.000Z" },
+        { territoryId: 3, territoryName: "East Zone", createdAt: "2024-01-01T00:00:00.000Z" },
+        { territoryId: 4, territoryName: "West Zone", createdAt: "2024-01-01T00:00:00.000Z" },
+        { territoryId: 5, territoryName: "Central Zone", createdAt: "2024-01-01T00:00:00.000Z" }
+      ];
+      return NextResponse.json(mockTerritories, { headers: corsHeaders });
+    }
+    
     const territories = await prisma.territories.findMany();
     return NextResponse.json(territories, { headers: corsHeaders });
   } catch (err) {
+    console.error('Error fetching territories:', err);
     return NextResponse.json({ error: err.message }, { status: 500, headers: corsHeaders });
   }
 }

@@ -29,12 +29,22 @@ export async function PUT(req) {
     return Response.json({ error: "Employee ID is required" }, { status: 400 });
   }
 
+  // Prepare update data - only include fields that are provided
+  const updateData = {};
+  if (body.fullName !== undefined) updateData.fullName = body.fullName;
+  if (body.email !== undefined) updateData.email = body.email;
+  if (body.status !== undefined) {
+    // Validate status value
+    if (!['ACTIVE', 'INACTIVE', 'SUSPENDED'].includes(body.status)) {
+      return Response.json({ error: "Invalid status. Must be ACTIVE, INACTIVE, or SUSPENDED" }, { status: 400 });
+    }
+    updateData.status = body.status;
+  }
+  if (body.designation !== undefined) updateData.designation = body.designation;
+
   const updated = await prisma.employees.update({
     where: { employeeId: body.employeeId },
-    data: {
-      fullName: body.fullName,
-      email: body.email,
-    },
+    data: updateData,
   });
 
   return Response.json(updated);
