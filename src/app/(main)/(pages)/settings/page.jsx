@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import axios from "axios";
 
 export default function SettingsPage() {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const [activeTab, setActiveTab] = useState("profile");
   const [users, setUsers] = useState([]);
   const [usersLoading, setUsersLoading] = useState(true);
@@ -40,7 +40,27 @@ export default function SettingsPage() {
   };
 
 
-  // Authentication is handled by the server-side layout
+  // Show loading state while session is being fetched
+  if (status === "loading") {
+    return (
+      <div className="max-w-6xl mx-auto p-6">
+        <div className="flex items-center justify-center py-8">
+          <p className="text-gray-500">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error if no session
+  if (status === "unauthenticated" || !session) {
+    return (
+      <div className="max-w-6xl mx-auto p-6">
+        <div className="flex items-center justify-center py-8">
+          <p className="text-red-500">Please log in to access settings.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-6xl mx-auto p-6">
@@ -72,19 +92,19 @@ export default function SettingsPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium mb-1">Name</label>
-                <p className="p-2 bg-gray-100 rounded">{session.user.name}</p>
+                <p className="p-2 bg-gray-100 rounded">{session?.user?.name || 'N/A'}</p>
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1">Email</label>
-                <p className="p-2 bg-gray-100 rounded">{session.user.email}</p>
+                <p className="p-2 bg-gray-100 rounded">{session?.user?.email || 'N/A'}</p>
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1">User ID</label>
-                <p className="p-2 bg-gray-100 rounded">{session.user.id}</p>
+                <p className="p-2 bg-gray-100 rounded">{session?.user?.id || 'N/A'}</p>
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1">Role ID</label>
-                <p className="p-2 bg-gray-100 rounded">{session.user.roleId}</p>
+                <p className="p-2 bg-gray-100 rounded">{session?.user?.roleId || 'N/A'}</p>
               </div>
             </div>
           </CardContent>

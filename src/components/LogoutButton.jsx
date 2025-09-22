@@ -33,7 +33,7 @@ export default function LogoutButton() {
         </div>
       ) : (
         <div className="flex items-center space-x-2">
-          <span>🚪</span>
+        
           <span>Logout</span>
         </div>
       )}
