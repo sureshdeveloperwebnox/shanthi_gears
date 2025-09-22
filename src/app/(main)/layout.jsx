@@ -8,11 +8,9 @@ export default async function DashboardLayout({ children }) {
   if (!session) redirect("/login");
 
   return (
-    <html lang="en">
-      <body className="flex h-screen bg-gray-100 text-gray-900">
-        <Sidebar />
-        <main className="flex-1 p-6 overflow-y-auto">{children}</main>
-      </body>
-    </html>
+    <div className="flex h-screen bg-gray-100 text-gray-900">
+      <Sidebar session={session} />
+      <main className="flex-1 p-6 overflow-y-auto">{children}</main>
+    </div>
   );
 }

@@ -19,7 +19,7 @@ export default function Sidebar() {
       </div>
 
       <nav className="flex-1 space-y-2">
-        <Link href="/" className="block px-3 py-2 rounded hover:bg-orange-600">
+        <Link href="/dashboard" className="block px-3 py-2 rounded hover:bg-orange-600">
           Dashboard
         </Link>
         <Link href="/employees" className="block px-3 py-2 rounded hover:bg-orange-600">
@@ -41,7 +41,10 @@ export default function Sidebar() {
 
       <div className="mt-auto">
         <Button
-          onClick={() => signOut({ callbackUrl: "/login" })}
+          onClick={() => signOut({ 
+            callbackUrl: "/login",
+            redirect: true 
+          })}
           className="w-full bg-black text-white hover:bg-gray-800"
         >
           Logout

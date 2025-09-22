@@ -1,11 +1,17 @@
 import prisma from "@/lib/prisma";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 
 export async function GET() {
+  const session = await getServerSession(authOptions);
+  if (!session) return Response.json({ error: "Unauthorized" }, { status: 401 });
   const territories = await prisma.territories.findMany();
   return Response.json(territories);
 }
 
 export async function POST(req) {
+  const session = await getServerSession(authOptions);
+  if (!session) return Response.json({ error: "Unauthorized" }, { status: 401 });
   const body = await req.json();
   const newTerritory = await prisma.territories.create({
     data: {
@@ -16,6 +22,8 @@ export async function POST(req) {
 }
 
 export async function PUT(req) {
+  const session = await getServerSession(authOptions);
+  if (!session) return Response.json({ error: "Unauthorized" }, { status: 401 });
   const body = await req.json();
   if (!body.territoryId)
     return Response.json({ error: "Territory ID required" }, { status: 400 });
@@ -28,6 +36,8 @@ export async function PUT(req) {
 }
 
 export async function DELETE(req) {
+  const session = await getServerSession(authOptions);
+  if (!session) return Response.json({ error: "Unauthorized" }, { status: 401 });
   const body = await req.json();
   if (!body.territoryId)
     return Response.json({ error: "Territory ID required" }, { status: 400 });

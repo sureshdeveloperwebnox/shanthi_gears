@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 
 // WordPress API Configuration
 const WORDPRESS_API_BASE = process.env.WORDPRESS_API_URL || 'https://your-wordpress-site.com/wp-json/wp/v2';
@@ -21,6 +23,8 @@ const getWordPressAuth = () => {
 
 // GET all complaints from WordPress
 export async function GET() {
+  const session = await getServerSession(authOptions);
+  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   try {
     // Fetch complaints from WordPress custom post type
     const response = await fetch(`${WORDPRESS_API_BASE}/complaints?_embed&per_page=100&orderby=date&order=desc`, {
@@ -86,6 +90,8 @@ export async function GET() {
 
 // POST new complaint to WordPress
 export async function POST(req) {
+  const session = await getServerSession(authOptions);
+  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   try {
     const body = await req.json();
 console.log(body);

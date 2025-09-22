@@ -1,10 +1,12 @@
 import { NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import prisma from "@/lib/prisma";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 
 // GET all assignments
 export async function GET() {
+  const session = await getServerSession(authOptions);
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   try {
     const assignments = await prisma.employeeTerritories.findMany({
       include: {
@@ -21,6 +23,8 @@ export async function GET() {
 
 // CREATE assignment
 export async function POST(req) {
+  const session = await getServerSession(authOptions);
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   try {
     const { employeeId, territoryId } = await req.json();
 
@@ -36,7 +40,7 @@ export async function POST(req) {
       data: {
         employeeId,
         territoryId: Number(territoryId),
-        assignedAt: new Date(), // Add the required assignedAt field
+        assignedAt: new Date(),
       },
       include: {
         employee: true,
@@ -53,6 +57,8 @@ export async function POST(req) {
 
 // UPDATE assignment
 export async function PUT(req) {
+  const session = await getServerSession(authOptions);
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   try {
     const { id, employeeId, territoryId } = await req.json();
 
@@ -77,6 +83,8 @@ export async function PUT(req) {
 
 // DELETE assignment
 export async function DELETE(req) {
+  const session = await getServerSession(authOptions);
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   try {
     const { id } = await req.json();
 

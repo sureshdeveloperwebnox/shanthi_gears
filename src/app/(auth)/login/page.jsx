@@ -10,14 +10,20 @@ export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
   const onSubmit = async (e) => {
     e.preventDefault();
-    const res = await signIn("credentials", { email, password, redirect: false });
-    if (res.error) {
-      alert(res.error);
-    } else {
-      router.push("/"); // redirect to dashboard
+    setSubmitting(true);
+    try {
+      await signIn("credentials", {
+        email: email.toLowerCase().trim(),
+        password,
+        redirect: true,
+        callbackUrl: "/dashboard",
+      });
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -39,7 +45,7 @@ export default function LoginPage() {
           onChange={(e) => setPassword(e.target.value)}
           required
         />
-        <Button type="submit">Login</Button>
+        <Button type="submit" disabled={submitting}>{submitting ? "Logging in..." : "Login"}</Button>
       </form>
 
       {/* Add redirect to signup */}

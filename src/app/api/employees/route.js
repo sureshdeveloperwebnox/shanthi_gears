@@ -1,20 +1,25 @@
 import prisma from "@/lib/prisma";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 
 export async function GET() {
-  // Get all employees
+  const session = await getServerSession(authOptions);
+  if (!session) return Response.json({ error: "Unauthorized" }, { status: 401 });
+
   const employees = await prisma.employees.findMany();
   return Response.json(employees);
 }
 
 export async function POST(req) {
-  // Create new employee
+  const session = await getServerSession(authOptions);
+  if (!session) return Response.json({ error: "Unauthorized" }, { status: 401 });
+
   const body = await req.json();
   const newEmployee = await prisma.employees.create({
     data: {
       fullName: body.fullName,
       email: body.email,
       status: "ACTIVE",
-    //   userId: "dummy", // placeholder, adjust if using Users table
       designation: "Employee",
     },
   });
@@ -22,7 +27,9 @@ export async function POST(req) {
 }
 
 export async function PUT(req) {
-  // Update employee
+  const session = await getServerSession(authOptions);
+  if (!session) return Response.json({ error: "Unauthorized" }, { status: 401 });
+
   const body = await req.json();
 
   if (!body.employeeId) {
@@ -41,7 +48,9 @@ export async function PUT(req) {
 }
 
 export async function DELETE(req) {
-  // Delete employee
+  const session = await getServerSession(authOptions);
+  if (!session) return Response.json({ error: "Unauthorized" }, { status: 401 });
+
   const body = await req.json();
 
   if (!body.employeeId) {
