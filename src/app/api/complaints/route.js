@@ -19,22 +19,31 @@ const getWordPressAuth = () => {
   };
 };
 
-// GET all complaints from WordPress
+// CORS headers function
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*', // or your WordPress domain
+  'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+};
+
+// Handle preflight request
+export async function OPTIONS() {
+  return new NextResponse(null, { status: 200, headers: corsHeaders });
+}
+
+// GET all complaints
 export async function GET() {
+
   try {
-    // Fetch complaints from WordPress custom post type
     const response = await fetch(`${WORDPRESS_API_BASE}/complaints?_embed&per_page=100&orderby=date&order=desc`, {
       method: 'GET',
       headers: getWordPressAuth(),
     });
 
-    if (!response.ok) {
-      throw new Error(`WordPress API error: ${response.status}`);
-    }
+    if (!response.ok) throw new Error(`WordPress API error: ${response.status}`);
 
     const wordpressComplaints = await response.json();
 
-    // Transform WordPress data to match your application structure
     const complaints = wordpressComplaints.map(complaint => ({
       complaintId: complaint.id.toString(),
       contactPersonName: complaint.acf?.contact_person_name || complaint.title?.rendered || '',
@@ -67,7 +76,6 @@ export async function GET() {
       failureHistoryDetails: complaint.acf?.failure_history_details || '',
       createdAt: complaint.date,
       updatedAt: complaint.modified,
-      // Territory information (you may need to fetch this separately)
       territory: {
         territoryId: complaint.acf?.territory_id || 1,
         territoryName: complaint.acf?.territory_name || 'Unknown Territory'
@@ -75,27 +83,24 @@ export async function GET() {
     }));
 
     return NextResponse.json(complaints);
+
   } catch (error) {
     console.error('Error fetching complaints from WordPress:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch complaints from WordPress' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to fetch complaints from WordPress' }, { status: 500 });
   }
 }
 
-// POST new complaint to WordPress
+// POST new complaint
 export async function POST(req) {
+
   try {
     const body = await req.json();
 console.log(body);
 
-    // Prepare data for WordPress
     const wordpressData = {
       title: `Complaint - ${body.contactPersonName} - ${body.companyName}`,
       content: body.applicationDetails || '',
       status: 'publish',
-      // Custom fields using ACF (Advanced Custom Fields)
       fields: {
         contact_person_name: body.contactPersonName,
         email: body.mailId,
@@ -128,31 +133,28 @@ console.log(body);
       }
     };
 
-    // Send to WordPress
-    const response = await fetch(`${WORDPRESS_API_BASE}/complaints`, {
-      method: 'POST',
-      headers: getWordPressAuth(),
-      body: JSON.stringify(wordpressData),
-    });
+    // const response = await fetch(`${WORDPRESS_API_BASE}/complaints`, {
+    //   method: 'POST',
+    //   headers: getWordPressAuth(),
+    //   body: JSON.stringify(wordpressData),
+    // });
 
-    if (!response.ok) {
-      throw new Error(`WordPress API error: ${response.status}`);
-    }
+    // if (!response.ok) throw new Error(`WordPress API error: ${response.status}`);
 
-    const newComplaint = await response.json();
+    // const newComplaint = await response.json();
 
+    // return NextResponse.json({
+    //   complaintId: newComplaint.id.toString(),
+    //   message: 'Complaint created successfully in WordPress',
+    //   wordpressId: newComplaint.id,
+    //   wordpressLink: newComplaint.link
+    // });
     return NextResponse.json({
-      complaintId: newComplaint.id.toString(),
-      message: 'Complaint created successfully in WordPress',
-      wordpressId: newComplaint.id,
-      wordpressLink: newComplaint.link
+      complaintId: 1
     });
 
   } catch (error) {
     console.error('Error creating complaint in WordPress:', error);
-    return NextResponse.json(
-      { error: 'Failed to create complaint in WordPress' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to create complaint in WordPress' }, { status: 500 });
   }
 }
