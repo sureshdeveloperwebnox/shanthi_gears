@@ -47,16 +47,8 @@ export async function POST(req) {
       return NextResponse.json({ error: "Assignment already exists" }, { status: 400 });
     }
 
-    // prevent territory being assigned to multiple employees
-    const territoryAssignment = await prisma.employeeTerritories.findFirst({
-      where: { territoryId: Number(territoryId) },
-      include: { employee: true }
-    });
-    if (territoryAssignment) {
-      return NextResponse.json({ 
-        error: `Territory is already assigned to ${territoryAssignment.employee.fullName}` 
-      }, { status: 400 });
-    }
+    // Note: Multiple employees can now be assigned to the same territory
+    // This restriction has been removed to support many-to-many relationships
 
     const newAssignment = await prisma.employeeTerritories.create({
       data: {

@@ -146,26 +146,8 @@ export default function EmployeeTerritoriesPage() {
         const territoriesToAdd = data.territoryIds.filter(id => !currentTerritoryIds.includes(id));
         const territoriesToRemove = currentTerritoryIds.filter(id => !data.territoryIds.includes(id));
         
-        // 3. Validate territories to add are not assigned to other employees
-        const territoryConflicts = territoriesToAdd.filter(territoryId => {
-          const existingAssignment = assignments.find(a => 
-            a.territoryId === territoryId && a.employeeId !== data.employeeId
-          );
-          return existingAssignment;
-        });
-
-        if (territoryConflicts.length > 0) {
-          const conflictDetails = territoryConflicts.map(territoryId => {
-            const territory = territories.find(t => t.territoryId === territoryId);
-            const assignment = assignments.find(a => a.territoryId === territoryId);
-            const employee = assignment?.employee;
-            return `${territory?.territoryName} (assigned to ${employee?.fullName})`;
-          });
-          
-          setError(`These territories are already assigned: ${conflictDetails.join(', ')}`);
-          setSubmitting(false);
-          return;
-        }
+        // Note: Multiple employees can now be assigned to the same territory
+        // This validation has been removed to support many-to-many relationships
         
         // 4. Remove territories that are no longer selected
         for (const territoryId of territoriesToRemove) {
@@ -323,7 +305,7 @@ export default function EmployeeTerritoriesPage() {
             </div>
             <div className="min-w-0">
               <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900">Employee Territories</h1>
-              <p className="text-sm sm:text-base text-gray-600">Assign and manage territory coverage for your team</p>
+              <p className="text-sm sm:text-base text-gray-600">Assign multiple employees to multiple territories for flexible coverage</p>
             </div>
           </div>
         </div>
@@ -410,7 +392,7 @@ export default function EmployeeTerritoriesPage() {
                     <DialogHeader>
                       <DialogTitle className="text-xl font-bold flex items-center">
                         {editing ? <Edit className="mr-2 w-5 h-5" /> : <Target className="mr-2 w-5 h-5" />}
-                        {editing ? "Edit Employee Territories" : "New Assignment"}
+                        {editing ? "Edit Employee Territories" : "Assign Territories"}
                       </DialogTitle>
                       {editing && (
                         <p className="text-sm text-gray-600 mt-1">
@@ -477,36 +459,30 @@ export default function EmployeeTerritoriesPage() {
                           ) : (
                             <div className="space-y-2">
                               {territories.map((territory) => {
-                                // Check if territory is already assigned to another employee
-                                const assignedToOther = assignments.find(a => 
+                                // Check if territory is already assigned to other employees (for information only)
+                                const assignedToOthers = assignments.filter(a => 
                                   a.territoryId === territory.territoryId && 
                                   a.employeeId !== selectedEmployee
                                 );
-                                const isDisabled = !editing && assignedToOther;
                                 
                                 return (
                                   <label
                                     key={territory.territoryId}
-                                    className={`flex items-center space-x-3 p-2 rounded transition-colors ${
-                                      isDisabled 
-                                        ? 'cursor-not-allowed opacity-60 bg-gray-50' 
-                                        : 'cursor-pointer hover:bg-orange-50'
-                                    }`}
+                                    className="flex items-center space-x-3 p-2 rounded transition-colors cursor-pointer hover:bg-orange-50"
                                   >
                                     <input
                                       type="checkbox"
                                       checked={selectedTerritories.includes(territory.territoryId)}
-                                      onChange={() => !isDisabled && handleTerritoryToggle(territory.territoryId)}
-                                      disabled={isDisabled}
-                                      className="rounded border-gray-300 text-orange-600 shadow-sm focus:border-orange-300 focus:ring focus:ring-orange-200 focus:ring-opacity-50 disabled:opacity-50"
+                                      onChange={() => handleTerritoryToggle(territory.territoryId)}
+                                      className="rounded border-gray-300 text-orange-600 shadow-sm focus:border-orange-300 focus:ring focus:ring-orange-200 focus:ring-opacity-50"
                                     />
                                     <div className="flex items-center flex-1">
                                       <MapPin className="text-orange-600 mr-2 w-4 h-4" />
                                       <div className="flex-1">
                                         <span className="text-sm font-medium">{territory.territoryName}</span>
-                                        {assignedToOther && (
-                                          <div className="text-xs text-red-600 mt-1">
-                                            Already assigned to {assignedToOther.employee?.fullName}
+                                        {assignedToOthers.length > 0 && (
+                                          <div className="text-xs text-blue-600 mt-1">
+                                            Also assigned to {assignedToOthers.length} other employee{assignedToOthers.length !== 1 ? 's' : ''}
                                           </div>
                                         )}
                                       </div>
@@ -640,15 +616,27 @@ export default function EmployeeTerritoriesPage() {
                           </td>
                           <td className="px-6 py-4">
                             <div className="flex flex-wrap gap-1">
-                              {group.territories.map((territory, index) => (
-                                <span
-                                  key={territory?.territoryId || index}
-                                  className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800"
-                                >
-                                  <MapPin className="mr-1 w-3 h-3" />
-                                  {territory?.territoryName || 'Unknown'}
-                                </span>
-                              ))}
+                              {group.territories.map((territory, index) => {
+                                // Find other employees assigned to this territory
+                                const otherAssignments = assignments.filter(a => 
+                                  a.territoryId === territory.territoryId && 
+                                  a.employeeId !== group.employee?.employeeId
+                                );
+                                
+                                return (
+                                  <span
+                                    key={territory?.territoryId || index}
+                                    className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800"
+                                    title={otherAssignments.length > 0 ? `Also assigned to: ${otherAssignments.map(a => a.employee?.fullName).join(', ')}` : ''}
+                                  >
+                                    <MapPin className="mr-1 w-3 h-3" />
+                                    {territory?.territoryName || 'Unknown'}
+                                    {otherAssignments.length > 0 && (
+                                      <span className="ml-1 text-orange-600">({otherAssignments.length + 1})</span>
+                                    )}
+                                  </span>
+                                );
+                              })}
                             </div>
                             <div className="text-xs text-gray-500 mt-1">
                               {group.territories.length} territory{group.territories.length !== 1 ? 'ies' : ''}
@@ -721,15 +709,27 @@ export default function EmployeeTerritoriesPage() {
                         <div className="mb-3">
                           <p className="text-sm font-medium text-gray-700 mb-2">Assigned Territories:</p>
                           <div className="flex flex-wrap gap-1">
-                            {group.territories.map((territory, index) => (
-                              <span
-                                key={territory?.territoryId || index}
-                                className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800"
-                              >
+                            {group.territories.map((territory, index) => {
+                              // Find other employees assigned to this territory
+                              const otherAssignments = assignments.filter(a => 
+                                a.territoryId === territory.territoryId && 
+                                a.employeeId !== group.employee?.employeeId
+                              );
+                              
+                              return (
+                                <span
+                                  key={territory?.territoryId || index}
+                                  className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800"
+                                  title={otherAssignments.length > 0 ? `Also assigned to: ${otherAssignments.map(a => a.employee?.fullName).join(', ')}` : ''}
+                                >
                                   <MapPin className="mr-1 w-3 h-3" />
                                   {territory?.territoryName || 'Unknown'}
-                              </span>
-                            ))}
+                                  {otherAssignments.length > 0 && (
+                                    <span className="ml-1 text-orange-600">({otherAssignments.length + 1})</span>
+                                  )}
+                                </span>
+                              );
+                            })}
                           </div>
                           <p className="text-xs text-gray-500 mt-1">
                             {group.territories.length} territory{group.territories.length !== 1 ? 'ies' : ''}
