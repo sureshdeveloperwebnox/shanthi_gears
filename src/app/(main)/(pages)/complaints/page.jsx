@@ -335,33 +335,6 @@ export default function ComplaintsPage() {
                 <span className="text-sm text-gray-600">
                   Total: {complaints.length} complaints
                 </span>
-                {complaints.length === 0 && (
-                  <Button
-                    onClick={async () => {
-                      console.log('Creating test data...');
-                      try {
-                        const res = await fetch('/api/complaints/test', {
-                          method: 'POST'
-                        });
-                        const result = await res.json();
-                        if (result.success) {
-                          console.log('Test data created successfully');
-                          await fetchComplaints();
-                        } else {
-                          console.error('Failed to create test data:', result.error);
-                        }
-                      } catch (err) {
-                        console.error('Error creating test data:', err);
-                      }
-                    }}
-                    variant="outline"
-                    size="sm"
-                    className="text-orange-600 border-orange-200 hover:bg-orange-50"
-                  >
-                    <span className="mr-1">➕</span>
-                    Add Test Data
-                  </Button>
-                )}
                 <Button
                   onClick={async () => {
                     console.log('Manual refresh clicked');
