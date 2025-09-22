@@ -264,17 +264,17 @@ export default function EmployeeTerritoriesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen bg-gray-50 p-4 sm:p-6">
       <div className="max-w-6xl mx-auto">
         {/* Header Section */}
-        <div className="mb-8">
-          <div className="flex items-center mb-6">
-            <div className="bg-purple-500 p-3 rounded-full mr-4">
-              <span className="text-2xl">🎯</span>
+        <div className="mb-6 sm:mb-8">
+          <div className="flex items-center mb-4 sm:mb-6">
+            <div className="bg-purple-500 p-2 sm:p-3 rounded-full mr-3 sm:mr-4 flex-shrink-0">
+              <span className="text-xl sm:text-2xl">🎯</span>
             </div>
-            <div>
-              <h1 className="text-4xl font-bold text-gray-900">Employee Territories</h1>
-              <p className="text-gray-600">Assign and manage territory coverage for your team</p>
+            <div className="min-w-0">
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900">Employee Territories</h1>
+              <p className="text-sm sm:text-base text-gray-600">Assign and manage territory coverage for your team</p>
             </div>
           </div>
         </div>
