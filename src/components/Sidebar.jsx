@@ -1,69 +1,52 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { cn } from "@/lib/utils"; // shadcn utility
-
-const links = [
-  { href: "/", label: "Dashboard" },
-  { href: "/complaints", label: "Complaints" },
-  { href: "/territories", label: "Territories" },
-  { href: "/employees", label: "Employees" },
-  { href: "/employee-territories", label: "Employee Territories" },
-];
-
-const settings = [
-  { href: "/settings/roles", label: "Roles" },
-  { href: "/settings/users", label: "users" },
-];
+import { signOut, useSession } from "next-auth/react";
+import { Button } from "@/components/ui/button";
 
 export default function Sidebar() {
-  const pathname = usePathname();
+  const { data: session } = useSession();
 
   return (
-    <div className="w-64 bg-gray-900 text-white flex flex-col h-screen shadow-lg">
-      <div className="p-6 border-b border-gray-700">
-        <h1 className="text-xl font-bold">Admin Dashboard</h1>
+    <aside className="w-64 bg-orange-500 text-white flex flex-col h-screen p-6">
+      <div className="mb-8">
+        <h2 className="text-2xl font-bold mb-1">Shanthi Gears</h2>
+        {session && (
+          <p className="text-sm">
+            {session.user.name} <br /> {session.user.email}
+          </p>
+        )}
       </div>
 
-      <nav className="flex-1 p-4 space-y-2">
-        {links.map((link) => (
-          <Link
-            key={link.href}
-            href={link.href}
-            className={cn(
-              "block px-4 py-2 rounded-md text-sm font-medium transition-colors",
-              pathname === link.href
-                ? "bg-gray-700 text-white"
-                : "text-gray-300 hover:bg-gray-800 hover:text-white"
-            )}
-          >
-            {link.label}
-          </Link>
-        ))}
-
-        <div className="mt-6">
-          <p className="text-gray-400 text-xs uppercase mb-2">Settings</p>
-          {settings.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className={cn(
-                "block px-4 py-2 rounded-md text-sm font-medium transition-colors",
-                pathname === link.href
-                  ? "bg-gray-700 text-white"
-                  : "text-gray-300 hover:bg-gray-800 hover:text-white"
-              )}
-            >
-              {link.label}
-            </Link>
-          ))}
-        </div>
+      <nav className="flex-1 space-y-2">
+        <Link href="/" className="block px-3 py-2 rounded hover:bg-orange-600">
+          Dashboard
+        </Link>
+        <Link href="/employees" className="block px-3 py-2 rounded hover:bg-orange-600">
+          Employees
+        </Link>
+        <Link href="/territories" className="block px-3 py-2 rounded hover:bg-orange-600">
+          Territories
+        </Link>
+        <Link href="/employee-territories" className="block px-3 py-2 rounded hover:bg-orange-600">
+          Employee Territories
+        </Link>
+        <Link href="/complaints" className="block px-3 py-2 rounded hover:bg-orange-600">
+          Complaints
+        </Link>
+        <Link href="/settings" className="block px-3 py-2 rounded hover:bg-orange-600">
+          Settings
+        </Link>
       </nav>
 
-      <div className="p-4 border-t border-gray-700 text-xs text-gray-400">
-        © {new Date().getFullYear()} Shanthi Gears
+      <div className="mt-auto">
+        <Button
+          onClick={() => signOut({ callbackUrl: "/login" })}
+          className="w-full bg-black text-white hover:bg-gray-800"
+        >
+          Logout
+        </Button>
       </div>
-    </div>
+    </aside>
   );
 }
