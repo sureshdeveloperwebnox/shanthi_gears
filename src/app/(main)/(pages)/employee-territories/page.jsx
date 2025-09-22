@@ -5,6 +5,21 @@ import axios from "axios";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
+import { 
+  Target, 
+  Plus, 
+  Edit, 
+  Trash2, 
+  BarChart3, 
+  AlertCircle, 
+  CheckCircle, 
+  X,
+  User,
+  MapPin,
+  Save,
+  Pause,
+  Clock
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -41,8 +56,6 @@ export default function EmployeeTerritoriesPage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
-  
-  // Authentication is handled by the server-side layout
 
   const {
     handleSubmit,
@@ -292,7 +305,7 @@ export default function EmployeeTerritoriesPage() {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-50">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600 mx-auto mb-4"></div>
           <p className="text-gray-600">Loading assignments...</p>
         </div>
       </div>
@@ -305,8 +318,8 @@ export default function EmployeeTerritoriesPage() {
         {/* Header Section */}
         <div className="mb-6 sm:mb-8">
           <div className="flex items-center mb-4 sm:mb-6">
-            <div className="bg-purple-500 p-2 sm:p-3 rounded-full mr-3 sm:mr-4 flex-shrink-0">
-              <span className="text-xl sm:text-2xl">🎯</span>
+            <div className="bg-orange-500 p-2 sm:p-3 rounded-full mr-3 sm:mr-4 flex-shrink-0">
+              <Target className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
             </div>
             <div className="min-w-0">
               <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900">Employee Territories</h1>
@@ -320,7 +333,7 @@ export default function EmployeeTerritoriesPage() {
           <div className="bg-red-50 border-l-4 border-red-400 p-4 mb-6 rounded-lg">
             <div className="flex">
               <div className="flex-shrink-0">
-                <span className="text-red-400 text-xl">⚠️</span>
+                <AlertCircle className="w-5 h-5 text-red-400" />
               </div>
               <div className="ml-3">
                 <p className="text-sm text-red-700">{error}</p>
@@ -334,7 +347,7 @@ export default function EmployeeTerritoriesPage() {
           <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6 rounded-lg">
             <div className="flex">
               <div className="flex-shrink-0">
-                <span className="text-yellow-400 text-xl">⚠️</span>
+                <AlertCircle className="w-5 h-5 text-yellow-400" />
               </div>
               <div className="ml-3">
                 <h3 className="text-sm font-medium text-yellow-800">
@@ -362,7 +375,7 @@ export default function EmployeeTerritoriesPage() {
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0">
               <div className="flex items-center">
                 <CardTitle className="text-2xl font-bold text-gray-800 flex items-center">
-                  <span className="mr-3">📊</span>
+              
                   Territory Assignments
                 </CardTitle>
               </div>
@@ -378,7 +391,7 @@ export default function EmployeeTerritoriesPage() {
                     placeholder="Search assignments..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10 pr-4 py-2 w-full sm:w-64 border-gray-300 focus:border-purple-500 focus:ring-2 focus:ring-purple-200"
+                    className="pl-10 pr-4 py-2 w-full sm:w-64 border-gray-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-200"
                   />
                 </div>
 
@@ -387,16 +400,16 @@ export default function EmployeeTerritoriesPage() {
                   <DialogTrigger asChild>
                     <Button
                       onClick={() => handleFormReset()}
-                      className="bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
+                      className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
                     >
-                      <span className="mr-2">🎯</span>
+                      <Target className="mr-2 w-4 h-4" />
                       Add Assignment
                     </Button>
                   </DialogTrigger>
                   <DialogContent className="sm:max-w-[500px]">
                     <DialogHeader>
                       <DialogTitle className="text-xl font-bold flex items-center">
-                        <span className="mr-2">{editing ? "✏️" : "🎯"}</span>
+                        {editing ? <Edit className="mr-2 w-5 h-5" /> : <Target className="mr-2 w-5 h-5" />}
                         {editing ? "Edit Employee Territories" : "New Assignment"}
                       </DialogTitle>
                       {editing && (
@@ -419,19 +432,19 @@ export default function EmployeeTerritoriesPage() {
                           }}
                           disabled={editing} // Disable during editing
                         >
-                          <SelectTrigger className="border-gray-300 focus:border-purple-500 focus:ring-2 focus:ring-purple-200">
+                          <SelectTrigger className="border-gray-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-200">
                             <SelectValue placeholder="Select employee" />
                           </SelectTrigger>
                           <SelectContent>
                             {employees.map((emp) => (
                               <SelectItem key={emp.employeeId} value={emp.employeeId}>
                                 <div className="flex items-center">
-                                  <span className="mr-2">👤</span>
+                                  <User className="mr-2 w-4 h-4" />
                                   <div className="flex flex-col">
                                     <span className="font-medium">{emp.fullName}</span>
                                     <span className="text-xs text-gray-500">{emp.email}</span>
                                   </div>
-                                  <span className="ml-2 text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
+                                  <span className="ml-2 text-xs bg-orange-100 text-orange-800 px-2 py-1 rounded-full">
                                     {emp.status}
                                   </span>
                                 </div>
@@ -441,7 +454,7 @@ export default function EmployeeTerritoriesPage() {
                         </Select>
                         {errors.employeeId && (
                           <p className="text-red-500 text-sm flex items-center">
-                            <span className="mr-1">⚠️</span>
+                            <AlertCircle className="mr-1 w-4 h-4" />
                             {errors.employeeId.message}
                           </p>
                         )}
@@ -451,7 +464,7 @@ export default function EmployeeTerritoriesPage() {
                         <label className="text-sm font-medium text-gray-700">
                           Territories <span className="text-gray-500">(Select multiple)</span>
                           {editing && (
-                            <span className="text-purple-600 text-xs ml-2">
+                            <span className="text-orange-600 text-xs ml-2">
                               - Editing all territories for this employee
                             </span>
                           )}
@@ -477,7 +490,7 @@ export default function EmployeeTerritoriesPage() {
                                     className={`flex items-center space-x-3 p-2 rounded transition-colors ${
                                       isDisabled 
                                         ? 'cursor-not-allowed opacity-60 bg-gray-50' 
-                                        : 'cursor-pointer hover:bg-purple-50'
+                                        : 'cursor-pointer hover:bg-orange-50'
                                     }`}
                                   >
                                     <input
@@ -485,10 +498,10 @@ export default function EmployeeTerritoriesPage() {
                                       checked={selectedTerritories.includes(territory.territoryId)}
                                       onChange={() => !isDisabled && handleTerritoryToggle(territory.territoryId)}
                                       disabled={isDisabled}
-                                      className="rounded border-gray-300 text-purple-600 shadow-sm focus:border-purple-300 focus:ring focus:ring-purple-200 focus:ring-opacity-50 disabled:opacity-50"
+                                      className="rounded border-gray-300 text-orange-600 shadow-sm focus:border-orange-300 focus:ring focus:ring-orange-200 focus:ring-opacity-50 disabled:opacity-50"
                                     />
                                     <div className="flex items-center flex-1">
-                                      <span className="text-purple-600 mr-2">📍</span>
+                                      <MapPin className="text-orange-600 mr-2 w-4 h-4" />
                                       <div className="flex-1">
                                         <span className="text-sm font-medium">{territory.territoryName}</span>
                                         {assignedToOther && (
@@ -507,19 +520,19 @@ export default function EmployeeTerritoriesPage() {
                         
                         {errors.territoryIds && (
                           <p className="text-red-500 text-sm flex items-center">
-                            <span className="mr-1">⚠️</span>
+                            <AlertCircle className="mr-1 w-4 h-4" />
                             {errors.territoryIds.message}
                           </p>
                         )}
                         
                         {selectedTerritories.length > 0 && (
-                          <div className="bg-purple-50 p-3 rounded-lg">
-                            <p className="text-sm text-purple-800 font-medium">
-                              <span className="mr-1">✅</span>
+                          <div className="bg-orange-50 p-3 rounded-lg">
+                            <p className="text-sm text-orange-800 font-medium flex items-center">
+                              <CheckCircle className="mr-1 w-4 h-4" />
                               {selectedTerritories.length} territories selected
                             </p>
                             {editing && (
-                              <p className="text-xs text-purple-600 mt-1">
+                              <p className="text-xs text-orange-600 mt-1">
                                 Will update all assignments for this employee
                               </p>
                             )}
@@ -539,9 +552,9 @@ export default function EmployeeTerritoriesPage() {
                         <Button 
                           type="submit" 
                           disabled={submitting}
-                          className="bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700"
+                          className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700"
                         >
-                          <span className="mr-2">{submitting ? "⏳" : editing ? "💾" : "🎯"}</span>
+                          {submitting ? <Clock className="mr-2 w-4 h-4" /> : editing ? <Save className="mr-2 w-4 h-4" /> : <Target className="mr-2 w-4 h-4" />}
                           {submitting ? "Saving..." : (editing ? "Update" : "Save")}
                         </Button>
                       </DialogFooter>
@@ -555,7 +568,9 @@ export default function EmployeeTerritoriesPage() {
           <CardContent className="p-0">
             {filteredEmployeeGroups.length === 0 ? (
               <div className="text-center py-16">
-                <div className="text-6xl mb-4">🎯</div>
+                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Target className="w-8 h-8 text-gray-400" />
+                </div>
                 <h3 className="text-xl font-semibold text-gray-800 mb-2">
                   {searchTerm ? "No assignments found" : "No territory assignments yet"}
                 </h3>
@@ -571,9 +586,9 @@ export default function EmployeeTerritoriesPage() {
                       handleFormReset();
                       setOpen(true);
                     }}
-                    className="bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700"
+                    className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700"
                   >
-                    <span className="mr-2">🎯</span>
+                    <Target className="mr-2 w-4 h-4" />
                     Create Your First Assignment
                   </Button>
                 )}
@@ -603,38 +618,21 @@ export default function EmployeeTerritoriesPage() {
                       {filteredEmployeeGroups.map((group, index) => (
                         <tr 
                           key={group.employee?.employeeId || 'unknown'} 
-                          className="hover:bg-purple-50 transition-colors duration-200"
+                          className="hover:bg-orange-50 transition-colors duration-200"
                           style={{ animationDelay: `${index * 0.1}s` }}
                         >
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="flex items-center">
-                              <div className="bg-purple-100 p-2 rounded-full mr-3">
-                                <span className="text-purple-600">👤</span>
+                              <div className="bg-orange-100 p-2 rounded-full mr-3">
+                                <User className="w-4 h-4 text-orange-600" />
                               </div>
                               <div className="flex-1">
                                 <div className="text-sm font-medium text-gray-900">
                                   {group.employee?.fullName || 'N/A'}
                                 </div>
-                                <div className="text-sm text-gray-500">
-                                  ID: {group.employee?.employeeId || 'N/A'}
-                                </div>
+                              
                               </div>
-                              {group.employee?.status && (
-                                <span
-                                  className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                                    group.employee.status === 'ACTIVE'
-                                      ? 'bg-green-100 text-green-800'
-                                      : group.employee.status === 'INACTIVE'
-                                      ? 'bg-red-100 text-red-800'
-                                      : 'bg-yellow-100 text-yellow-800'
-                                  }`}
-                                >
-                                  {group.employee.status === 'ACTIVE' && '✅'}
-                                  {group.employee.status === 'INACTIVE' && '❌'}
-                                  {group.employee.status === 'SUSPENDED' && '⏸️'}
-                                  <span className="ml-1">{group.employee.status}</span>
-                                </span>
-                              )}
+                          
                             </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -645,9 +643,9 @@ export default function EmployeeTerritoriesPage() {
                               {group.territories.map((territory, index) => (
                                 <span
                                   key={territory?.territoryId || index}
-                                  className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800"
+                                  className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800"
                                 >
-                                  <span className="mr-1">📍</span>
+                                  <MapPin className="mr-1 w-3 h-3" />
                                   {territory?.territoryName || 'Unknown'}
                                 </span>
                               ))}
@@ -662,9 +660,9 @@ export default function EmployeeTerritoriesPage() {
                                 variant="outline"
                                 size="sm" 
                                 onClick={() => handleEdit(group.assignments[0])}
-                                className="w-full text-blue-600 border-blue-200 hover:bg-blue-50 hover:border-blue-300 transition-all duration-200"
+                                className="w-full text-orange-600 border-orange-200 hover:bg-orange-50 hover:border-orange-300 transition-all duration-200"
                               >
-                                <span className="mr-1">✏️</span>
+                                <Edit className="mr-1 w-4 h-4" />
                                 Edit
                               </Button>
                               <Button
@@ -673,7 +671,7 @@ export default function EmployeeTerritoriesPage() {
                                 onClick={() => handleDelete(group.employee?.employeeId)}
                                 className="w-full text-red-600 border-red-200 hover:bg-red-50 hover:border-red-300 transition-all duration-200"
                               >
-                                <span className="mr-1">🗑️</span>
+                                <Trash2 className="mr-1 w-4 h-4" />
                                 Delete
                               </Button>
                             </div>
@@ -695,8 +693,8 @@ export default function EmployeeTerritoriesPage() {
                       <CardContent className="p-4">
                         <div className="flex justify-between items-start mb-3">
                           <div className="flex items-center flex-1">
-                            <div className="bg-purple-100 p-2 rounded-full mr-3">
-                              <span className="text-purple-600">👤</span>
+                            <div className="bg-orange-100 p-2 rounded-full mr-3">
+                              <User className="w-4 h-4 text-orange-600" />
                             </div>
                             <div className="flex-1">
                               <h3 className="font-semibold text-gray-900">{group.employee?.fullName || 'N/A'}</h3>
@@ -707,15 +705,14 @@ export default function EmployeeTerritoriesPage() {
                               <span
                                 className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium flex-shrink-0 ml-2 ${
                                   group.employee.status === 'ACTIVE'
-                                    ? 'bg-green-100 text-green-800'
+                                    ? 'bg-orange-100 text-orange-800'
                                     : group.employee.status === 'INACTIVE'
                                     ? 'bg-red-100 text-red-800'
                                     : 'bg-yellow-100 text-yellow-800'
                                 }`}
                               >
-                                {group.employee.status === 'ACTIVE' && '✅'}
-                                {group.employee.status === 'INACTIVE' && '❌'}
-                                {group.employee.status === 'SUSPENDED' && '⏸️'}
+                                {group.employee.status === 'ACTIVE' && <CheckCircle className="w-4 h-4" />}
+                                {group.employee.status === 'INACTIVE' && <X className="w-4 h-4" />}
                                 <span className="ml-1">{group.employee.status}</span>
                               </span>
                             )}
@@ -727,10 +724,10 @@ export default function EmployeeTerritoriesPage() {
                             {group.territories.map((territory, index) => (
                               <span
                                 key={territory?.territoryId || index}
-                                className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800"
+                                className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800"
                               >
-                                <span className="mr-1">📍</span>
-                                {territory?.territoryName || 'Unknown'}
+                                  <MapPin className="mr-1 w-3 h-3" />
+                                  {territory?.territoryName || 'Unknown'}
                               </span>
                             ))}
                           </div>
@@ -743,9 +740,9 @@ export default function EmployeeTerritoriesPage() {
                             variant="outline"
                             size="sm" 
                             onClick={() => handleEdit(group.assignments[0])}
-                            className="w-full text-blue-600 border-blue-200 hover:bg-blue-50"
+                            className="w-full text-orange-600 border-orange-200 hover:bg-orange-50"
                           >
-                            <span className="mr-2">✏️</span>
+                            <Edit className="mr-2 w-4 h-4" />
                             Edit Territories
                           </Button>
                           <Button
@@ -754,7 +751,7 @@ export default function EmployeeTerritoriesPage() {
                             onClick={() => handleDelete(group.employee?.employeeId)}
                             className="w-full text-red-600 border-red-200 hover:bg-red-50"
                           >
-                            <span className="mr-2">🗑️</span>
+                            <Trash2 className="mr-2 w-4 h-4" />
                             Delete All
                           </Button>
                         </div>

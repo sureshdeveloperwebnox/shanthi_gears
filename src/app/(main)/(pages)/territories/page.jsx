@@ -21,6 +21,17 @@ import {
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { 
+  MapPin, 
+  Plus, 
+  Edit, 
+  Trash2, 
+  Users, 
+  BarChart3, 
+  AlertCircle, 
+  CheckCircle, 
+  X
+} from "lucide-react";
 
 // validation schema
 const territorySchema = z.object({
@@ -34,10 +45,7 @@ export default function TerritoriesPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
-  
-  // Authentication is handled by the server-side layout
-  
-  // All hooks must be at the top, before any conditional logic
+
   const {
     register,
     handleSubmit,
@@ -114,7 +122,7 @@ export default function TerritoriesPage() {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-50">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600 mx-auto mb-4"></div>
           <p className="text-gray-600">Loading territories...</p>
         </div>
       </div>
@@ -127,8 +135,8 @@ export default function TerritoriesPage() {
         {/* Header Section */}
         <div className="mb-6 sm:mb-8">
           <div className="flex items-center mb-4">
-            <div className="bg-blue-500 p-2 sm:p-3 rounded-full mr-3 sm:mr-4 flex-shrink-0">
-              <span className="text-xl sm:text-2xl">🗺️</span>
+            <div className="bg-orange-500 p-2 sm:p-3 rounded-full mr-3 sm:mr-4 flex-shrink-0">
+              <MapPin className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
             </div>
             <div className="min-w-0">
               <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900">Territories</h1>
@@ -143,7 +151,7 @@ export default function TerritoriesPage() {
           <div className="bg-red-50 border-l-4 border-red-400 p-4 mb-6 rounded-lg">
             <div className="flex">
               <div className="flex-shrink-0">
-                <span className="text-red-400 text-xl">⚠️</span>
+                <AlertCircle className="w-5 h-5 text-red-400" />
               </div>
               <div className="ml-3">
                 <p className="text-sm text-red-700">{error}</p>
@@ -167,14 +175,14 @@ export default function TerritoriesPage() {
                 {/* Search Bar */}
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <span className="text-gray-400">🔍</span>
+                    
                   </div>
                   <Input
                     type="text"
                     placeholder="Search territories..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10 pr-4 py-2 w-full sm:w-64 border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+                    className="pl-10 pr-4 py-2 w-full sm:w-64 border-gray-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-200"
                   />
                 </div>
 
@@ -187,16 +195,16 @@ export default function TerritoriesPage() {
                         setEditingTerritory(null);
                         setError(null);
                       }}
-                      className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
+                      className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
                     >
-                      <span className="mr-2">✨</span>
+                      
                       Add Territory
                     </Button>
                   </DialogTrigger>
                   <DialogContent className="sm:max-w-[425px]">
                     <DialogHeader>
                       <DialogTitle className="text-xl font-bold flex items-center">
-                        <span className="mr-2">{editingTerritory ? "✏️" : "➕"}</span>
+                        {editingTerritory ? <Edit className="mr-2 w-5 h-5" /> : <Plus className="mr-2 w-5 h-5" />}
                         {editingTerritory ? "Edit Territory" : "Add New Territory"}
                       </DialogTitle>
                     </DialogHeader>
@@ -208,11 +216,11 @@ export default function TerritoriesPage() {
                         <Input
                           placeholder="Enter territory name..."
                           {...register("territoryName")}
-                          className="border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+                          className="border-gray-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-200"
                         />
                         {errors.territoryName && (
                           <p className="text-red-500 text-sm flex items-center">
-                            <span className="mr-1">⚠️</span>
+                            <AlertCircle className="mr-1 w-4 h-4" />
                             {errors.territoryName.message}
                           </p>
                         )}
@@ -228,7 +236,7 @@ export default function TerritoriesPage() {
                         </Button>
                         <Button
                           type="submit"
-                          className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700"
+                          className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700"
                         >
                           <span className="mr-2">{editingTerritory ? "💾" : "✨"}</span>
                           {editingTerritory ? "Update" : "Create"}
@@ -244,7 +252,9 @@ export default function TerritoriesPage() {
           <CardContent className="p-0">
             {filteredTerritories.length === 0 ? (
               <div className="text-center py-16">
-                <div className="text-6xl mb-4">🗺️</div>
+                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <MapPin className="w-8 h-8 text-gray-400" />
+                </div>
                 <h3 className="text-xl font-semibold text-gray-800 mb-2">
                   {searchTerm ? "No territories found" : "No territories yet"}
                 </h3>
@@ -261,9 +271,9 @@ export default function TerritoriesPage() {
                       setEditingTerritory(null);
                       setOpen(true);
                     }}
-                    className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700"
+                    className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700"
                   >
-                    <span className="mr-2">✨</span>
+                    <span className="mr-2"></span>
                     Add Your First Territory
                   </Button>
                 )}
@@ -290,21 +300,19 @@ export default function TerritoriesPage() {
                       {filteredTerritories.map((territory, index) => (
                         <tr 
                           key={territory.territoryId} 
-                          className="hover:bg-blue-50 transition-colors duration-200"
+                          className="hover:bg-orange-50 transition-colors duration-200"
                           style={{ animationDelay: `${index * 0.1}s` }}
                         >
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="flex items-center">
-                              <div className="bg-blue-100 p-2 rounded-full mr-3">
-                                <span className="text-blue-600">📍</span>
+                              <div className="bg-orange-100 p-2 rounded-full mr-3">
+                                <MapPin className="w-4 h-4 text-orange-600" />
                               </div>
                               <div>
                                 <div className="text-sm font-medium text-gray-900">
                                   {territory.territoryName}
                                 </div>
-                                <div className="text-sm text-gray-500">
-                                  ID: {territory.territoryId}
-                                </div>
+                                
                               </div>
                             </div>
                           </td>
@@ -320,9 +328,9 @@ export default function TerritoriesPage() {
                                 variant="outline"
                                 size="sm"
                                 onClick={() => handleEdit(territory)}
-                                className="text-blue-600 border-blue-200 hover:bg-blue-50 hover:border-blue-300 transition-all duration-200"
+                                className="text-orange-600 border-orange-200 hover:bg-orange-50 hover:border-orange-300 transition-all duration-200"
                               >
-                                <span className="mr-1">✏️</span>
+                                <Edit className="mr-1 w-4 h-4" />
                                 Edit
                               </Button>
                               <Button
@@ -331,7 +339,7 @@ export default function TerritoriesPage() {
                                 onClick={() => handleDelete(territory.territoryId)}
                                 className="text-red-600 border-red-200 hover:bg-red-50 hover:border-red-300 transition-all duration-200"
                               >
-                                <span className="mr-1">🗑️</span>
+                                <Trash2 className="mr-1 w-4 h-4" />
                                 Delete
                               </Button>
                             </div>
@@ -353,8 +361,8 @@ export default function TerritoriesPage() {
                       <CardContent className="p-4">
                         <div className="flex justify-between items-start mb-3">
                           <div className="flex items-center">
-                            <div className="bg-blue-100 p-2 rounded-full mr-3">
-                              <span className="text-blue-600">📍</span>
+                            <div className="bg-orange-100 p-2 rounded-full mr-3">
+                              <MapPin className="w-4 h-4 text-orange-600" />
                             </div>
                             <div>
                               <h3 className="font-semibold text-gray-900">{territory.territoryName}</h3>
@@ -374,9 +382,9 @@ export default function TerritoriesPage() {
                               variant="outline"
                               size="sm"
                               onClick={() => handleEdit(territory)}
-                              className="text-blue-600 border-blue-200 hover:bg-blue-50"
+                              className="text-orange-600 border-orange-200 hover:bg-orange-50"
                             >
-                              ✏️
+                              <Edit className="w-4 h-4" />
                             </Button>
                             <Button
                               variant="outline"
@@ -384,7 +392,7 @@ export default function TerritoriesPage() {
                               onClick={() => handleDelete(territory.territoryId)}
                               className="text-red-600 border-red-200 hover:bg-red-50"
                             >
-                              🗑️
+                              <Trash2 className="w-4 h-4" />
                             </Button>
                           </div>
                         </div>
