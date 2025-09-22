@@ -24,7 +24,7 @@ import {
 
 const schema = z.object({
   employeeId: z.string().min(1, "Select an employee"),
-  territoryId: z.string().min(1, "Select a territory"),
+  territoryIds: z.array(z.number()).min(1, "Select at least one territory"),
 });
 
 export default function EmployeeTerritoriesPage() {
@@ -34,7 +34,7 @@ export default function EmployeeTerritoriesPage() {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState(null);
   const [selectedEmployee, setSelectedEmployee] = useState("");
-  const [selectedTerritory, setSelectedTerritory] = useState("");
+  const [selectedTerritories, setSelectedTerritories] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -48,7 +48,7 @@ export default function EmployeeTerritoriesPage() {
     resolver: zodResolver(schema),
     defaultValues: {
       employeeId: "",
-      territoryId: "",
+      territoryIds: [],
     },
   });
 
@@ -98,14 +98,62 @@ export default function EmployeeTerritoriesPage() {
     try {
       console.log("Submitting data:", data); // Debug log
       
-      let response;
-      if (editing) {
-        response = await axios.put("/api/employee-territories", { id: editing.id, ...data });
-      } else {
-        response = await axios.post("/api/employee-territories", data);
+      // Validate that employee doesn't already have assignments for selected territories (for new assignments)
+      if (!editing) {
+        const existingAssignments = assignments.filter(a => 
+          a.employeeId === data.employeeId && data.territoryIds.includes(a.territoryId)
+        );
+        
+        if (existingAssignments.length > 0) {
+          const duplicateTerritories = existingAssignments
+            .map(a => territories.find(t => t.territoryId === a.territoryId)?.territoryName)
+            .filter(Boolean);
+          
+          setError(`Employee already assigned to: ${duplicateTerritories.join(', ')}`);
+          setLoading(false);
+          return;
+        }
       }
       
-      console.log("Response:", response.data); // Debug log
+      if (editing) {
+        // For editing, we need to handle multiple territories
+        // 1. Get current assignments for this employee
+        const currentAssignments = assignments.filter(a => a.employeeId === data.employeeId);
+        const currentTerritoryIds = currentAssignments.map(a => a.territoryId);
+        
+        // 2. Find territories to add and remove
+        const territoriesToAdd = data.territoryIds.filter(id => !currentTerritoryIds.includes(id));
+        const territoriesToRemove = currentTerritoryIds.filter(id => !data.territoryIds.includes(id));
+        
+        // 3. Remove territories that are no longer selected
+        for (const territoryId of territoriesToRemove) {
+          const assignmentToRemove = currentAssignments.find(a => a.territoryId === territoryId);
+          if (assignmentToRemove) {
+            await axios.delete("/api/employee-territories", { data: { id: assignmentToRemove.id } });
+          }
+        }
+        
+        // 4. Add new territories
+        for (const territoryId of territoriesToAdd) {
+          await axios.post("/api/employee-territories", {
+            employeeId: data.employeeId,
+            territoryId: territoryId
+          });
+        }
+        
+        console.log("Updated assignments for employee");
+      } else {
+        // For new assignments, create multiple assignments for selected territories
+        const promises = data.territoryIds.map(territoryId => 
+          axios.post("/api/employee-territories", {
+            employeeId: data.employeeId,
+            territoryId: territoryId
+          })
+        );
+        
+        const responses = await Promise.all(promises);
+        console.log("Multiple assignment responses:", responses.map(r => r.data));
+      }
       
       // Refresh the assignments list
       await fetchAssignments();
@@ -113,10 +161,10 @@ export default function EmployeeTerritoriesPage() {
       // Reset form and close dialog
       reset({
         employeeId: "",
-        territoryId: "",
+        territoryIds: [],
       });
       setSelectedEmployee("");
-      setSelectedTerritory("");
+      setSelectedTerritories([]);
       setEditing(null);
       setOpen(false);
       
@@ -137,32 +185,71 @@ export default function EmployeeTerritoriesPage() {
   const handleFormReset = () => {
     reset({
       employeeId: "",
-      territoryId: "",
+      territoryIds: [],
     });
     setSelectedEmployee("");
-    setSelectedTerritory("");
+    setSelectedTerritories([]);
     setEditing(null);
     setError("");
     if (!open) setOpen(true); // Only set to true if currently closed
   };
 
   const handleEdit = (assignment) => {
+    // When editing, we want to show all territories for this employee
+    // and allow adding/removing territories
+    const employeeAssignments = assignments.filter(a => a.employeeId === assignment.employeeId);
+    const employeeTerritories = employeeAssignments.map(a => a.territoryId);
+    
     setEditing(assignment);
     setSelectedEmployee(assignment.employeeId);
-    setSelectedTerritory(assignment.territoryId.toString());
+    setSelectedTerritories(employeeTerritories);
     setValue("employeeId", assignment.employeeId);
-    setValue("territoryId", assignment.territoryId.toString());
+    setValue("territoryIds", employeeTerritories);
     setOpen(true);
   };
 
-  const handleDelete = async (id) => {
+  const handleTerritoryToggle = (territoryId) => {
+    const newSelected = selectedTerritories.includes(territoryId)
+      ? selectedTerritories.filter(id => id !== territoryId)
+      : [...selectedTerritories, territoryId];
+    
+    setSelectedTerritories(newSelected);
+    setValue("territoryIds", newSelected, { shouldValidate: true });
+  };
+
+  const handleDelete = async (employeeId) => {
+    if (!confirm("Are you sure you want to delete all territory assignments for this employee?")) return;
+    
     try {
-      await axios.delete("/api/employee-territories", { data: { id } });
+      // Delete all assignments for this employee
+      const employeeAssignments = assignments.filter(a => a.employeeId === employeeId);
+      
+      for (const assignment of employeeAssignments) {
+        await axios.delete("/api/employee-territories", { data: { id: assignment.id } });
+      }
+      
       fetchAssignments();
     } catch (error) {
-      console.error("Error deleting assignment:", error);
+      console.error("Error deleting assignments:", error);
     }
   };
+
+  // Group assignments by employee
+  const groupedAssignments = assignments.reduce((groups, assignment) => {
+    const employeeId = assignment.employeeId;
+    if (!groups[employeeId]) {
+      groups[employeeId] = {
+        employee: assignment.employee,
+        territories: [],
+        assignments: []
+      };
+    }
+    groups[employeeId].territories.push(assignment.territory);
+    groups[employeeId].assignments.push(assignment);
+    return groups;
+  }, {});
+
+  const employeeGroups = Object.values(groupedAssignments);
 
   return (
     <Card className="m-6 shadow-lg">
@@ -175,7 +262,14 @@ export default function EmployeeTerritoriesPage() {
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>{editing ? "Edit Assignment" : "New Assignment"}</DialogTitle>
+                <DialogTitle>
+                  {editing ? "Edit Employee Territories" : "New Assignment"}
+                </DialogTitle>
+                {editing && (
+                  <p className="text-sm text-gray-600 mt-1">
+                    Modify all territory assignments for this employee
+                  </p>
+                )}
               </DialogHeader>
               <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
                 <div>
@@ -187,6 +281,7 @@ export default function EmployeeTerritoriesPage() {
                       setSelectedEmployee(val);
                       setValue("employeeId", val, { shouldValidate: true });
                     }}
+                    disabled={editing} // Disable during editing
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select employee" />
@@ -204,28 +299,50 @@ export default function EmployeeTerritoriesPage() {
                   )}
                 </div>
                 <div>
-                  <label className="block mb-1 text-sm">Territory</label>
-                  <Select
-                    value={selectedTerritory}
-                    onValueChange={(val) => {
-                      console.log("Selected territory:", val); // Debug log
-                      setSelectedTerritory(val);
-                      setValue("territoryId", val, { shouldValidate: true });
-                    }}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select territory" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {territories.map((t) => (
-                        <SelectItem key={t.territoryId} value={t.territoryId.toString()}>
-                          {t.territoryName}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {errors.territoryId && (
-                    <p className="text-red-500 text-sm">{errors.territoryId.message}</p>
+                  <label className="block mb-2 text-sm">
+                    Territories <span className="text-gray-500">(Select multiple)</span>
+                    {editing && (
+                      <span className="text-blue-600 text-xs ml-2">
+                        - Editing all territories for this employee
+                      </span>
+                    )}
+                  </label>
+                  
+                  {/* Multi-select checkboxes for both new and editing assignments */}
+                  <div className="border rounded-md p-3 max-h-48 overflow-y-auto bg-white">
+                    {territories.length === 0 ? (
+                      <p className="text-gray-500 text-sm">No territories available</p>
+                    ) : (
+                      <div className="space-y-2">
+                        {territories.map((territory) => (
+                          <label
+                            key={territory.territoryId}
+                            className="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 p-1 rounded"
+                          >
+                            <input
+                              type="checkbox"
+                              checked={selectedTerritories.includes(territory.territoryId)}
+                              onChange={() => handleTerritoryToggle(territory.territoryId)}
+                              className="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+                            />
+                            <span className="text-sm">{territory.territoryName}</span>
+                          </label>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  
+                  {errors.territoryIds && (
+                    <p className="text-red-500 text-sm">{errors.territoryIds.message}</p>
+                  )}
+                  
+                  {selectedTerritories.length > 0 && (
+                    <p className="text-sm text-blue-600 mt-1">
+                      {selectedTerritories.length} territories selected
+                      {editing && (
+                        <span className="text-gray-500"> (will update all assignments for this employee)</span>
+                      )}
+                    </p>
                   )}
                 </div>
                 
@@ -249,25 +366,44 @@ export default function EmployeeTerritoriesPage() {
             <tr className="bg-gray-100">
               <th className="border p-2 text-left">Employee Name</th>
               <th className="border p-2 text-left">Email</th>
-              <th className="border p-2 text-left">Territory Name</th>
+              <th className="border p-2 text-left">Assigned Territories</th>
               <th className="border p-2 text-center">Actions</th>
             </tr>
           </thead>
           <tbody>
-            {assignments.length > 0 ? (
-              assignments.map((a) => (
-                <tr key={a.id} className="hover:bg-gray-50">
-                  <td className="border p-2">{a.employee?.fullName || 'N/A'}</td>
-                  <td className="border p-2">{a.employee?.email || 'N/A'}</td>
-                  <td className="border p-2">{a.territory?.territoryName || 'N/A'}</td>
+            {employeeGroups.length > 0 ? (
+              employeeGroups.map((group) => (
+                <tr key={group.employee?.employeeId || 'unknown'} className="hover:bg-gray-50">
+                  <td className="border p-2">{group.employee?.fullName || 'N/A'}</td>
+                  <td className="border p-2">{group.employee?.email || 'N/A'}</td>
+                  <td className="border p-2">
+                    <div className="flex flex-wrap gap-1">
+                      {group.territories.map((territory, index) => (
+                        <span
+                          key={territory?.territoryId || index}
+                          className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
+                        >
+                          {territory?.territoryName || 'Unknown'}
+                        </span>
+                      ))}
+                    </div>
+                    <div className="text-xs text-gray-500 mt-1">
+                      {group.territories.length} territory{group.territories.length !== 1 ? 'ies' : ''}
+                    </div>
+                  </td>
                   <td className="border p-2 text-center space-x-2">
-                    <Button size="sm" onClick={() => handleEdit(a)}>Edit</Button>
+                    <Button 
+                      size="sm" 
+                      onClick={() => handleEdit(group.assignments[0])}
+                    >
+                      Edit
+                    </Button>
                     <Button
                       variant="destructive"
                       size="sm"
-                      onClick={() => handleDelete(a.id)}
+                      onClick={() => handleDelete(group.employee?.employeeId)}
                     >
-                      Delete
+                      Delete All
                     </Button>
                   </td>
                 </tr>
