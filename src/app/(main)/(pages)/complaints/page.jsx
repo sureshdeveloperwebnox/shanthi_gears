@@ -1,287 +1,304 @@
-    "use client";
+'use client';
 
-import { useEffect, useState } from "react";
-import axios from "axios";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { useEffect, useState } from 'react';
 
-const schema = z.object({
-  employeeId: z.string().min(1, "Select an employee"),
-  territoryId: z.string().min(1, "Select a territory"),
-});
-
-export default function EmployeeTerritoriesPage() {
-  const [assignments, setAssignments] = useState([]);
-  const [employees, setEmployees] = useState([]);
+export default function ComplaintsPage() {
+  const [complaints, setComplaints] = useState([]);
   const [territories, setTerritories] = useState([]);
-  const [open, setOpen] = useState(false);
-  const [editing, setEditing] = useState(null);
-  const [selectedEmployee, setSelectedEmployee] = useState("");
-  const [selectedTerritory, setSelectedTerritory] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-
-  const {
-    handleSubmit,
-    reset,
-    setValue,
-    watch,
-    formState: { errors },
-  } = useForm({
-    resolver: zodResolver(schema),
-    defaultValues: {
-      employeeId: "",
-      territoryId: "",
-    },
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [search, setSearch] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [filters, setFilters] = useState({
+    dateFrom: '',
+    dateTo: '',
+    territory: '',
+    status: ''
   });
+  const itemsPerPage = 10; // Number of rows per page
 
-  useEffect(() => {
-    fetchAssignments();
-    fetchEmployees();
-    fetchTerritories();
-  }, []);
-
-  const fetchAssignments = async () => {
+  // Fetch complaints from API
+  const fetchComplaints = async () => {
     try {
-      const res = await axios.get("/api/employee-territories");
-      console.log("Fetched assignments:", res.data); // Debug log
-      setAssignments(res.data);
-    } catch (error) {
-      console.error("Error fetching assignments:", error);
-      setAssignments([]);
+      console.log('Starting to fetch complaints from /api/complaints...');
+      const res = await fetch('/api/complaints');
+      console.log('Response status:', res.status);
+      console.log('Response headers:', res.headers);
+      
+      if (!res.ok) {
+        const errorText = await res.text();
+        console.error('API returned error:', errorText);
+        throw new Error(`API Error ${res.status}: ${errorText}`);
+      }
+      
+      const data = await res.json();
+      console.log('Fetched complaints data:', data);
+      console.log('Data type:', typeof data, 'Is array:', Array.isArray(data));
+      
+      if (Array.isArray(data)) {
+        setComplaints(data);
+        console.log(`Successfully set ${data.length} complaints`);
+      } else {
+        console.warn('Data is not an array, setting empty array');
+        setComplaints([]);
+      }
+    } catch (err) {
+      console.error('Error fetching complaints:', err);
+      setError(`Failed to fetch complaints: ${err.message}`);
     }
   };
 
-  const fetchEmployees = async () => {
-    try {
-      const res = await axios.get("/api/employees");
-      console.log("Fetched employees:", res.data); // Debug log
-      setEmployees(res.data);
-    } catch (error) {
-      console.error("Error fetching employees:", error);
-      setEmployees([]);
-    }
-  };
-
+  // Fetch territories from API
   const fetchTerritories = async () => {
     try {
-      const res = await axios.get("/api/territories");
-      console.log("Fetched territories:", res.data); // Debug log
-      setTerritories(res.data);
-    } catch (error) {
-      console.error("Error fetching territories:", error);
-      setTerritories([]);
+      const res = await fetch('/api/territories');
+      if (!res.ok) throw new Error(`Error: ${res.status}`);
+      const data = await res.json();
+      console.log('Fetched territories:', data); // Debug log
+      setTerritories(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error('Error fetching territories:', err);
+      // Don't set error state for territories, just log it
     }
   };
 
-  const onSubmit = async (data) => {
-    setLoading(true);
-    setError("");
-    
-    try {
-      console.log("Submitting data:", data); // Debug log
-      
-      let response;
-      if (editing) {
-        response = await axios.put("/api/employee-territories", { id: editing.id, ...data });
-      } else {
-        response = await axios.post("/api/employee-territories", data);
-      }
-      
-      console.log("Response:", response.data); // Debug log
-      
-      // Refresh the assignments list
-      await fetchAssignments();
-      
-      // Reset form and close dialog
-      reset({
-        employeeId: "",
-        territoryId: "",
-      });
-      setSelectedEmployee("");
-      setSelectedTerritory("");
-      setEditing(null);
-      setOpen(false);
-      
-    } catch (error) {
-      console.error("Error saving assignment:", error);
-      
-      // Handle specific error messages
-      if (error.response?.data?.error) {
-        setError(error.response.data.error);
-      } else {
-        setError("Failed to save assignment. Please try again.");
-      }
-    } finally {
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      await Promise.all([
+        fetchComplaints(),
+        fetchTerritories()
+      ]);
       setLoading(false);
-    }
+    };
+    
+    fetchData();
+  }, []);
+
+  // Helper function to format date for comparison
+  const formatDateForComparison = (dateStr) => {
+    if (!dateStr) return null;
+    const date = new Date(dateStr);
+    return isNaN(date.getTime()) ? null : date;
   };
 
-  const handleFormReset = () => {
-    reset({
-      employeeId: "",
-      territoryId: "",
-    });
-    setSelectedEmployee("");
-    setSelectedTerritory("");
-    setEditing(null);
-    setError("");
-    if (!open) setOpen(true); // Only set to true if currently closed
-  };
+  // Filtered complaints based on search and filters
+  const filteredComplaints = complaints.filter(c => {
+    // Text search
+    const matchesSearch = !search || 
+      (c.contactPersonName && c.contactPersonName.toLowerCase().includes(search.toLowerCase())) ||
+      (c.companyName && c.companyName.toLowerCase().includes(search.toLowerCase())) ||
+      (c.gearboxSerialNumber && c.gearboxSerialNumber.toLowerCase().includes(search.toLowerCase()));
 
-  const handleEdit = (assignment) => {
-    setEditing(assignment);
-    setSelectedEmployee(assignment.employeeId);
-    setSelectedTerritory(assignment.territoryId.toString());
-    setValue("employeeId", assignment.employeeId);
-    setValue("territoryId", assignment.territoryId.toString());
-    setOpen(true);
-  };
+    // Date range filter
+    const complaintDate = formatDateForComparison(c.complaintDate);
+    const fromDate = filters.dateFrom ? new Date(filters.dateFrom) : null;
+    const toDate = filters.dateTo ? new Date(filters.dateTo) : null;
+    
+    const matchesDateRange = (!fromDate || !complaintDate || complaintDate >= fromDate) &&
+                            (!toDate || !complaintDate || complaintDate <= toDate);
 
-  const handleDelete = async (id) => {
-    try {
-      await axios.delete("/api/employee-territories", { data: { id } });
-      fetchAssignments();
-    } catch (error) {
-      console.error("Error deleting assignment:", error);
-    }
-  };
+    // Territory filter
+    const matchesTerritory = !filters.territory || 
+      (c.territory && c.territory.territoryName && c.territory.territoryName.toLowerCase().includes(filters.territory.toLowerCase()));
+
+    return matchesSearch && matchesDateRange && matchesTerritory;
+  });
+
+  // Pagination logic
+  const totalPages = Math.ceil(filteredComplaints.length / itemsPerPage);
+  const paginatedComplaints = filteredComplaints.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
+  if (loading) return <p className="text-center mt-10">Loading complaints...</p>;
+  if (error) return <p className="text-center mt-10 text-red-500">{error}</p>;
 
   return (
-    <Card className="m-6 shadow-lg">
-      <CardHeader>
-        <div className="flex justify-between items-center">
-          <CardTitle>Employee Territories</CardTitle>
-          <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
-              <Button onClick={() => handleFormReset()}>Add Assignment</Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>{editing ? "Edit Assignment" : "New Assignment"}</DialogTitle>
-              </DialogHeader>
-              <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-                <div>
-                  <label className="block mb-1 text-sm">Employee</label>
-                  <Select
-                    value={selectedEmployee}
-                    onValueChange={(val) => {
-                      console.log("Selected employee:", val); // Debug log
-                      setSelectedEmployee(val);
-                      setValue("employeeId", val, { shouldValidate: true });
-                    }}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select employee" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {employees.map((emp) => (
-                        <SelectItem key={emp.employeeId} value={emp.employeeId}>
-                          {emp.fullName} - {emp.email}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {errors.employeeId && (
-                    <p className="text-red-500 text-sm">{errors.employeeId.message}</p>
-                  )}
-                </div>
-                <div>
-                  <label className="block mb-1 text-sm">Territory</label>
-                  <Select
-                    value={selectedTerritory}
-                    onValueChange={(val) => {
-                      console.log("Selected territory:", val); // Debug log
-                      setSelectedTerritory(val);
-                      setValue("territoryId", val, { shouldValidate: true });
-                    }}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select territory" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {territories.map((t) => (
-                        <SelectItem key={t.territoryId} value={t.territoryId.toString()}>
-                          {t.territoryName}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {errors.territoryId && (
-                    <p className="text-red-500 text-sm">{errors.territoryId.message}</p>
-                  )}
-                </div>
-                
-                {error && (
-                  <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
-                    {error}
-                  </div>
-                )}
-                
-                <Button type="submit" disabled={loading}>
-                  {loading ? "Saving..." : (editing ? "Update" : "Save")}
-                </Button>
-              </form>
-            </DialogContent>
-          </Dialog>
+    <div className="p-6">
+      <h1 className="text-2xl font-bold mb-4">Complaints List</h1>
+
+      {/* Search and Filters */}
+      <div className="mb-6 space-y-4">
+        {/* Search */}
+        <div>
+          <input
+            type="text"
+            placeholder="Search by contact person, company, or gearbox serial..."
+            value={search}
+            onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
+            className="border p-2 rounded w-full md:w-1/2"
+          />
         </div>
-      </CardHeader>
-      <CardContent>
-        <table className="w-full border-collapse border rounded-md overflow-hidden">
-          <thead>
-            <tr className="bg-gray-100">
-              <th className="border p-2 text-left">Employee Name</th>
-              <th className="border p-2 text-left">Email</th>
-              <th className="border p-2 text-left">Territory Name</th>
-              <th className="border p-2 text-center">Actions</th>
+
+        {/* Filters */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div>
+            <label className="block text-sm font-medium mb-1">From Date:</label>
+            <input
+              type="date"
+              value={filters.dateFrom}
+              onChange={(e) => {
+                setFilters(prev => ({ ...prev, dateFrom: e.target.value }));
+                setCurrentPage(1);
+              }}
+              className="border p-2 rounded w-full"
+            />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium mb-1">To Date:</label>
+            <input
+              type="date"
+              value={filters.dateTo}
+              onChange={(e) => {
+                setFilters(prev => ({ ...prev, dateTo: e.target.value }));
+                setCurrentPage(1);
+              }}
+              className="border p-2 rounded w-full"
+            />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium mb-1">Territory:</label>
+            <select
+              value={filters.territory}
+              onChange={(e) => {
+                setFilters(prev => ({ ...prev, territory: e.target.value }));
+                setCurrentPage(1);
+              }}
+              className="border p-2 rounded w-full"
+            >
+              <option value="">All Territories</option>
+              {territories.map(territory => (
+                <option key={territory.territoryId} value={territory.territoryName}>
+                  {territory.territoryName}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="flex items-end">
+            <button
+              onClick={() => {
+                setFilters({ dateFrom: '', dateTo: '', territory: '', status: '' });
+                setSearch('');
+                setCurrentPage(1);
+              }}
+              className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 w-full"
+            >
+              Clear Filters
+            </button>
+          </div>
+        </div>
+
+        {/* Results summary */}
+        <div className="text-sm text-gray-600">
+          Showing {filteredComplaints.length} of {complaints.length} complaints
+        </div>
+      </div>
+
+      {/* Table */}
+      <div className="overflow-x-auto">
+        <table className="min-w-full border border-gray-300">
+          <thead className="bg-gray-100">
+            <tr>
+              <th className="border px-2 py-1">ID</th>
+              <th className="border px-2 py-1">Contact Person</th>
+              <th className="border px-2 py-1">Email</th>
+              <th className="border px-2 py-1">Mobile</th>
+              <th className="border px-2 py-1">Company</th>
+              <th className="border px-2 py-1">Territory</th>
+              <th className="border px-2 py-1">Gearbox Serial</th>
+              <th className="border px-2 py-1">Commissioning Date</th>
+              <th className="border px-2 py-1">Complaint Date</th>
+              <th className="border px-2 py-1">Application Details</th>
+              <th className="border px-2 py-1">Nature of Complaint</th>
             </tr>
           </thead>
           <tbody>
-            {assignments.length > 0 ? (
-              assignments.map((a) => (
-                <tr key={a.id} className="hover:bg-gray-50">
-                  <td className="border p-2">{a.employee?.fullName || 'N/A'}</td>
-                  <td className="border p-2">{a.employee?.email || 'N/A'}</td>
-                  <td className="border p-2">{a.territory?.territoryName || 'N/A'}</td>
-                  <td className="border p-2 text-center space-x-2">
-                    <Button size="sm" onClick={() => handleEdit(a)}>Edit</Button>
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => handleDelete(a.id)}
-                    >
-                      Delete
-                    </Button>
+            {paginatedComplaints.length === 0 ? (
+              <tr>
+                <td colSpan="11" className="border px-2 py-4 text-center text-gray-500">
+                  No complaints found matching your criteria
+                </td>
+              </tr>
+            ) : (
+              paginatedComplaints.map((c) => (
+                <tr key={c.complaintId} className="hover:bg-gray-50">
+                  <td className="border px-2 py-1">{c.complaintId}</td>
+                  <td className="border px-2 py-1">{c.contactPersonName || 'N/A'}</td>
+                  <td className="border px-2 py-1">{c.mailId || 'N/A'}</td>
+                  <td className="border px-2 py-1">{c.mobileNumber || 'N/A'}</td>
+                  <td className="border px-2 py-1">{c.companyName || 'N/A'}</td>
+                  <td className="border px-2 py-1">{c.territory?.territoryName || 'N/A'}</td>
+                  <td className="border px-2 py-1">{c.gearboxSerialNumber || 'N/A'}</td>
+                  <td className="border px-2 py-1">
+                    {c.dateOfCommissioning ? 
+                      new Date(c.dateOfCommissioning).toLocaleDateString() : 'N/A'}
+                  </td>
+                  <td className="border px-2 py-1">
+                    {c.complaintDate ? 
+                      new Date(c.complaintDate).toLocaleDateString() : 'N/A'}
+                  </td>
+                  <td className="border px-2 py-1 max-w-xs truncate" title={c.applicationDetails}>
+                    {c.applicationDetails || 'N/A'}
+                  </td>
+                  <td className="border px-2 py-1 max-w-xs truncate" title={c.natureOfComplaintWithPhotos}>
+                    {c.natureOfComplaintWithPhotos || 'N/A'}
                   </td>
                 </tr>
               ))
-            ) : (
-              <tr>
-                <td colSpan="4" className="border p-4 text-center text-gray-500">
-                  No employee territory assignments found. Click "Add Assignment" to create one.
-                </td>
-              </tr>
             )}
           </tbody>
         </table>
-      </CardContent>
-    </Card>
+      </div>
+
+      {/* Pagination */}
+      {filteredComplaints.length > 0 && (
+        <div className="mt-4 flex justify-center space-x-2">
+          <button
+            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+            disabled={currentPage === 1}
+            className="px-3 py-1 border rounded disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Prev
+          </button>
+
+          {[...Array(Math.min(totalPages, 5))].map((_, i) => {
+            let pageNum;
+            if (totalPages <= 5) {
+              pageNum = i + 1;
+            } else {
+              const start = Math.max(1, currentPage - 2);
+              const end = Math.min(totalPages, start + 4);
+              pageNum = start + i;
+              if (pageNum > end) return null;
+            }
+            
+            return (
+              <button
+                key={pageNum}
+                onClick={() => setCurrentPage(pageNum)}
+                className={`px-3 py-1 border rounded ${
+                  currentPage === pageNum ? 'bg-blue-500 text-white' : 'hover:bg-gray-100'
+                }`}
+              >
+                {pageNum}
+              </button>
+            );
+          })}
+
+          <button
+            onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+            disabled={currentPage === totalPages}
+            className="px-3 py-1 border rounded disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Next
+          </button>
+        </div>
+      )}
+    </div>
   );
 }
