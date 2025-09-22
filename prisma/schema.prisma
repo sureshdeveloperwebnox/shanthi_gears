@@ -64,6 +64,7 @@ model Territories {
   territoryId   Int               @id @default(autoincrement())
   territoryName String               @unique
   createdAt     DateTime             @default(now())
+  updatedAt  DateTime       @updatedAt
 
   employeeTerritories EmployeeTerritories[]
   complaints          Complaints[]
