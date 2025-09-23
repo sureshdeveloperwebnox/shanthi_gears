@@ -173,7 +173,7 @@ export default function TerritoriesPage() {
                 {/* Search Bar */}
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <span className="text-gray-400">🔍</span>
+                    
                   </div>
                   <Input
                     type="text"
@@ -195,7 +195,7 @@ export default function TerritoriesPage() {
                       }}
                       className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
                     >
-                      <span className="mr-2">✨</span>
+                      
                       Add Territory
                     </Button>
                   </DialogTrigger>
@@ -271,7 +271,7 @@ export default function TerritoriesPage() {
                     }}
                     className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700"
                   >
-                    <span className="mr-2">✨</span>
+                    <span className="mr-2"></span>
                     Add Your First Territory
                   </Button>
                 )}
@@ -310,9 +310,7 @@ export default function TerritoriesPage() {
                                 <div className="text-sm font-medium text-gray-900">
                                   {territory.territoryName}
                                 </div>
-                                <div className="text-sm text-gray-500">
-                                  ID: {territory.territoryId}
-                                </div>
+                                
                               </div>
                             </div>
                           </td>
