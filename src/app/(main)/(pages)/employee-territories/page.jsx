@@ -630,26 +630,9 @@ export default function EmployeeTerritoriesPage() {
                                 <div className="text-sm font-medium text-gray-900">
                                   {group.employee?.fullName || 'N/A'}
                                 </div>
-                                <div className="text-sm text-gray-500">
-                                  ID: {group.employee?.employeeId || 'N/A'}
-                                </div>
+                              
                               </div>
-                              {group.employee?.status && (
-                                <span
-                                  className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                                    group.employee.status === 'ACTIVE'
-                                      ? 'bg-orange-100 text-orange-800'
-                                      : group.employee.status === 'INACTIVE'
-                                      ? 'bg-red-100 text-red-800'
-                                      : 'bg-yellow-100 text-yellow-800'
-                                  }`}
-                                >
-                                  {group.employee.status === 'ACTIVE' && <CheckCircle className="w-4 h-4" />}
-                                  {group.employee.status === 'INACTIVE' && <X className="w-4 h-4" />}
-                                  {group.employee.status === 'SUSPENDED' && <Pause className="w-4 h-4" />}
-                                  <span className="ml-1">{group.employee.status}</span>
-                                </span>
-                              )}
+                          
                             </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -730,7 +713,6 @@ export default function EmployeeTerritoriesPage() {
                               >
                                 {group.employee.status === 'ACTIVE' && <CheckCircle className="w-4 h-4" />}
                                 {group.employee.status === 'INACTIVE' && <X className="w-4 h-4" />}
-                                {group.employee.status === 'SUSPENDED' && <Pause className="w-4 h-4" />}
                                 <span className="ml-1">{group.employee.status}</span>
                               </span>
                             )}
