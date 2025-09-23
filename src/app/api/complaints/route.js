@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { sendComplaintNotification } from "@/lib/email";
+import { sendComplaintNotification, sendUserThankYouEmail } from "@/lib/email";
 
 // CORS headers function
 const corsHeaders = {
@@ -205,15 +205,28 @@ export async function POST(req) {
 
     console.log('Created new complaint:', newComplaint.complaintId);
 
-    // Fetch employee assigned to this territory and send email notification
-    let emailResult = null;
+    // Send emails: thank you to user and notification to employee
+    let userEmailResult = null;
+    let employeeEmailResult = null;
+    
     try {
-      // Get territory name for email
+      // Get territory name for emails
       const territory = await prisma.territories.findUnique({
         where: { territoryId: parseInt(finalTerritoryId) }
       });
+      const territoryName = territory?.territoryName || 'Unknown Territory';
 
-      // Find employee assigned to this territory
+      // Send thank you email to the user who submitted the complaint
+      console.log(`Sending thank you email to user: ${mappedData.contactPersonName} (${mappedData.mailId})`);
+      userEmailResult = await sendUserThankYouEmail(newComplaint, territoryName);
+      
+      if (userEmailResult.success) {
+        console.log('User thank you email sent successfully:', userEmailResult.messageId);
+      } else {
+        console.warn('Failed to send user thank you email:', userEmailResult.error);
+      }
+
+      // Find employee assigned to this territory and send notification
       const employeeAssignment = await prisma.employeeTerritories.findFirst({
         where: { 
           territoryId: parseInt(finalTerritoryId),
@@ -229,22 +242,22 @@ export async function POST(req) {
       if (employeeAssignment && employeeAssignment.employee) {
         console.log(`Sending email notification to employee: ${employeeAssignment.employee.fullName} (${employeeAssignment.employee.email})`);
         
-        emailResult = await sendComplaintNotification(
+        employeeEmailResult = await sendComplaintNotification(
           newComplaint, 
           employeeAssignment.employee, 
-          territory?.territoryName || 'Unknown Territory'
+          territoryName
         );
         
-        if (emailResult.success) {
-          console.log('Email notification sent successfully:', emailResult.messageId);
+        if (employeeEmailResult.success) {
+          console.log('Employee notification email sent successfully:', employeeEmailResult.messageId);
         } else {
-          console.warn('Failed to send email notification:', emailResult.error);
+          console.warn('Failed to send employee notification email:', employeeEmailResult.error);
         }
       } else {
         console.warn(`No active employee found for territory ID: ${finalTerritoryId}`);
       }
     } catch (emailError) {
-      console.error('Error sending email notification:', emailError);
+      console.error('Error sending emails:', emailError);
       // Don't fail the complaint creation if email fails
     }
 
@@ -253,11 +266,18 @@ export async function POST(req) {
       complaintId: newComplaint.complaintId,
       message: 'Complaint created successfully',
       data: newComplaint,
-      emailNotification: emailResult ? {
-        sent: emailResult.success,
-        recipient: emailResult.recipient || null,
-        error: emailResult.error || null
-      } : null
+      emails: {
+        userThankYou: userEmailResult ? {
+          sent: userEmailResult.success,
+          recipient: userEmailResult.recipient || null,
+          error: userEmailResult.error || null
+        } : null,
+        employeeNotification: employeeEmailResult ? {
+          sent: employeeEmailResult.success,
+          recipient: employeeEmailResult.recipient || null,
+          error: employeeEmailResult.error || null
+        } : null
+      }
     }, { headers: corsHeaders });
 
   } catch (error) {

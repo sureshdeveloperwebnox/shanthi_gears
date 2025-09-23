@@ -49,18 +49,34 @@ SMTP_PASS=your-password
 
 1. **Complaint Creation**: When a new complaint is submitted via the API
 2. **Territory Lookup**: System finds the territory associated with the complaint
-3. **Employee Lookup**: System finds the active employee assigned to that territory
-4. **Email Generation**: Creates a professional HTML email with all complaint details
-5. **Email Sending**: Sends the notification to the assigned employee
+3. **Dual Email Sending**:
+   - **Thank You Email**: Sends a professional thank you email to the user who submitted the complaint
+   - **Employee Notification**: Sends a detailed notification to the employee assigned to that territory
+4. **Email Generation**: Creates professional HTML emails with all complaint details
+5. **Email Sending**: Both emails are sent simultaneously
 
 ## Email Template Features
 
-- **Professional HTML Design**: Clean, responsive email template
-- **Complete Complaint Details**: All form fields included
+### User Thank You Email
+- **Professional Design**: Clean, responsive HTML layout with green theme
+- **Thank You Message**: Personalized appreciation message
+- **Next Steps**: Clear information about what happens next
+- **Contact Information**: Shanthi Gears contact details
+- **Complete Complaint Details**: All form fields included in organized sections
+- **Complaint ID**: Unique reference number for tracking
+
+### Employee Notification Email
+- **Professional Design**: Clean, responsive HTML layout with red theme
+- **Urgent Alert**: Clear indication of new complaint requiring attention
+- **Complete Complaint Details**: All form fields included in organized sections
+- **Contact Information**: Highlighted for quick action
 - **Territory Information**: Shows which territory the complaint is from
-- **Contact Information**: Highlighted contact details for quick action
-- **Structured Sections**: Organized by categories (Contact, Gearbox, Oil, etc.)
-- **Fallback Text Version**: Plain text version for email clients that don't support HTML
+- **Structured Sections**: Contact, Gearbox, Oil & Lubrication, Operational, Maintenance
+
+### Common Features
+- **Responsive Design**: Works on all devices and email clients
+- **Fallback Support**: Plain text version for all email clients
+- **Professional Branding**: Consistent Shanthi Gears branding
 
 ## Error Handling
 
