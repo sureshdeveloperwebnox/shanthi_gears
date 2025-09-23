@@ -579,20 +579,20 @@ export default function EmployeeTerritoriesPage() {
             ) : (
               <div className="overflow-hidden">
                 {/* Desktop Table View */}
-                <div className="hidden md:block">
-                  <table className="w-full">
+                <div className="hidden md:block overflow-x-auto">
+                  <table className="w-full min-w-[800px]">
                     <thead className="bg-gray-50 border-b">
                       <tr>
-                        <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/4">
                           Employee
                         </th>
-                        <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/4">
                           Email
                         </th>
-                        <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/3">
                           Assigned Territories
                         </th>
-                        <th className="px-6 py-4 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-4 py-4 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-1/6">
                           Actions
                         </th>
                       </tr>
@@ -654,13 +654,13 @@ export default function EmployeeTerritoriesPage() {
                               {group.territories.length} territory{group.territories.length !== 1 ? 'ies' : ''}
                             </div>
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
-                            <div className="flex justify-center space-x-2">
+                          <td className="px-4 py-4 whitespace-nowrap text-center text-sm font-medium">
+                            <div className="flex flex-col space-y-1 min-w-[120px]">
                               <Button 
                                 variant="outline"
                                 size="sm" 
                                 onClick={() => handleEdit(group.assignments[0])}
-                                className="text-blue-600 border-blue-200 hover:bg-blue-50 hover:border-blue-300 transition-all duration-200"
+                                className="w-full text-blue-600 border-blue-200 hover:bg-blue-50 hover:border-blue-300 transition-all duration-200"
                               >
                                 <span className="mr-1">✏️</span>
                                 Edit
@@ -669,10 +669,10 @@ export default function EmployeeTerritoriesPage() {
                                 variant="outline"
                                 size="sm"
                                 onClick={() => handleDelete(group.employee?.employeeId)}
-                                className="text-red-600 border-red-200 hover:bg-red-50 hover:border-red-300 transition-all duration-200"
+                                className="w-full text-red-600 border-red-200 hover:bg-red-50 hover:border-red-300 transition-all duration-200"
                               >
                                 <span className="mr-1">🗑️</span>
-                                Delete All
+                                Delete
                               </Button>
                             </div>
                           </td>
@@ -736,22 +736,24 @@ export default function EmployeeTerritoriesPage() {
                             {group.territories.length} territory{group.territories.length !== 1 ? 'ies' : ''}
                           </p>
                         </div>
-                        <div className="flex space-x-2">
+                        <div className="flex flex-col space-y-2">
                           <Button 
                             variant="outline"
                             size="sm" 
                             onClick={() => handleEdit(group.assignments[0])}
-                            className="text-blue-600 border-blue-200 hover:bg-blue-50"
+                            className="w-full text-blue-600 border-blue-200 hover:bg-blue-50"
                           >
-                            ✏️
+                            <span className="mr-2">✏️</span>
+                            Edit Territories
                           </Button>
                           <Button
                             variant="outline"
                             size="sm"
                             onClick={() => handleDelete(group.employee?.employeeId)}
-                            className="text-red-600 border-red-200 hover:bg-red-50"
+                            className="w-full text-red-600 border-red-200 hover:bg-red-50"
                           >
-                            🗑️
+                            <span className="mr-2">🗑️</span>
+                            Delete All
                           </Button>
                         </div>
                       </CardContent>

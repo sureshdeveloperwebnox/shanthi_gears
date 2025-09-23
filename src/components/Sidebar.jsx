@@ -14,7 +14,6 @@ const links = [
 ];
 
 const settings = [
-  { href: "/settings/roles", label: "Roles", icon: "👑" },
   { href: "/settings/users", label: "Users", icon: "👤" },
 ];
 
