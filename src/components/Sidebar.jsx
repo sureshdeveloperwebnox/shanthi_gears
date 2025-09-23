@@ -70,10 +70,10 @@ export default function Sidebar() {
       {/* Sidebar */}
       <div className={cn(
         "bg-gray-900 text-white flex flex-col shadow-lg transition-transform duration-300 ease-in-out z-50",
-        // Desktop styles
-        "lg:w-64 lg:relative lg:translate-x-0",
+        // Desktop styles - fixed position to stay in place during scroll
+        "lg:w-64 lg:fixed lg:top-0 lg:left-0 lg:translate-x-0 lg:h-screen lg:min-h-full",
         // Mobile styles
-        "fixed top-0 left-0 h-full w-80 max-w-[80vw]",
+        "fixed top-0 left-0 h-screen w-80 max-w-[80vw]",
         isMobileMenuOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
       )}>
         <div className="p-6 border-b border-gray-700">
@@ -92,7 +92,7 @@ export default function Sidebar() {
           <p className="text-sm text-gray-400 mt-1">Management System</p>
         </div>
 
-        <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
+        <nav className="flex-1 p-4 space-y-2 overflow-y-auto min-h-0">
           <div className="space-y-1">
             {links.map((link) => (
               <Link

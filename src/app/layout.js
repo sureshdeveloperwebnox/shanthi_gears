@@ -8,14 +8,14 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en">
-      <body className="min-h-screen bg-gray-50 text-gray-900">
-        <div className="flex min-h-screen">
+    <html lang="en" className="h-full">
+      <body className="h-full bg-gray-50 text-gray-900">
+        <div className="relative min-h-screen">
           <Sidebar />
-          {/* Main content area */}
-          <main className="flex-1 lg:ml-0 transition-all duration-300">
+          {/* Main content area - add left margin for fixed sidebar */}
+          <main className="lg:ml-64 transition-all duration-300 min-h-screen">
             {/* Content wrapper with mobile padding */}
-            <div className="pt-20 lg:pt-0 px-0 lg:px-0">
+            <div className="pt-20 lg:pt-0 min-h-screen">
               {children}
             </div>
           </main>

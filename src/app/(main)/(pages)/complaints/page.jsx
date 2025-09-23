@@ -9,6 +9,13 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 export default function ComplaintsPage() {
   const [complaints, setComplaints] = useState([]);
@@ -24,6 +31,8 @@ export default function ComplaintsPage() {
     status: ''
   });
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedComplaint, setSelectedComplaint] = useState(null);
+  const [viewModalOpen, setViewModalOpen] = useState(false);
   const itemsPerPage = 10; // Number of rows per page
 
   // Fetch complaints from API
@@ -135,6 +144,18 @@ export default function ComplaintsPage() {
     setFilters({ dateFrom: '', dateTo: '', territory: '', status: '' });
     setSearchTerm('');
     setCurrentPage(1);
+  };
+
+  // Handle viewing complaint details
+  const handleViewComplaint = (complaint) => {
+    setSelectedComplaint(complaint);
+    setViewModalOpen(true);
+  };
+
+  // Close modal
+  const handleCloseModal = () => {
+    setViewModalOpen(false);
+    setSelectedComplaint(null);
   };
 
   if (loading) {
@@ -390,6 +411,9 @@ export default function ComplaintsPage() {
                         <th className="px-4 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Complaint Details
                         </th>
+                        <th className="px-4 py-4 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Actions
+                        </th>
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
@@ -469,6 +493,16 @@ export default function ComplaintsPage() {
                                 </div>
                               </div>
                             </div>
+                          </td>
+                          <td className="px-4 py-4 text-center">
+                            <Button
+                              onClick={() => handleViewComplaint(complaint)}
+                              variant="outline"
+                              size="sm"
+                              className="text-blue-600 border-blue-200 hover:bg-blue-50 hover:border-blue-300"
+                            >
+                              <span className="text-lg">👁️</span>
+                            </Button>
                           </td>
                         </tr>
                       ))}
@@ -552,6 +586,19 @@ export default function ComplaintsPage() {
                             </div>
                           )}
                         </div>
+                        
+                        {/* Action Button for Mobile */}
+                        <div className="mt-4 pt-3 border-t border-gray-100">
+                          <Button
+                            onClick={() => handleViewComplaint(complaint)}
+                            variant="outline"
+                            size="sm"
+                            className="w-full text-blue-600 border-blue-200 hover:bg-blue-50"
+                          >
+                            <span className="mr-2">👁️</span>
+                            View Details
+                          </Button>
+                        </div>
                       </CardContent>
                     </Card>
                   ))}
@@ -624,6 +671,251 @@ export default function ComplaintsPage() {
             </CardContent>
           </Card>
         )}
+
+        {/* Detailed View Modal */}
+        <Dialog open={viewModalOpen} onOpenChange={setViewModalOpen}>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="text-xl font-bold flex items-center">
+                <span className="mr-2">📋</span>
+                Complaint Details
+                {selectedComplaint && (
+                  <span className="ml-3 text-sm font-normal text-gray-500">
+                    ID: {selectedComplaint.complaintId}
+                  </span>
+                )}
+              </DialogTitle>
+            </DialogHeader>
+            
+            {selectedComplaint && (
+              <div className="space-y-6">
+                {/* Contact Information */}
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <h3 className="text-lg font-semibold text-gray-800 mb-3 flex items-center">
+                    <span className="mr-2">👤</span>
+                    Contact Information
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-sm font-medium text-gray-600">Contact Person Name:</label>
+                      <p className="text-sm text-gray-900">{selectedComplaint.contactPersonName || 'N/A'}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-600">Email ID:</label>
+                      <p className="text-sm text-gray-900">{selectedComplaint.mailId || 'N/A'}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-600">Mobile Number:</label>
+                      <p className="text-sm text-gray-900">{selectedComplaint.mobileNumber || 'N/A'}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-600">Company Name:</label>
+                      <p className="text-sm text-gray-900">{selectedComplaint.companyName || 'N/A'}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Territory & Gearbox Information */}
+                <div className="bg-blue-50 p-4 rounded-lg">
+                  <h3 className="text-lg font-semibold text-gray-800 mb-3 flex items-center">
+                    <span className="mr-2">📍</span>
+                    Territory & Gearbox Information
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-sm font-medium text-gray-600">Territory:</label>
+                      <p className="text-sm text-gray-900">{selectedComplaint.territory?.territoryName || 'N/A'}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-600">Gearbox Serial Number:</label>
+                      <p className="text-sm text-gray-900">{selectedComplaint.gearboxSerialNumber || 'N/A'}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-600">Date of Commissioning:</label>
+                      <p className="text-sm text-gray-900">
+                        {selectedComplaint.dateOfCommissioning ? 
+                          new Date(selectedComplaint.dateOfCommissioning).toLocaleDateString() : 'N/A'}
+                      </p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-600">Complaint Date:</label>
+                      <p className="text-sm text-gray-900">
+                        {selectedComplaint.complaintDate ? 
+                          new Date(selectedComplaint.complaintDate).toLocaleDateString() : 'N/A'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Application & Complaint Details */}
+                <div className="bg-yellow-50 p-4 rounded-lg">
+                  <h3 className="text-lg font-semibold text-gray-800 mb-3 flex items-center">
+                    <span className="mr-2">📝</span>
+                    Application & Complaint Details
+                  </h3>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="text-sm font-medium text-gray-600">Application Details:</label>
+                      <p className="text-sm text-gray-900 mt-1">{selectedComplaint.applicationDetails || 'N/A'}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-600">Nature of Complaint (with Photos):</label>
+                      <p className="text-sm text-gray-900 mt-1">{selectedComplaint.natureOfComplaintWithPhotos || 'N/A'}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Motor & Connection Details */}
+                <div className="bg-green-50 p-4 rounded-lg">
+                  <h3 className="text-lg font-semibold text-gray-800 mb-3 flex items-center">
+                    <span className="mr-2">⚡</span>
+                    Motor & Connection Details
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-sm font-medium text-gray-600">Input Motor Details (KW):</label>
+                      <p className="text-sm text-gray-900">{selectedComplaint.inputMotorDetailsKw || 'N/A'}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-600">Input/Output Connection Details:</label>
+                      <p className="text-sm text-gray-900">{selectedComplaint.inputOutputConnectionDetails || 'N/A'}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Oil & Lubrication Details */}
+                <div className="bg-purple-50 p-4 rounded-lg">
+                  <h3 className="text-lg font-semibold text-gray-800 mb-3 flex items-center">
+                    <span className="mr-2">🛢️</span>
+                    Oil & Lubrication Details
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-sm font-medium text-gray-600">Oil Level Details:</label>
+                      <p className="text-sm text-gray-900">{selectedComplaint.oilLevelDetails || 'N/A'}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-600">Grade of Oil Used:</label>
+                      <p className="text-sm text-gray-900">{selectedComplaint.gradeOfOilUsed || 'N/A'}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-600">Condition of Oil:</label>
+                      <p className="text-sm text-gray-900">{selectedComplaint.conditionOfOil || 'N/A'}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-600">Condition of Breather:</label>
+                      <p className="text-sm text-gray-900">{selectedComplaint.conditionOfBreather || 'N/A'}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-600">Sediment in Oil Bottom:</label>
+                      <p className="text-sm text-gray-900">{selectedComplaint.sedimentInOilBottom || 'N/A'}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-600">Lubrication Check Details:</label>
+                      <p className="text-sm text-gray-900">{selectedComplaint.lubricationCheckDetails || 'N/A'}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Operational Details */}
+                <div className="bg-orange-50 p-4 rounded-lg">
+                  <h3 className="text-lg font-semibold text-gray-800 mb-3 flex items-center">
+                    <span className="mr-2">⚙️</span>
+                    Operational Details
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-sm font-medium text-gray-600">Alignment – Input & Output:</label>
+                      <p className="text-sm text-gray-900">{selectedComplaint.alignmentInputOutput || 'N/A'}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-600">Running Hours Per Day:</label>
+                      <p className="text-sm text-gray-900">{selectedComplaint.runningHoursPerDay || 'N/A'}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-600">Start-Stop Per Day:</label>
+                      <p className="text-sm text-gray-900">{selectedComplaint.startStopPerDay || 'N/A'}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-600">Input Speed Details:</label>
+                      <p className="text-sm text-gray-900">{selectedComplaint.inputSpeedDetails || 'N/A'}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Environmental & Failure Details */}
+                <div className="bg-red-50 p-4 rounded-lg">
+                  <h3 className="text-lg font-semibold text-gray-800 mb-3 flex items-center">
+                    <span className="mr-2">🌡️</span>
+                    Environmental & Failure Details
+                  </h3>
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-sm font-medium text-gray-600">Gearbox Dismantled Before Failure:</label>
+                        <p className="text-sm text-gray-900">{selectedComplaint.dismantledBeforeFailure || 'N/A'}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-600">Forced Lubrication Photos:</label>
+                        <p className="text-sm text-gray-900">{selectedComplaint.forcedLubricationPhotos || 'N/A'}</p>
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-600">Ambient Conditions:</label>
+                      <p className="text-sm text-gray-900 mt-1">{selectedComplaint.ambientConditions || 'N/A'}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-600">Load Spectrum:</label>
+                      <p className="text-sm text-gray-900 mt-1">{selectedComplaint.loadSpectrum || 'N/A'}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-600">Condition of Other Parts:</label>
+                      <p className="text-sm text-gray-900 mt-1">{selectedComplaint.conditionOfOtherParts || 'N/A'}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-600">Failure History Details:</label>
+                      <p className="text-sm text-gray-900 mt-1">{selectedComplaint.failureHistoryDetails || 'N/A'}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* System Information */}
+                <div className="bg-gray-100 p-4 rounded-lg">
+                  <h3 className="text-lg font-semibold text-gray-800 mb-3 flex items-center">
+                    <span className="mr-2">🗃️</span>
+                    System Information
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-sm font-medium text-gray-600">Created At:</label>
+                      <p className="text-sm text-gray-900">
+                        {selectedComplaint.createdAt ? 
+                          new Date(selectedComplaint.createdAt).toLocaleString() : 'N/A'}
+                      </p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-600">Updated At:</label>
+                      <p className="text-sm text-gray-900">
+                        {selectedComplaint.updatedAt ? 
+                          new Date(selectedComplaint.updatedAt).toLocaleString() : 'N/A'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Close Button */}
+                <div className="flex justify-end pt-4 border-t">
+                  <Button
+                    onClick={handleCloseModal}
+                    className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700"
+                  >
+                    Close
+                  </Button>
+                </div>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
