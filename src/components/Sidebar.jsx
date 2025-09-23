@@ -79,7 +79,7 @@ export default function Sidebar() {
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <img 
-                src="/shanthi-logo.png" 
+                src="Logo.gif" 
                 alt="Shanthi Gears Logo" 
                 className="h-12 w-auto object-contain"
                 onError={(e) => {
@@ -88,7 +88,7 @@ export default function Sidebar() {
                 }}
               />
               <h1 className="text-xl font-bold text-white" style={{display: 'none'}}>
-                Shanthi Gears
+                
               </h1>
             </div>
             {/* Close button for mobile */}
@@ -101,7 +101,6 @@ export default function Sidebar() {
               </svg>
             </button>
           </div>
-          <p className="text-sm text-orange-200 mt-2">Management System</p>
         </div>
 
         <nav className="flex-1 p-4 space-y-2 overflow-y-auto min-h-0">
