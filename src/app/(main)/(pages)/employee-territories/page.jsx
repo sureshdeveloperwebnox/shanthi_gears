@@ -375,7 +375,7 @@ export default function EmployeeTerritoriesPage() {
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0">
               <div className="flex items-center">
                 <CardTitle className="text-2xl font-bold text-gray-800 flex items-center">
-                  <BarChart3 className="mr-3 w-6 h-6" />
+              
                   Territory Assignments
                 </CardTitle>
               </div>
