@@ -96,6 +96,14 @@ export default function EmployeeTerritoriesPage() {
     setError("");
     
     try {
+      // Check if selected employee is active (extra validation)
+      const selectedEmployeeData = employees.find(emp => emp.employeeId === data.employeeId);
+      if (selectedEmployeeData && selectedEmployeeData.status !== 'ACTIVE') {
+        setError(`Cannot assign territories to ${selectedEmployeeData.status.toLowerCase()} employee: ${selectedEmployeeData.fullName}`);
+        setSubmitting(false);
+        return;
+      }
+      
       // Validate that employee doesn't already have assignments for selected territories (for new assignments)
       if (!editing) {
         const existingAssignments = assignments.filter(a => 
@@ -123,7 +131,28 @@ export default function EmployeeTerritoriesPage() {
         const territoriesToAdd = data.territoryIds.filter(id => !currentTerritoryIds.includes(id));
         const territoriesToRemove = currentTerritoryIds.filter(id => !data.territoryIds.includes(id));
         
-        // 3. Remove territories that are no longer selected
+        // 3. Validate territories to add are not assigned to other employees
+        const territoryConflicts = territoriesToAdd.filter(territoryId => {
+          const existingAssignment = assignments.find(a => 
+            a.territoryId === territoryId && a.employeeId !== data.employeeId
+          );
+          return existingAssignment;
+        });
+
+        if (territoryConflicts.length > 0) {
+          const conflictDetails = territoryConflicts.map(territoryId => {
+            const territory = territories.find(t => t.territoryId === territoryId);
+            const assignment = assignments.find(a => a.territoryId === territoryId);
+            const employee = assignment?.employee;
+            return `${territory?.territoryName} (assigned to ${employee?.fullName})`;
+          });
+          
+          setError(`These territories are already assigned: ${conflictDetails.join(', ')}`);
+          setSubmitting(false);
+          return;
+        }
+        
+        // 4. Remove territories that are no longer selected
         for (const territoryId of territoriesToRemove) {
           const assignmentToRemove = currentAssignments.find(a => a.territoryId === territoryId);
           if (assignmentToRemove) {
@@ -131,7 +160,7 @@ export default function EmployeeTerritoriesPage() {
           }
         }
         
-        // 4. Add new territories
+        // 5. Add new territories
         for (const territoryId of territoriesToAdd) {
           await axios.post("/api/employee-territories", {
             employeeId: data.employeeId,
@@ -240,6 +269,11 @@ export default function EmployeeTerritoriesPage() {
 
   const employeeGroups = Object.values(groupedAssignments);
 
+  // Check for assignments with inactive employees
+  const inactiveEmployeeAssignments = employeeGroups.filter(group => 
+    group.employee && group.employee.status !== 'ACTIVE'
+  );
+
   // Filter employee groups based on search term
   const filteredEmployeeGroups = employeeGroups.filter(group => {
     const employeeName = group.employee?.fullName?.toLowerCase() || '';
@@ -288,6 +322,33 @@ export default function EmployeeTerritoriesPage() {
               </div>
               <div className="ml-3">
                 <p className="text-sm text-red-700">{error}</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Warning for Inactive Employee Assignments */}
+        {inactiveEmployeeAssignments.length > 0 && (
+          <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6 rounded-lg">
+            <div className="flex">
+              <div className="flex-shrink-0">
+                <span className="text-yellow-400 text-xl">⚠️</span>
+              </div>
+              <div className="ml-3">
+                <h3 className="text-sm font-medium text-yellow-800">
+                  Inactive Employee Assignments Found
+                </h3>
+                <p className="text-sm text-yellow-700 mt-1">
+                  {inactiveEmployeeAssignments.length} inactive employee(s) still have territory assignments. 
+                  Consider reassigning these territories to active employees.
+                </p>
+                <div className="mt-2">
+                  {inactiveEmployeeAssignments.map((group, index) => (
+                    <div key={group.employee?.employeeId || index} className="text-xs text-yellow-600 mt-1">
+                      • {group.employee?.fullName} ({group.employee?.status}) - {group.territories.length} territories
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
@@ -344,7 +405,10 @@ export default function EmployeeTerritoriesPage() {
                     </DialogHeader>
                     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
                       <div className="space-y-2">
-                        <label className="text-sm font-medium text-gray-700">Employee</label>
+                        <label className="text-sm font-medium text-gray-700">
+                          Employee 
+                          <span className="text-xs text-gray-500 ml-2">(Only active employees shown)</span>
+                        </label>
                         <Select
                           value={selectedEmployee}
                           onValueChange={(val) => {
@@ -361,7 +425,13 @@ export default function EmployeeTerritoriesPage() {
                               <SelectItem key={emp.employeeId} value={emp.employeeId}>
                                 <div className="flex items-center">
                                   <span className="mr-2">👤</span>
-                                  {emp.fullName} - {emp.email}
+                                  <div className="flex flex-col">
+                                    <span className="font-medium">{emp.fullName}</span>
+                                    <span className="text-xs text-gray-500">{emp.email}</span>
+                                  </div>
+                                  <span className="ml-2 text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
+                                    {emp.status}
+                                  </span>
                                 </div>
                               </SelectItem>
                             ))}
@@ -391,23 +461,44 @@ export default function EmployeeTerritoriesPage() {
                             <p className="text-gray-500 text-sm">No territories available</p>
                           ) : (
                             <div className="space-y-2">
-                              {territories.map((territory) => (
-                                <label
-                                  key={territory.territoryId}
-                                  className="flex items-center space-x-3 cursor-pointer hover:bg-purple-50 p-2 rounded transition-colors"
-                                >
-                                  <input
-                                    type="checkbox"
-                                    checked={selectedTerritories.includes(territory.territoryId)}
-                                    onChange={() => handleTerritoryToggle(territory.territoryId)}
-                                    className="rounded border-gray-300 text-purple-600 shadow-sm focus:border-purple-300 focus:ring focus:ring-purple-200 focus:ring-opacity-50"
-                                  />
-                                  <div className="flex items-center">
-                                    <span className="text-purple-600 mr-2">📍</span>
-                                    <span className="text-sm font-medium">{territory.territoryName}</span>
-                                  </div>
-                                </label>
-                              ))}
+                              {territories.map((territory) => {
+                                // Check if territory is already assigned to another employee
+                                const assignedToOther = assignments.find(a => 
+                                  a.territoryId === territory.territoryId && 
+                                  a.employeeId !== selectedEmployee
+                                );
+                                const isDisabled = !editing && assignedToOther;
+                                
+                                return (
+                                  <label
+                                    key={territory.territoryId}
+                                    className={`flex items-center space-x-3 p-2 rounded transition-colors ${
+                                      isDisabled 
+                                        ? 'cursor-not-allowed opacity-60 bg-gray-50' 
+                                        : 'cursor-pointer hover:bg-purple-50'
+                                    }`}
+                                  >
+                                    <input
+                                      type="checkbox"
+                                      checked={selectedTerritories.includes(territory.territoryId)}
+                                      onChange={() => !isDisabled && handleTerritoryToggle(territory.territoryId)}
+                                      disabled={isDisabled}
+                                      className="rounded border-gray-300 text-purple-600 shadow-sm focus:border-purple-300 focus:ring focus:ring-purple-200 focus:ring-opacity-50 disabled:opacity-50"
+                                    />
+                                    <div className="flex items-center flex-1">
+                                      <span className="text-purple-600 mr-2">📍</span>
+                                      <div className="flex-1">
+                                        <span className="text-sm font-medium">{territory.territoryName}</span>
+                                        {assignedToOther && (
+                                          <div className="text-xs text-red-600 mt-1">
+                                            Already assigned to {assignedToOther.employee?.fullName}
+                                          </div>
+                                        )}
+                                      </div>
+                                    </div>
+                                  </label>
+                                );
+                              })}
                             </div>
                           )}
                         </div>
@@ -518,7 +609,7 @@ export default function EmployeeTerritoriesPage() {
                               <div className="bg-purple-100 p-2 rounded-full mr-3">
                                 <span className="text-purple-600">👤</span>
                               </div>
-                              <div>
+                              <div className="flex-1">
                                 <div className="text-sm font-medium text-gray-900">
                                   {group.employee?.fullName || 'N/A'}
                                 </div>
@@ -526,6 +617,22 @@ export default function EmployeeTerritoriesPage() {
                                   ID: {group.employee?.employeeId || 'N/A'}
                                 </div>
                               </div>
+                              {group.employee?.status && (
+                                <span
+                                  className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                    group.employee.status === 'ACTIVE'
+                                      ? 'bg-green-100 text-green-800'
+                                      : group.employee.status === 'INACTIVE'
+                                      ? 'bg-red-100 text-red-800'
+                                      : 'bg-yellow-100 text-yellow-800'
+                                  }`}
+                                >
+                                  {group.employee.status === 'ACTIVE' && '✅'}
+                                  {group.employee.status === 'INACTIVE' && '❌'}
+                                  {group.employee.status === 'SUSPENDED' && '⏸️'}
+                                  <span className="ml-1">{group.employee.status}</span>
+                                </span>
+                              )}
                             </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -585,15 +692,31 @@ export default function EmployeeTerritoriesPage() {
                     >
                       <CardContent className="p-4">
                         <div className="flex justify-between items-start mb-3">
-                          <div className="flex items-center">
+                          <div className="flex items-center flex-1">
                             <div className="bg-purple-100 p-2 rounded-full mr-3">
                               <span className="text-purple-600">👤</span>
                             </div>
-                            <div>
+                            <div className="flex-1">
                               <h3 className="font-semibold text-gray-900">{group.employee?.fullName || 'N/A'}</h3>
                               <p className="text-sm text-gray-500">{group.employee?.email || 'N/A'}</p>
                               <p className="text-xs text-gray-400">ID: {group.employee?.employeeId || 'N/A'}</p>
                             </div>
+                            {group.employee?.status && (
+                              <span
+                                className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium flex-shrink-0 ml-2 ${
+                                  group.employee.status === 'ACTIVE'
+                                    ? 'bg-green-100 text-green-800'
+                                    : group.employee.status === 'INACTIVE'
+                                    ? 'bg-red-100 text-red-800'
+                                    : 'bg-yellow-100 text-yellow-800'
+                                }`}
+                              >
+                                {group.employee.status === 'ACTIVE' && '✅'}
+                                {group.employee.status === 'INACTIVE' && '❌'}
+                                {group.employee.status === 'SUSPENDED' && '⏸️'}
+                                <span className="ml-1">{group.employee.status}</span>
+                              </span>
+                            )}
                           </div>
                         </div>
                         <div className="mb-3">

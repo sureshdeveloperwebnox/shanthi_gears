@@ -1,8 +1,17 @@
 import prisma from "@/lib/prisma";
 
-export async function GET() {
-  // Get all employees
-  const employees = await prisma.employees.findMany();
+export async function GET(req) {
+  // Get employees - can filter by status using query params
+  const { searchParams } = new URL(req.url);
+  const activeOnly = searchParams.get('activeOnly') === 'true';
+  
+  const whereClause = activeOnly ? { status: 'ACTIVE' } : {};
+  
+  const employees = await prisma.employees.findMany({
+    where: whereClause,
+    orderBy: { fullName: 'asc' }
+  });
+  
   return Response.json(employees);
 }
 
