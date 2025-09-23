@@ -4,17 +4,26 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils"; // shadcn utility
+import { 
+  BarChart3, 
+  FileText, 
+  MapPin, 
+  Users, 
+  Target, 
+  User,
+  X
+} from "lucide-react";
 
 const links = [
-  { href: "/", label: "Dashboard", icon: "📊" },
-  { href: "/complaints", label: "Complaints", icon: "📋" },
-  { href: "/territories", label: "Territories", icon: "🗺️" },
-  { href: "/employees", label: "Employees", icon: "👥" },
-  { href: "/employee-territories", label: "Employee Territories", icon: "🎯" },
+  { href: "/", label: "Dashboard", icon: BarChart3 },
+  { href: "/complaints", label: "Complaints", icon: FileText },
+  { href: "/territories", label: "Territories", icon: MapPin },
+  { href: "/employees", label: "Employees", icon: Users },
+  { href: "/employee-territories", label: "Employee Territories", icon: Target },
 ];
 
 const settings = [
-  { href: "/settings/users", label: "Users", icon: "👤" },
+  { href: "/settings/users", label: "Users", icon: User },
 ];
 
 export default function Sidebar() {
@@ -96,9 +105,7 @@ export default function Sidebar() {
               onClick={() => setIsMobileMenuOpen(false)}
               className="lg:hidden text-gray-500 hover:text-gray-700"
             >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
+              <X className="w-6 h-6" />
             </button>
           </div>
         </div>
@@ -116,7 +123,7 @@ export default function Sidebar() {
                     : "text-gray-700 hover:bg-orange-50 hover:text-orange-600"
                 )}
               >
-                <span className="mr-3 text-lg">{link.icon}</span>
+                <link.icon className="mr-3 w-5 h-5" />
                 <span>{link.label}</span>
                 {pathname === link.href && (
                   <div className="ml-auto w-2 h-2 bg-orange-600 rounded-full"></div>
@@ -142,7 +149,7 @@ export default function Sidebar() {
                       : "text-gray-700 hover:bg-orange-50 hover:text-orange-600"
                   )}
                 >
-                  <span className="mr-3 text-lg">{link.icon}</span>
+                  <link.icon className="mr-3 w-5 h-5" />
                   <span>{link.label}</span>
                   {pathname === link.href && (
                     <div className="ml-auto w-2 h-2 bg-orange-600 rounded-full"></div>

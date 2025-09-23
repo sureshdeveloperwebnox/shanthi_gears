@@ -16,6 +16,22 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { 
+  Search, 
+  Filter, 
+  Trash2, 
+  Eye, 
+  FileText, 
+  Calendar,
+  MapPin,
+  User,
+  Building,
+  AlertCircle,
+  CheckCircle,
+  Clock,
+  ChevronLeft,
+  ChevronRight
+} from "lucide-react";
 
 export default function ComplaintsPage() {
   const [complaints, setComplaints] = useState([]);
@@ -176,7 +192,7 @@ export default function ComplaintsPage() {
         <div className="mb-6 sm:mb-8">
           <div className="flex items-center mb-4 sm:mb-6">
             <div className="bg-orange-500 p-2 sm:p-3 rounded-full mr-3 sm:mr-4 flex-shrink-0">
-              <span className="text-xl sm:text-2xl">📋</span>
+              <FileText className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
             </div>
             <div className="min-w-0">
               <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900">Complaints</h1>
@@ -190,7 +206,7 @@ export default function ComplaintsPage() {
           <div className="bg-red-50 border-l-4 border-red-400 p-4 mb-6 rounded-lg">
             <div className="flex">
               <div className="flex-shrink-0">
-                <span className="text-red-400 text-xl">⚠️</span>
+                <AlertCircle className="w-5 h-5 text-red-400" />
               </div>
               <div className="ml-3">
                 <p className="text-sm text-red-700">{error}</p>
@@ -203,7 +219,7 @@ export default function ComplaintsPage() {
         <Card className="shadow-xl border-0 bg-white/80 backdrop-blur-sm mb-6">
           <CardHeader className="bg-gradient-to-r from-gray-50 to-gray-100 border-b">
             <CardTitle className="text-lg font-bold text-gray-800 flex items-center">
-              <span className="mr-3">🔍</span>
+              <Search className="mr-3 w-5 h-5" />
               Search & Filters
             </CardTitle>
           </CardHeader>
@@ -212,7 +228,7 @@ export default function ComplaintsPage() {
             <div className="mb-6">
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <span className="text-gray-400">🔍</span>
+                  <Search className="w-4 h-4 text-gray-400" />
                 </div>
                 <Input
                   type="text"
@@ -280,7 +296,7 @@ export default function ComplaintsPage() {
                   variant="outline"
                   className="w-full text-gray-600 border-gray-300 hover:bg-gray-50"
                 >
-                  <span className="mr-2">🗑️</span>
+                  <Trash2 className="mr-2 w-4 h-4" />
                   Clear Filters
                 </Button>
               </div>
@@ -289,12 +305,12 @@ export default function ComplaintsPage() {
             {/* Results Summary */}
             <div className="flex items-center justify-between pt-4 border-t border-gray-200">
               <div className="text-sm text-gray-600 flex items-center">
-                <span className="mr-2">📊</span>
+                <Filter className="mr-2 w-4 h-4" />
                 Showing {filteredComplaints.length} of {complaints.length} complaints
               </div>
               {(searchTerm || filters.dateFrom || filters.dateTo || filters.territory) && (
-                <div className="text-sm text-orange-600 font-medium">
-                  <span className="mr-1">🔍</span>
+                <div className="text-sm text-orange-600 font-medium flex items-center">
+                  <Search className="mr-1 w-4 h-4" />
                   Filters active
                 </div>
               )}
@@ -307,7 +323,7 @@ export default function ComplaintsPage() {
           <CardHeader className="bg-gradient-to-r from-gray-50 to-gray-100 border-b">
             <div className="flex justify-between items-center">
               <CardTitle className="text-2xl font-bold text-gray-800 flex items-center">
-                <span className="mr-3">📋</span>
+                <FileText className="mr-3 w-6 h-6" />
                 Complaints List
                 {filteredComplaints.length > 0 && (
                   <span className="ml-3 text-sm font-normal text-gray-500">
@@ -340,7 +356,7 @@ export default function ComplaintsPage() {
                     }}
                     variant="outline"
                     size="sm"
-                    className="text-green-600 border-green-200 hover:bg-green-50"
+                    className="text-orange-600 border-orange-200 hover:bg-orange-50"
                   >
                     <span className="mr-1">➕</span>
                     Add Test Data
@@ -368,7 +384,9 @@ export default function ComplaintsPage() {
           <CardContent className="p-0">
             {filteredComplaints.length === 0 ? (
               <div className="text-center py-16">
-                <div className="text-6xl mb-4">📋</div>
+                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <FileText className="w-8 h-8 text-gray-400" />
+                </div>
                 <h3 className="text-xl font-semibold text-gray-800 mb-2">
                   {searchTerm || filters.dateFrom || filters.dateTo || filters.territory ? 
                     "No complaints found" : "No complaints yet"}
@@ -384,7 +402,7 @@ export default function ComplaintsPage() {
                     onClick={clearFilters}
                     className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700"
                   >
-                    <span className="mr-2">🗑️</span>
+                    <Trash2 className="mr-2 w-4 h-4" />
                     Clear All Filters
                   </Button>
                 )}
@@ -426,7 +444,7 @@ export default function ComplaintsPage() {
                           <td className="px-4 py-4">
                             <div className="flex items-center min-w-0">
                               <div className="bg-orange-100 p-2 rounded-full mr-3 flex-shrink-0">
-                                <span className="text-orange-600">👤</span>
+                                <User className="w-4 h-4 text-orange-600" />
                               </div>
                               <div className="min-w-0 flex-1">
                                 <div className="text-sm font-medium text-gray-900 truncate" 
@@ -448,7 +466,7 @@ export default function ComplaintsPage() {
                               {complaint.companyName || 'N/A'}
                             </div>
                             <div className="text-xs text-gray-500 flex items-center">
-                              <span className="mr-1">📍</span>
+                              <MapPin className="mr-1 w-3 h-3" />
                               {complaint.territory?.territoryName || 'N/A'}
                             </div>
                           </td>
@@ -499,7 +517,7 @@ export default function ComplaintsPage() {
                               onClick={() => handleViewComplaint(complaint)}
                               variant="outline"
                               size="sm"
-                              className="text-blue-600 border-blue-200 hover:bg-blue-50 hover:border-blue-300"
+                              className="text-orange-600 border-orange-200 hover:bg-orange-50 hover:border-orange-300"
                             >
                               <span className="text-lg">👁️</span>
                             </Button>
@@ -520,10 +538,10 @@ export default function ComplaintsPage() {
                     >
                       <CardContent className="p-4">
                         <div className="flex items-start justify-between mb-3">
-                          <div className="flex items-center min-w-0 flex-1">
-                            <div className="bg-orange-100 p-2 rounded-full mr-3 flex-shrink-0">
-                              <span className="text-orange-600">👤</span>
-                            </div>
+                            <div className="flex items-center min-w-0 flex-1">
+                              <div className="bg-orange-100 p-2 rounded-full mr-3 flex-shrink-0">
+                                <User className="w-4 h-4 text-orange-600" />
+                              </div>
                             <div className="min-w-0 flex-1">
                               <h3 className="font-semibold text-gray-900 truncate" 
                                   title={complaint.contactPersonName}>
@@ -555,7 +573,7 @@ export default function ComplaintsPage() {
                           <div className="flex items-center">
                             <span className="font-medium text-gray-700 w-20">Territory:</span>
                             <span className="text-gray-600 flex items-center">
-                              <span className="mr-1">📍</span>
+                              <MapPin className="mr-1 w-4 h-4" />
                               {complaint.territory?.territoryName || 'N/A'}
                             </span>
                           </div>
@@ -593,7 +611,7 @@ export default function ComplaintsPage() {
                             onClick={() => handleViewComplaint(complaint)}
                             variant="outline"
                             size="sm"
-                            className="w-full text-blue-600 border-blue-200 hover:bg-blue-50"
+                            className="w-full text-orange-600 border-orange-200 hover:bg-orange-50"
                           >
                             <span className="mr-2">👁️</span>
                             View Details
@@ -620,7 +638,7 @@ export default function ComplaintsPage() {
                   size="sm"
                   className="disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <span className="mr-1">←</span>
+                  <ChevronLeft className="mr-1 w-4 h-4" />
                   Previous
                 </Button>
 
@@ -661,7 +679,7 @@ export default function ComplaintsPage() {
                   className="disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Next
-                  <span className="ml-1">→</span>
+                  <ChevronRight className="ml-1 w-4 h-4" />
                 </Button>
               </div>
               
@@ -677,7 +695,7 @@ export default function ComplaintsPage() {
           <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle className="text-xl font-bold flex items-center">
-                <span className="mr-2">📋</span>
+                <FileText className="mr-2 w-5 h-5" />
                 Complaint Details
                 {selectedComplaint && (
                   <span className="ml-3 text-sm font-normal text-gray-500">
@@ -692,7 +710,7 @@ export default function ComplaintsPage() {
                 {/* Contact Information */}
                 <div className="bg-gray-50 p-4 rounded-lg">
                   <h3 className="text-lg font-semibold text-gray-800 mb-3 flex items-center">
-                    <span className="mr-2">👤</span>
+                    <User className="mr-2 w-5 h-5" />
                     Contact Information
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -716,9 +734,9 @@ export default function ComplaintsPage() {
                 </div>
 
                 {/* Territory & Gearbox Information */}
-                <div className="bg-blue-50 p-4 rounded-lg">
+                <div className="bg-orange-50 p-4 rounded-lg">
                   <h3 className="text-lg font-semibold text-gray-800 mb-3 flex items-center">
-                    <span className="mr-2">📍</span>
+                    <MapPin className="mr-2 w-5 h-5" />
                     Territory & Gearbox Information
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -750,7 +768,7 @@ export default function ComplaintsPage() {
                 {/* Application & Complaint Details */}
                 <div className="bg-yellow-50 p-4 rounded-lg">
                   <h3 className="text-lg font-semibold text-gray-800 mb-3 flex items-center">
-                    <span className="mr-2">📝</span>
+                    <FileText className="mr-2 w-5 h-5" />
                     Application & Complaint Details
                   </h3>
                   <div className="space-y-4">
@@ -766,7 +784,7 @@ export default function ComplaintsPage() {
                 </div>
 
                 {/* Motor & Connection Details */}
-                <div className="bg-green-50 p-4 rounded-lg">
+                <div className="bg-orange-50 p-4 rounded-lg">
                   <h3 className="text-lg font-semibold text-gray-800 mb-3 flex items-center">
                     <span className="mr-2">⚡</span>
                     Motor & Connection Details
@@ -784,7 +802,7 @@ export default function ComplaintsPage() {
                 </div>
 
                 {/* Oil & Lubrication Details */}
-                <div className="bg-purple-50 p-4 rounded-lg">
+                <div className="bg-orange-50 p-4 rounded-lg">
                   <h3 className="text-lg font-semibold text-gray-800 mb-3 flex items-center">
                     <span className="mr-2">🛢️</span>
                     Oil & Lubrication Details

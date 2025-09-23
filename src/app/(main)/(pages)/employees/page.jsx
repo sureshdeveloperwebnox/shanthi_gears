@@ -21,6 +21,22 @@ import {
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { 
+  Users, 
+  Plus, 
+  Edit, 
+  Trash2, 
+  BarChart3, 
+  AlertCircle, 
+  CheckCircle, 
+  X,
+  User,
+  Mail,
+  Phone,
+  Building,
+  Save,
+  Pause
+} from "lucide-react";
 
 // validation schema
 const employeeSchema = z.object({
@@ -134,7 +150,7 @@ export default function EmployeesPage() {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-50">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600 mx-auto mb-4"></div>
           <p className="text-gray-600">Loading employees...</p>
         </div>
       </div>
@@ -147,8 +163,8 @@ export default function EmployeesPage() {
         {/* Header Section */}
         <div className="mb-6 sm:mb-8">
           <div className="flex items-center mb-4 sm:mb-6">
-            <div className="bg-green-500 p-2 sm:p-3 rounded-full mr-3 sm:mr-4 flex-shrink-0">
-              <span className="text-xl sm:text-2xl">👥</span>
+            <div className="bg-orange-500 p-2 sm:p-3 rounded-full mr-3 sm:mr-4 flex-shrink-0">
+              <Users className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
             </div>
             <div className="min-w-0">
               <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900">Employees</h1>
@@ -166,18 +182,16 @@ export default function EmployeesPage() {
                   : 'bg-white text-gray-600 hover:bg-gray-50 shadow-md'
               }`}
             >
-              <span className="mr-2">📊</span>
               All ({employees.length})
             </button>
             <button
               onClick={() => setActiveTab('ACTIVE')}
               className={`px-6 py-3 rounded-xl font-medium transition-all duration-200 transform hover:scale-105 ${
                 activeTab === 'ACTIVE'
-                  ? 'bg-gradient-to-r from-green-500 to-green-600 text-white shadow-lg'
-                  : 'bg-white text-gray-600 hover:bg-green-50 shadow-md'
+                  ? 'bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-lg'
+                  : 'bg-white text-gray-600 hover:bg-orange-50 shadow-md'
               }`}
             >
-              <span className="mr-2">✅</span>
               Active ({statusCounts.ACTIVE})
             </button>
             <button
@@ -188,20 +202,9 @@ export default function EmployeesPage() {
                   : 'bg-white text-gray-600 hover:bg-red-50 shadow-md'
               }`}
             >
-              <span className="mr-2">❌</span>
               Inactive ({statusCounts.INACTIVE})
             </button>
-            <button
-              onClick={() => setActiveTab('SUSPENDED')}
-              className={`px-6 py-3 rounded-xl font-medium transition-all duration-200 transform hover:scale-105 ${
-                activeTab === 'SUSPENDED'
-                  ? 'bg-gradient-to-r from-yellow-500 to-yellow-600 text-white shadow-lg'
-                  : 'bg-white text-gray-600 hover:bg-yellow-50 shadow-md'
-              }`}
-            >
-              <span className="mr-2">⏸️</span>
-              Suspended ({statusCounts.SUSPENDED})
-            </button>
+            
           </div>
         </div>
 
@@ -210,7 +213,7 @@ export default function EmployeesPage() {
           <div className="bg-red-50 border-l-4 border-red-400 p-4 mb-6 rounded-lg">
             <div className="flex">
               <div className="flex-shrink-0">
-                <span className="text-red-400 text-xl">⚠️</span>
+                <AlertCircle className="w-5 h-5 text-red-400" />
               </div>
               <div className="ml-3">
                 <p className="text-sm text-red-700">{error}</p>
@@ -225,7 +228,7 @@ export default function EmployeesPage() {
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0">
               <div className="flex items-center">
                 <CardTitle className="text-2xl font-bold text-gray-800 flex items-center">
-                  <span className="mr-3">👤</span>
+                  <User className="mr-3 w-6 h-6" />
                   Employee Management
                   {activeTab !== 'ALL' && (
                     <span className="text-sm font-normal text-gray-500 ml-2">
@@ -246,7 +249,7 @@ export default function EmployeesPage() {
                     placeholder="Search employees..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10 pr-4 py-2 w-full sm:w-64 border-gray-300 focus:border-green-500 focus:ring-2 focus:ring-green-200"
+                    className="pl-10 pr-4 py-2 w-full sm:w-64 border-gray-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-200"
                   />
                 </div>
 
@@ -259,16 +262,16 @@ export default function EmployeesPage() {
                         setEditingEmployee(null);
                         setError(null);
                       }}
-                      className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
+                      className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
                     >
-                      <span className="mr-2">➕</span>
+                      <Plus className="mr-2 w-4 h-4" />
                       Add Employee
                     </Button>
                   </DialogTrigger>
                   <DialogContent className="sm:max-w-[425px]">
                     <DialogHeader>
                       <DialogTitle className="text-xl font-bold flex items-center">
-                        <span className="mr-2">{editingEmployee ? "✏️" : "👤"}</span>
+                        {editingEmployee ? <Edit className="mr-2 w-5 h-5" /> : <User className="mr-2 w-5 h-5" />}
                         {editingEmployee ? "Edit Employee" : "Add New Employee"}
                       </DialogTitle>
                     </DialogHeader>
@@ -280,11 +283,11 @@ export default function EmployeesPage() {
                         <Input
                           placeholder="Enter full name..."
                           {...register("fullName")}
-                          className="border-gray-300 focus:border-green-500 focus:ring-2 focus:ring-green-200"
+                          className="border-gray-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-200"
                         />
                         {errors.fullName && (
                           <p className="text-red-500 text-sm flex items-center">
-                            <span className="mr-1">⚠️</span>
+                            <AlertCircle className="mr-1 w-4 h-4" />
                             {errors.fullName.message}
                           </p>
                         )}
@@ -296,11 +299,11 @@ export default function EmployeesPage() {
                         <Input
                           placeholder="Enter email address..."
                           {...register("email")}
-                          className="border-gray-300 focus:border-green-500 focus:ring-2 focus:ring-green-200"
+                          className="border-gray-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-200"
                         />
                         {errors.email && (
                           <p className="text-red-500 text-sm flex items-center">
-                            <span className="mr-1">⚠️</span>
+                            <AlertCircle className="mr-1 w-4 h-4" />
                             {errors.email.message}
                           </p>
                         )}
@@ -316,9 +319,9 @@ export default function EmployeesPage() {
                         </Button>
                         <Button
                           type="submit"
-                          className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700"
+                          className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700"
                         >
-                          <span className="mr-2">{editingEmployee ? "💾" : "➕"}</span>
+                          {editingEmployee ? <Save className="mr-2 w-4 h-4" /> : <Plus className="mr-2 w-4 h-4" />}
                           {editingEmployee ? "Update" : "Create"}
                         </Button>
                       </DialogFooter>
@@ -332,7 +335,9 @@ export default function EmployeesPage() {
           <CardContent className="p-0">
             {filteredEmployees.length === 0 ? (
               <div className="text-center py-16">
-                <div className="text-6xl mb-4">👥</div>
+                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Users className="w-8 h-8 text-gray-400" />
+                </div>
                 <h3 className="text-xl font-semibold text-gray-800 mb-2">
                   {searchTerm ? "No employees found" : employees.length === 0 ? "No employees yet" : `No ${activeTab.toLowerCase()} employees`}
                 </h3>
@@ -351,9 +356,9 @@ export default function EmployeesPage() {
                       setEditingEmployee(null);
                       setOpen(true);
                     }}
-                    className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700"
+                    className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700"
                   >
-                    <span className="mr-2">➕</span>
+                    <Plus className="mr-2 w-4 h-4" />
                     Add Your First Employee
                   </Button>
                 )}
@@ -383,21 +388,19 @@ export default function EmployeesPage() {
                       {filteredEmployees.map((employee, index) => (
                         <tr 
                           key={employee.employeeId} 
-                          className="hover:bg-green-50 transition-colors duration-200"
+                          className="hover:bg-orange-50 transition-colors duration-200"
                           style={{ animationDelay: `${index * 0.1}s` }}
                         >
                           <td className="px-4 py-4">
                             <div className="flex items-center min-w-0">
-                              <div className="bg-green-100 p-2 rounded-full mr-3 flex-shrink-0">
-                                <span className="text-green-600">👤</span>
+                              <div className="bg-orange-100 p-2 rounded-full mr-3 flex-shrink-0">
+                                <User className="w-4 h-4 text-orange-600" />
                               </div>
                               <div className="min-w-0 flex-1">
                                 <div className="text-sm font-medium text-gray-900 truncate" title={employee.fullName}>
                                   {employee.fullName}
                                 </div>
-                                <div className="text-xs text-gray-500 truncate" title={`ID: ${employee.employeeId}`}>
-                                  ID: {employee.employeeId.slice(0, 8)}...
-                                </div>
+                                
                               </div>
                             </div>
                           </td>
@@ -416,9 +419,8 @@ export default function EmployeesPage() {
                                   : 'bg-yellow-100 text-yellow-800'
                               }`}
                             >
-                              {employee.status === 'ACTIVE' && '✅'}
-                              {employee.status === 'INACTIVE' && '❌'}
-                              {employee.status === 'SUSPENDED' && '⏸️'}
+                              {employee.status === 'ACTIVE' }
+                              {employee.status === 'INACTIVE'}
                               <span className="ml-1">{employee.status}</span>
                             </span>
                           </td>
@@ -428,10 +430,10 @@ export default function EmployeesPage() {
                                 variant="outline"
                                 size="sm"
                                 onClick={() => handleEdit(employee)}
-                                className="text-blue-600 border-blue-200 hover:bg-blue-50 hover:border-blue-300 transition-all duration-200 text-xs"
+                                className="text-orange-600 border-orange-200 hover:bg-orange-50 hover:border-orange-300 transition-all duration-200 text-xs"
                                 title="Edit Employee"
                               >
-                                <span className="mr-1">✏️</span>
+                                <Edit className="mr-1 w-4 h-4" />
                                 Edit
                               </Button>
                               
@@ -444,18 +446,18 @@ export default function EmployeesPage() {
                                   onClick={() => handleStatusChange(employee.employeeId, 'INACTIVE')}
                                   title="Deactivate Employee"
                                 >
-                                  <span className="mr-1">❌</span>
+                                  <X className="mr-1 w-4 h-4" />
                                   Deactivate
                                 </Button>
                               ) : (
                                 <Button 
                                   variant="outline" 
                                   size="sm" 
-                                  className="text-green-600 border-green-200 hover:bg-green-50 hover:border-green-300 transition-all duration-200 text-xs"
+                                  className="text-orange-600 border-orange-200 hover:bg-orange-50 hover:border-orange-300 transition-all duration-200 text-xs"
                                   onClick={() => handleStatusChange(employee.employeeId, 'ACTIVE')}
                                   title="Activate Employee"
                                 >
-                                  <span className="mr-1">✅</span>
+                                  <CheckCircle className="mr-1 w-4 h-4" />
                                   Activate
                                 </Button>
                               )}
@@ -467,7 +469,7 @@ export default function EmployeesPage() {
                                 className="text-red-600 border-red-200 hover:bg-red-50 hover:border-red-300 transition-all duration-200 text-xs"
                                 title="Delete Employee"
                               >
-                                <span className="mr-1">🗑️</span>
+                                <Trash2 className="mr-1 w-4 h-4" />
                                 Delete
                               </Button>
                             </div>
@@ -489,8 +491,8 @@ export default function EmployeesPage() {
                       <CardContent className="p-4">
                         <div className="flex justify-between items-start mb-3">
                           <div className="flex items-center min-w-0 flex-1">
-                            <div className="bg-green-100 p-2 rounded-full mr-3 flex-shrink-0">
-                              <span className="text-green-600">👤</span>
+                            <div className="bg-orange-100 p-2 rounded-full mr-3 flex-shrink-0">
+                              <User className="w-4 h-4 text-orange-600" />
                             </div>
                             <div className="min-w-0 flex-1">
                               <h3 className="font-semibold text-gray-900 truncate" title={employee.fullName}>
@@ -513,9 +515,9 @@ export default function EmployeesPage() {
                                 : 'bg-yellow-100 text-yellow-800'
                             }`}
                           >
-                            {employee.status === 'ACTIVE' && '✅'}
-                            {employee.status === 'INACTIVE' && '❌'}
-                            {employee.status === 'SUSPENDED' && '⏸️'}
+                            {employee.status === 'ACTIVE' && <CheckCircle className="w-4 h-4" />}
+                            {employee.status === 'INACTIVE' && <X className="w-4 h-4" />}
+                            {employee.status === 'SUSPENDED' && <Pause className="w-4 h-4" />}
                             <span className="ml-1">{employee.status}</span>
                           </span>
                         </div>
@@ -524,9 +526,9 @@ export default function EmployeesPage() {
                             variant="outline"
                             size="sm"
                             onClick={() => handleEdit(employee)}
-                            className="text-blue-600 border-blue-200 hover:bg-blue-50"
+                            className="text-orange-600 border-orange-200 hover:bg-orange-50"
                           >
-                            <span className="mr-1">✏️</span>
+                            <Edit className="mr-1 w-4 h-4" />
                             Edit
                           </Button>
                           {employee.status === 'ACTIVE' ? (
@@ -536,17 +538,17 @@ export default function EmployeesPage() {
                               className="text-red-600 border-red-200 hover:bg-red-50"
                               onClick={() => handleStatusChange(employee.employeeId, 'INACTIVE')}
                             >
-                              <span className="mr-1">❌</span>
+                              <X className="mr-1 w-4 h-4" />
                               Deactivate
                             </Button>
                           ) : (
                             <Button 
                               variant="outline" 
                               size="sm" 
-                              className="text-green-600 border-green-200 hover:bg-green-50"
+                              className="text-orange-600 border-orange-200 hover:bg-orange-50"
                               onClick={() => handleStatusChange(employee.employeeId, 'ACTIVE')}
                             >
-                              <span className="mr-1">✅</span>
+                              <CheckCircle className="mr-1 w-4 h-4" />
                               Activate
                             </Button>
                           )}
@@ -556,7 +558,7 @@ export default function EmployeesPage() {
                             onClick={() => handleDelete(employee.employeeId)}
                             className="text-red-600 border-red-200 hover:bg-red-50"
                           >
-                            <span className="mr-1">🗑️</span>
+                            <Trash2 className="mr-1 w-4 h-4" />
                             Delete
                           </Button>
                         </div>
@@ -576,8 +578,8 @@ export default function EmployeesPage() {
                       <CardContent className="p-4">
                         <div className="flex justify-between items-start mb-3">
                           <div className="flex items-center">
-                            <div className="bg-green-100 p-2 rounded-full mr-3">
-                              <span className="text-green-600">👤</span>
+                            <div className="bg-orange-100 p-2 rounded-full mr-3">
+                              <User className="w-4 h-4 text-orange-600" />
                             </div>
                             <div>
                               <h3 className="font-semibold text-gray-900">{employee.fullName}</h3>
@@ -594,9 +596,9 @@ export default function EmployeesPage() {
                                 : 'bg-yellow-100 text-yellow-800'
                             }`}
                           >
-                            {employee.status === 'ACTIVE' && '✅'}
-                            {employee.status === 'INACTIVE' && '❌'}
-                            {employee.status === 'SUSPENDED' && '⏸️'}
+                            {employee.status === 'ACTIVE' && <CheckCircle className="w-4 h-4" />}
+                            {employee.status === 'INACTIVE' && <X className="w-4 h-4" />}
+                            {employee.status === 'SUSPENDED' && <Pause className="w-4 h-4" />}
                             <span className="ml-1">{employee.status}</span>
                           </span>
                         </div>
@@ -605,9 +607,9 @@ export default function EmployeesPage() {
                             variant="outline"
                             size="sm"
                             onClick={() => handleEdit(employee)}
-                            className="text-blue-600 border-blue-200 hover:bg-blue-50"
+                            className="text-orange-600 border-orange-200 hover:bg-orange-50"
                           >
-                            ✏️
+                            <Edit className="w-4 h-4" />
                           </Button>
                           {employee.status === 'ACTIVE' ? (
                             <Button 
@@ -616,16 +618,16 @@ export default function EmployeesPage() {
                               className="text-red-600 border-red-200 hover:bg-red-50"
                               onClick={() => handleStatusChange(employee.employeeId, 'INACTIVE')}
                             >
-                              ❌
+                              <X className="w-4 h-4" />
                             </Button>
                           ) : (
                             <Button 
                               variant="outline" 
                               size="sm" 
-                              className="text-green-600 border-green-200 hover:bg-green-50"
+                              className="text-orange-600 border-orange-200 hover:bg-orange-50"
                               onClick={() => handleStatusChange(employee.employeeId, 'ACTIVE')}
                             >
-                              ✅
+                              <CheckCircle className="w-4 h-4" />
                             </Button>
                           )}
                           <Button 
@@ -634,7 +636,7 @@ export default function EmployeesPage() {
                             onClick={() => handleDelete(employee.employeeId)}
                             className="text-red-600 border-red-200 hover:bg-red-50"
                           >
-                            🗑️
+                            <Trash2 className="w-4 h-4" />
                           </Button>
                         </div>
                       </CardContent>

@@ -16,6 +16,16 @@ import {
   LineElement,
 } from 'chart.js';
 import { Bar, Doughnut, Line } from 'react-chartjs-2';
+import { 
+  FileText, 
+  Users, 
+  MapPin, 
+  Target, 
+  TrendingUp,
+  User,
+  Calendar,
+  Building
+} from 'lucide-react';
 
 ChartJS.register(
   CategoryScale,
@@ -288,7 +298,7 @@ export default function DashboardPage() {
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-orange-100">Total Complaints</CardTitle>
               <div className="h-8 w-8 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
-                📋
+                <FileText className="w-4 h-4" />
               </div>
             </CardHeader>
             <CardContent>
@@ -306,7 +316,7 @@ export default function DashboardPage() {
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-orange-100">Active Employees</CardTitle>
               <div className="h-8 w-8 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
-                👥
+                <Users className="w-4 h-4" />
               </div>
             </CardHeader>
             <CardContent>
@@ -324,7 +334,7 @@ export default function DashboardPage() {
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-orange-100">Territories</CardTitle>
               <div className="h-8 w-8 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
-                🗺️
+                <MapPin className="w-4 h-4" />
               </div>
             </CardHeader>
             <CardContent>
@@ -342,7 +352,7 @@ export default function DashboardPage() {
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-orange-100">Assignments</CardTitle>
               <div className="h-8 w-8 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
-                🎯
+                <Target className="w-4 h-4" />
               </div>
             </CardHeader>
             <CardContent>
@@ -398,7 +408,7 @@ export default function DashboardPage() {
           <Card className="shadow-xl border-0">
             <CardHeader>
               <CardTitle className="text-lg font-semibold text-gray-800 flex items-center">
-                <span className="mr-2">📈</span>
+                <TrendingUp className="mr-2 w-5 h-5" />
                 Complaint Trends
                 <span className="ml-2 text-sm font-normal text-gray-500">
                   (Last 6 Months)
@@ -430,7 +440,7 @@ export default function DashboardPage() {
           <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle className="text-lg font-semibold text-gray-800 flex items-center">
-                  <span className="mr-2">📋</span>
+                  <FileText className="mr-2 w-5 h-5" />
                   Recent Complaints
                   {stats.recentComplaints.length > 0 && (
                     <span className="ml-2 text-sm font-normal text-gray-500">
@@ -484,7 +494,7 @@ export default function DashboardPage() {
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="flex items-center">
                               <div className="bg-orange-100 p-2 rounded-full mr-3 flex-shrink-0">
-                                <span className="text-orange-600 text-sm">👤</span>
+                                <User className="w-4 h-4 text-orange-600" />
                               </div>
                               <div>
                                 <div className="text-sm font-medium text-gray-900">
@@ -503,7 +513,7 @@ export default function DashboardPage() {
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="flex items-center text-sm text-gray-600">
-                              <span className="mr-1">📍</span>
+                              <MapPin className="mr-1 w-4 h-4" />
                               {complaint.territory?.territoryName || 'Unknown'}
                             </div>
                           </td>
@@ -513,14 +523,15 @@ export default function DashboardPage() {
                             </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm text-gray-900">
+                            <div className="flex items-center text-sm text-gray-900">
+                              <Calendar className="mr-1 w-4 h-4" />
                               {complaint.complaintDate ? 
                                 new Date(complaint.complaintDate).toLocaleDateString() : 'No date'}
                             </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-center">
                             <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
-                              <span className="mr-1">🆕</span>
+                              <div className="w-2 h-2 bg-orange-600 rounded-full mr-1"></div>
                               New
                             </span>
                           </td>
@@ -531,7 +542,9 @@ export default function DashboardPage() {
                 </div>
               ) : (
                 <div className="text-center py-12 text-gray-500">
-                  <div className="text-6xl mb-4">📝</div>
+                  <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <FileText className="w-8 h-8 text-gray-400" />
+                  </div>
                   <h3 className="text-xl font-semibold text-gray-800 mb-2">No complaints yet</h3>
                   <p className="text-gray-600 mb-4">Complaints will appear here when submitted through your forms</p>
                   <div className="bg-orange-50 p-4 rounded-lg max-w-md mx-auto">
