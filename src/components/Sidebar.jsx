@@ -68,14 +68,14 @@ export default function Sidebar() {
 
       {/* Sidebar */}
       <div className={cn(
-        "bg-orange-600 text-white flex flex-col shadow-lg transition-transform duration-300 ease-in-out z-50",
+        "bg-white text-gray-800 flex flex-col shadow-lg transition-transform duration-300 ease-in-out z-50 border-r border-gray-200",
         // Desktop styles - fixed position to stay in place during scroll
         "lg:w-64 lg:fixed lg:top-0 lg:left-0 lg:translate-x-0 lg:h-screen lg:min-h-full",
         // Mobile styles
         "fixed top-0 left-0 h-screen w-80 max-w-[80vw]",
         isMobileMenuOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
       )}>
-        <div className="p-6 border-b border-orange-500">
+        <div className="p-6 border-b border-gray-200">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <img 
@@ -87,14 +87,14 @@ export default function Sidebar() {
                   e.target.nextSibling.style.display = 'block';
                 }}
               />
-              <h1 className="text-xl font-bold text-white" style={{display: 'none'}}>
-                
+              <h1 className="text-xl font-bold text-gray-800" style={{display: 'none'}}>
+                 
               </h1>
             </div>
             {/* Close button for mobile */}
             <button
               onClick={() => setIsMobileMenuOpen(false)}
-              className="lg:hidden text-orange-200 hover:text-white"
+              className="lg:hidden text-gray-500 hover:text-gray-700"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -112,14 +112,14 @@ export default function Sidebar() {
                 className={cn(
                   "flex items-center px-4 py-3 rounded-lg text-sm font-medium transition-colors group",
                   pathname === link.href
-                    ? "bg-orange-700 text-white"
-                    : "text-orange-100 hover:bg-orange-700 hover:text-white"
+                    ? "bg-orange-600 text-white"
+                    : "text-gray-700 hover:bg-orange-50 hover:text-orange-600"
                 )}
               >
                 <span className="mr-3 text-lg">{link.icon}</span>
                 <span>{link.label}</span>
                 {pathname === link.href && (
-                  <div className="ml-auto w-2 h-2 bg-white rounded-full"></div>
+                  <div className="ml-auto w-2 h-2 bg-orange-600 rounded-full"></div>
                 )}
               </Link>
             ))}
@@ -127,8 +127,8 @@ export default function Sidebar() {
 
           <div className="pt-6">
             <div className="flex items-center mb-3">
-              <span className="text-orange-200 text-xs uppercase font-semibold">Settings</span>
-              <div className="flex-1 ml-3 border-t border-orange-500"></div>
+              <span className="text-gray-500 text-xs uppercase font-semibold">Settings</span>
+              <div className="flex-1 ml-3 border-t border-gray-200"></div>
             </div>
             <div className="space-y-1">
               {settings.map((link) => (
@@ -138,14 +138,14 @@ export default function Sidebar() {
                   className={cn(
                     "flex items-center px-4 py-3 rounded-lg text-sm font-medium transition-colors group",
                     pathname === link.href
-                      ? "bg-orange-700 text-white"
-                      : "text-orange-100 hover:bg-orange-700 hover:text-white"
+                      ? "bg-orange-600 text-white"
+                      : "text-gray-700 hover:bg-orange-50 hover:text-orange-600"
                   )}
                 >
                   <span className="mr-3 text-lg">{link.icon}</span>
                   <span>{link.label}</span>
                   {pathname === link.href && (
-                    <div className="ml-auto w-2 h-2 bg-white rounded-full"></div>
+                    <div className="ml-auto w-2 h-2 bg-orange-600 rounded-full"></div>
                   )}
                 </Link>
               ))}
@@ -153,14 +153,14 @@ export default function Sidebar() {
           </div>
         </nav>
 
-        <div className="p-4 border-t border-orange-500">
+        <div className="p-4 border-t border-gray-200">
           <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center">
-              <span className="text-orange-600 text-sm font-bold">SG</span>
+            <div className="w-8 h-8 bg-orange-600 rounded-full flex items-center justify-center">
+              <span className="text-white text-sm font-bold">SG</span>
             </div>
             <div>
-              <p className="text-sm font-medium text-white">Admin User</p>
-              <p className="text-xs text-orange-200">© {new Date().getFullYear()} Shanthi Gears</p>
+              <p className="text-sm font-medium text-gray-800">Admin User</p>
+              <p className="text-xs text-gray-500">© {new Date().getFullYear()} Shanthi Gears</p>
             </div>
           </div>
         </div>
