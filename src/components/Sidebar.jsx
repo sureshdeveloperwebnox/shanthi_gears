@@ -48,7 +48,7 @@ export default function Sidebar() {
       <div className="lg:hidden fixed top-4 left-4 z-50">
         <button
           onClick={toggleMobileMenu}
-          className="bg-gray-900 text-white p-3 rounded-lg shadow-lg hover:bg-gray-800 transition-colors"
+          className="bg-orange-600 text-white p-3 rounded-lg shadow-lg hover:bg-orange-700 transition-colors"
         >
           <div className="flex flex-col space-y-1">
             <div className={`w-5 h-0.5 bg-white transition-transform ${isMobileMenuOpen ? 'rotate-45 translate-y-1.5' : ''}`}></div>
@@ -68,27 +68,40 @@ export default function Sidebar() {
 
       {/* Sidebar */}
       <div className={cn(
-        "bg-gray-900 text-white flex flex-col shadow-lg transition-transform duration-300 ease-in-out z-50",
+        "bg-orange-600 text-white flex flex-col shadow-lg transition-transform duration-300 ease-in-out z-50",
         // Desktop styles - fixed position to stay in place during scroll
         "lg:w-64 lg:fixed lg:top-0 lg:left-0 lg:translate-x-0 lg:h-screen lg:min-h-full",
         // Mobile styles
         "fixed top-0 left-0 h-screen w-80 max-w-[80vw]",
         isMobileMenuOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
       )}>
-        <div className="p-6 border-b border-gray-700">
+        <div className="p-6 border-b border-orange-500">
           <div className="flex items-center justify-between">
-            <h1 className="text-xl font-bold">Shanthi Gears</h1>
+            <div className="flex items-center space-x-3">
+              <img 
+                src="/shanthi-logo.png" 
+                alt="Shanthi Gears Logo" 
+                className="h-12 w-auto object-contain"
+                onError={(e) => {
+                  e.target.style.display = 'none';
+                  e.target.nextSibling.style.display = 'block';
+                }}
+              />
+              <h1 className="text-xl font-bold text-white" style={{display: 'none'}}>
+                Shanthi Gears
+              </h1>
+            </div>
             {/* Close button for mobile */}
             <button
               onClick={() => setIsMobileMenuOpen(false)}
-              className="lg:hidden text-gray-400 hover:text-white"
+              className="lg:hidden text-orange-200 hover:text-white"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
           </div>
-          <p className="text-sm text-gray-400 mt-1">Management System</p>
+          <p className="text-sm text-orange-200 mt-2">Management System</p>
         </div>
 
         <nav className="flex-1 p-4 space-y-2 overflow-y-auto min-h-0">
@@ -100,14 +113,14 @@ export default function Sidebar() {
                 className={cn(
                   "flex items-center px-4 py-3 rounded-lg text-sm font-medium transition-colors group",
                   pathname === link.href
-                    ? "bg-gray-700 text-white"
-                    : "text-gray-300 hover:bg-gray-800 hover:text-white"
+                    ? "bg-orange-700 text-white"
+                    : "text-orange-100 hover:bg-orange-700 hover:text-white"
                 )}
               >
                 <span className="mr-3 text-lg">{link.icon}</span>
                 <span>{link.label}</span>
                 {pathname === link.href && (
-                  <div className="ml-auto w-2 h-2 bg-blue-400 rounded-full"></div>
+                  <div className="ml-auto w-2 h-2 bg-white rounded-full"></div>
                 )}
               </Link>
             ))}
@@ -115,8 +128,8 @@ export default function Sidebar() {
 
           <div className="pt-6">
             <div className="flex items-center mb-3">
-              <span className="text-gray-400 text-xs uppercase font-semibold">Settings</span>
-              <div className="flex-1 ml-3 border-t border-gray-700"></div>
+              <span className="text-orange-200 text-xs uppercase font-semibold">Settings</span>
+              <div className="flex-1 ml-3 border-t border-orange-500"></div>
             </div>
             <div className="space-y-1">
               {settings.map((link) => (
@@ -126,14 +139,14 @@ export default function Sidebar() {
                   className={cn(
                     "flex items-center px-4 py-3 rounded-lg text-sm font-medium transition-colors group",
                     pathname === link.href
-                      ? "bg-gray-700 text-white"
-                      : "text-gray-300 hover:bg-gray-800 hover:text-white"
+                      ? "bg-orange-700 text-white"
+                      : "text-orange-100 hover:bg-orange-700 hover:text-white"
                   )}
                 >
                   <span className="mr-3 text-lg">{link.icon}</span>
                   <span>{link.label}</span>
                   {pathname === link.href && (
-                    <div className="ml-auto w-2 h-2 bg-blue-400 rounded-full"></div>
+                    <div className="ml-auto w-2 h-2 bg-white rounded-full"></div>
                   )}
                 </Link>
               ))}
@@ -141,14 +154,14 @@ export default function Sidebar() {
           </div>
         </nav>
 
-        <div className="p-4 border-t border-gray-700">
+        <div className="p-4 border-t border-orange-500">
           <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
-              <span className="text-white text-sm font-bold">SG</span>
+            <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center">
+              <span className="text-orange-600 text-sm font-bold">SG</span>
             </div>
             <div>
               <p className="text-sm font-medium text-white">Admin User</p>
-              <p className="text-xs text-gray-400">© {new Date().getFullYear()} Shanthi Gears</p>
+              <p className="text-xs text-orange-200">© {new Date().getFullYear()} Shanthi Gears</p>
             </div>
           </div>
         </div>

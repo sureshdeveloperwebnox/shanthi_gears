@@ -162,8 +162,8 @@ export default function DashboardPage() {
         label: 'Employees per Territory',
         data: stats.territoryDistribution.map(t => t.count),
         backgroundColor: [
-          '#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6',
-          '#06B6D4', '#84CC16', '#F97316', '#EC4899', '#6366F1'
+          '#F97316', '#FB923C', '#FDBA74', '#FED7AA', '#FFEDD5',
+          '#F59E0B', '#FBBF24', '#FCD34D', '#FDE68A', '#FEF3C7'
         ],
         borderWidth: 2,
         borderColor: '#ffffff',
@@ -177,7 +177,7 @@ export default function DashboardPage() {
       {
         label: 'Employee Status',
         data: stats.employeeStats.map(s => s.count),
-        backgroundColor: ['#10B981', '#EF4444', '#F59E0B'],
+        backgroundColor: ['#F97316', '#FB923C', '#F59E0B'],
         borderWidth: 2,
         borderColor: '#ffffff',
       },
@@ -191,11 +191,11 @@ export default function DashboardPage() {
       {
         label: 'Complaints per Month',
         data: stats.complaintTrends.map(trend => trend.count),
-        borderColor: '#3B82F6',
-        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+        borderColor: '#F97316',
+        backgroundColor: 'rgba(249, 115, 22, 0.1)',
         tension: 0.4,
         fill: true,
-        pointBackgroundColor: '#3B82F6',
+        pointBackgroundColor: '#F97316',
         pointBorderColor: '#ffffff',
         pointBorderWidth: 2,
         pointRadius: 5,
@@ -266,7 +266,7 @@ export default function DashboardPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600"></div>
       </div>
     );
   }
@@ -283,17 +283,17 @@ export default function DashboardPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <Card 
             onClick={() => handleNavigation('/complaints')}
-            className="bg-gradient-to-r from-blue-500 to-blue-600 text-white border-0 shadow-xl hover:shadow-2xl transition-all duration-300 cursor-pointer transform hover:scale-105 active:scale-95"
+            className="bg-gradient-to-r from-orange-500 to-orange-600 text-white border-0 shadow-xl hover:shadow-2xl transition-all duration-300 cursor-pointer transform hover:scale-105 active:scale-95"
           >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-blue-100">Total Complaints</CardTitle>
+              <CardTitle className="text-sm font-medium text-orange-100">Total Complaints</CardTitle>
               <div className="h-8 w-8 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
                 📋
               </div>
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold">{stats.totalComplaints}</div>
-              <p className="text-xs text-blue-100 mt-1">
+              <p className="text-xs text-orange-100 mt-1">
                 {stats.totalComplaints > 0 ? 'Click to view details' : 'No complaints yet'}
               </p>
             </CardContent>
@@ -301,17 +301,17 @@ export default function DashboardPage() {
 
           <Card 
             onClick={() => handleNavigation('/employees')}
-            className="bg-gradient-to-r from-green-500 to-green-600 text-white border-0 shadow-xl hover:shadow-2xl transition-all duration-300 cursor-pointer transform hover:scale-105 active:scale-95"
+            className="bg-gradient-to-r from-orange-400 to-orange-500 text-white border-0 shadow-xl hover:shadow-2xl transition-all duration-300 cursor-pointer transform hover:scale-105 active:scale-95"
           >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-green-100">Active Employees</CardTitle>
+              <CardTitle className="text-sm font-medium text-orange-100">Active Employees</CardTitle>
               <div className="h-8 w-8 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
                 👥
               </div>
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold">{stats.activeEmployees}</div>
-              <p className="text-xs text-green-100 mt-1">
+              <p className="text-xs text-orange-100 mt-1">
                 {stats.totalEmployees > 0 ? 'Click to manage employees' : 'No employees yet'}
               </p>
             </CardContent>
@@ -319,17 +319,17 @@ export default function DashboardPage() {
 
           <Card 
             onClick={() => handleNavigation('/territories')}
-            className="bg-gradient-to-r from-purple-500 to-purple-600 text-white border-0 shadow-xl hover:shadow-2xl transition-all duration-300 cursor-pointer transform hover:scale-105 active:scale-95"
+            className="bg-gradient-to-r from-orange-300 to-orange-400 text-white border-0 shadow-xl hover:shadow-2xl transition-all duration-300 cursor-pointer transform hover:scale-105 active:scale-95"
           >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-purple-100">Territories</CardTitle>
+              <CardTitle className="text-sm font-medium text-orange-100">Territories</CardTitle>
               <div className="h-8 w-8 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
                 🗺️
               </div>
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold">{stats.totalTerritories}</div>
-              <p className="text-xs text-purple-100 mt-1">
+              <p className="text-xs text-orange-100 mt-1">
                 Click to view territories
               </p>
             </CardContent>
@@ -337,7 +337,7 @@ export default function DashboardPage() {
 
           <Card 
             onClick={() => handleNavigation('/employee-territories')}
-            className="bg-gradient-to-r from-orange-500 to-orange-600 text-white border-0 shadow-xl hover:shadow-2xl transition-all duration-300 cursor-pointer transform hover:scale-105 active:scale-95"
+            className="bg-gradient-to-r from-orange-600 to-orange-700 text-white border-0 shadow-xl hover:shadow-2xl transition-all duration-300 cursor-pointer transform hover:scale-105 active:scale-95"
           >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-orange-100">Assignments</CardTitle>
@@ -441,7 +441,7 @@ export default function DashboardPage() {
                 {stats.recentComplaints.length > 0 && (
                   <button
                     onClick={() => handleNavigation('/complaints')}
-                    className="text-sm text-blue-600 hover:text-blue-800 font-medium transition-colors"
+                    className="text-sm text-orange-600 hover:text-orange-800 font-medium transition-colors"
                   >
                     View All →
                   </button>
@@ -483,8 +483,8 @@ export default function DashboardPage() {
                         >
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="flex items-center">
-                              <div className="bg-blue-100 p-2 rounded-full mr-3 flex-shrink-0">
-                                <span className="text-blue-600 text-sm">👤</span>
+                              <div className="bg-orange-100 p-2 rounded-full mr-3 flex-shrink-0">
+                                <span className="text-orange-600 text-sm">👤</span>
                               </div>
                               <div>
                                 <div className="text-sm font-medium text-gray-900">
@@ -519,7 +519,7 @@ export default function DashboardPage() {
                             </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-center">
-                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
                               <span className="mr-1">🆕</span>
                               New
                             </span>
@@ -534,8 +534,8 @@ export default function DashboardPage() {
                   <div className="text-6xl mb-4">📝</div>
                   <h3 className="text-xl font-semibold text-gray-800 mb-2">No complaints yet</h3>
                   <p className="text-gray-600 mb-4">Complaints will appear here when submitted through your forms</p>
-                  <div className="bg-blue-50 p-4 rounded-lg max-w-md mx-auto">
-                    <p className="text-sm text-blue-800">
+                  <div className="bg-orange-50 p-4 rounded-lg max-w-md mx-auto">
+                    <p className="text-sm text-orange-800">
                       <span className="font-medium">Tip:</span> Recent complaints from your WordPress form submissions will be displayed here.
                     </p>
                   </div>
