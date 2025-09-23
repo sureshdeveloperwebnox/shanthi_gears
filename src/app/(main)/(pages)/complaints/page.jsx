@@ -43,10 +43,12 @@ export default function ComplaintsPage() {
       const data = await res.json();
       console.log('Fetched complaints data:', data);
       console.log('Data type:', typeof data, 'Is array:', Array.isArray(data));
+      console.log('Data content:', JSON.stringify(data, null, 2));
       
       if (Array.isArray(data)) {
         setComplaints(data);
-        console.log(`Successfully set ${data.length} complaints`);
+        console.log(`Successfully set ${data.length} complaints to state`);
+        console.log('Current complaints state after setting:', data);
       } else {
         console.warn('Data is not an array, setting empty array');
         setComplaints([]);
@@ -74,6 +76,7 @@ export default function ComplaintsPage() {
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
+      setError(null); // Clear any previous errors
       await Promise.all([
         fetchComplaints(),
         fetchTerritories()
@@ -83,6 +86,13 @@ export default function ComplaintsPage() {
     
     fetchData();
   }, []);
+
+  // Add debugging for complaints state changes
+  useEffect(() => {
+    console.log('Complaints state changed:', complaints);
+    console.log('Number of complaints:', complaints.length);
+    console.log('Complaints details:', JSON.stringify(complaints, null, 2));
+  }, [complaints]);
 
   // Helper function to format date for comparison
   const formatDateForComparison = (dateStr) => {
@@ -274,15 +284,64 @@ export default function ComplaintsPage() {
         {/* Main Content Card */}
         <Card className="shadow-2xl border-0 bg-white/80 backdrop-blur-sm">
           <CardHeader className="bg-gradient-to-r from-gray-50 to-gray-100 border-b">
-            <CardTitle className="text-2xl font-bold text-gray-800 flex items-center">
-              <span className="mr-3">📋</span>
-              Complaints List
-              {filteredComplaints.length > 0 && (
-                <span className="ml-3 text-sm font-normal text-gray-500">
-                  ({filteredComplaints.length} records)
+            <div className="flex justify-between items-center">
+              <CardTitle className="text-2xl font-bold text-gray-800 flex items-center">
+                <span className="mr-3">📋</span>
+                Complaints List
+                {filteredComplaints.length > 0 && (
+                  <span className="ml-3 text-sm font-normal text-gray-500">
+                    ({filteredComplaints.length} records)
+                  </span>
+                )}
+              </CardTitle>
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-600">
+                  Total: {complaints.length} complaints
                 </span>
-              )}
-            </CardTitle>
+                {complaints.length === 0 && (
+                  <Button
+                    onClick={async () => {
+                      console.log('Creating test data...');
+                      try {
+                        const res = await fetch('/api/complaints/test', {
+                          method: 'POST'
+                        });
+                        const result = await res.json();
+                        if (result.success) {
+                          console.log('Test data created successfully');
+                          await fetchComplaints();
+                        } else {
+                          console.error('Failed to create test data:', result.error);
+                        }
+                      } catch (err) {
+                        console.error('Error creating test data:', err);
+                      }
+                    }}
+                    variant="outline"
+                    size="sm"
+                    className="text-green-600 border-green-200 hover:bg-green-50"
+                  >
+                    <span className="mr-1">➕</span>
+                    Add Test Data
+                  </Button>
+                )}
+                <Button
+                  onClick={async () => {
+                    console.log('Manual refresh clicked');
+                    setLoading(true);
+                    setError(null);
+                    await fetchComplaints();
+                    setLoading(false);
+                  }}
+                  variant="outline"
+                  size="sm"
+                  className="text-orange-600 border-orange-200 hover:bg-orange-50"
+                >
+                  <span className="mr-1">🔄</span>
+                  Refresh
+                </Button>
+              </div>
+            </div>
           </CardHeader>
 
           <CardContent className="p-0">
