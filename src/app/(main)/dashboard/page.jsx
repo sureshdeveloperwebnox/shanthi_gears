@@ -138,9 +138,7 @@ export default function DashboardPage() {
         territoryDistribution,
         employeeStats: [
           { status: 'Active', count: activeEmployees },
-          { status: 'Inactive', count: Array.isArray(employees) ? employees.filter(emp => emp.status === 'INACTIVE').length : 0 },
-          { status: 'Suspended', count: Array.isArray(employees) ? employees.filter(emp => emp.status === 'SUSPENDED').length : 0 }
-        ],
+          { status: 'Inactive', count: Array.isArray(employees) ? employees.filter(emp => emp.status === 'INACTIVE').length : 0 }        ],
         complaintTrends
       });
     } catch (error) {
@@ -155,7 +153,6 @@ export default function DashboardPage() {
     labels: stats.territoryDistribution.map(t => t.name),
     datasets: [
       {
-        label: 'Employees per Territory',
         data: stats.territoryDistribution.map(t => t.count),
         backgroundColor: [
           '#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6',
