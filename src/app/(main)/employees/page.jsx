@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import axios from "axios";
+import toast, { Toaster } from "react-hot-toast";
 import {
   Card,
   CardHeader,
@@ -90,10 +91,18 @@ export default function EmployeesPage() {
       if (editingEmployee) {
         // Update
         await axios.put("/api/employees", { ...data, employeeId: editingEmployee.employeeId });
+        toast.success(`Employee "${data.fullName}" updated successfully!`, {
+          duration: 4000,
+          icon: '✅',
+        });
         fetchEmployees();
       } else {
         // Create
         await axios.post("/api/employees", data);
+        toast.success(`Employee "${data.fullName}" created successfully!`, {
+          duration: 4000,
+          icon: '🎉',
+        });
         fetchEmployees();
       }
       reset();
@@ -101,7 +110,12 @@ export default function EmployeesPage() {
       setOpen(false);
     } catch (error) {
       console.error("Error saving employee:", error);
-      setError(error.response?.data?.error || "Failed to save employee");
+      const errorMessage = error.response?.data?.error || "Failed to save employee";
+      setError(errorMessage);
+      toast.error(errorMessage, {
+        duration: 5000,
+        icon: '❌',
+      });
     }
   };
 
@@ -112,13 +126,25 @@ export default function EmployeesPage() {
   };
 
   const handleDelete = async (empId) => {
-    if (!confirm("Are you sure you want to delete this employee?")) return;
+    const employee = employees.find(emp => emp.employeeId === empId);
+    const employeeName = employee?.fullName || 'Unknown';
+    
+    if (!confirm(`Are you sure you want to delete employee "${employeeName}"?`)) return;
     try {
       await axios.delete("/api/employees", { data: { employeeId: empId } });
+      toast.success(`Employee "${employeeName}" deleted successfully!`, {
+        duration: 4000,
+        icon: '🗑️',
+      });
       fetchEmployees();
     } catch (error) {
       console.error("Error deleting employee:", error);
-      setError(error.response?.data?.error || "Failed to delete employee");
+      const errorMessage = error.response?.data?.error || "Failed to delete employee as it has territories assigned to it";
+      setError(errorMessage);
+      toast.error(errorMessage, {
+        duration: 5000,
+        icon: '❌',
+      });
     }
   };
 
@@ -128,10 +154,22 @@ export default function EmployeesPage() {
         employeeId: empId, 
         status: newStatus 
       });
+      const employee = employees.find(emp => emp.employeeId === empId);
+      const employeeName = employee?.fullName || 'Unknown';
+      
+      toast.success(`Employee "${employeeName}" ${newStatus === 'ACTIVE' ? 'activated' : 'deactivated'} successfully!`, {
+        duration: 4000,
+        icon: newStatus === 'ACTIVE' ? '✅' : '⏸️',
+      });
       fetchEmployees();
     } catch (error) {
       console.error("Error updating employee status:", error);
-      setError(error.response?.data?.error || "Failed to update employee status");
+      const errorMessage = error.response?.data?.error || "Failed to update employee status";
+      setError(errorMessage);
+      toast.error(errorMessage, {
+        duration: 5000,
+        icon: '❌',
+      });
     }
   };
 
@@ -651,6 +689,30 @@ export default function EmployeesPage() {
           </CardContent>
         </Card>
       </div>
+      <Toaster 
+        position="top-right"
+        toastOptions={{
+          duration: 4000,
+          style: {
+            background: '#363636',
+            color: '#fff',
+          },
+          success: {
+            duration: 4000,
+            iconTheme: {
+              primary: '#4ade80',
+              secondary: '#fff',
+            },
+          },
+          error: {
+            duration: 5000,
+            iconTheme: {
+              primary: '#ef4444',
+              secondary: '#fff',
+            },
+          },
+        }}
+      />
     </div>
   );
 }

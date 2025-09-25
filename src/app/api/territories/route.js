@@ -62,6 +62,38 @@ export async function PUT(req) {
   }
 }
 
+// ADDED FOR DEACTIVATE FUNCTIONALITY - START
+// PATCH territory status (toggle active/inactive)
+export async function PATCH(req) {
+  try {
+    const body = await req.json();
+    if (!body.territoryId)
+      return NextResponse.json({ error: "Territory ID required" }, { status: 400, headers: corsHeaders });
+
+    // Get current territory status
+    const territory = await prisma.territories.findUnique({
+      where: { territoryId: body.territoryId }
+    });
+
+    if (!territory) {
+      return NextResponse.json({ error: "Territory not found" }, { status: 404, headers: corsHeaders });
+    }
+
+    // Toggle status
+    const newStatus = territory.status === "ACTIVE" ? "INACTIVE" : "ACTIVE";
+    
+    const updated = await prisma.territories.update({
+      where: { territoryId: body.territoryId },
+      data: { status: newStatus },
+    });
+    
+    return NextResponse.json(updated, { headers: corsHeaders });
+  } catch (err) {
+    return NextResponse.json({ error: err.message }, { status: 500, headers: corsHeaders });
+  }
+}
+// ADDED FOR DEACTIVATE FUNCTIONALITY - END
+
 // DELETE territory
 export async function DELETE(req) {
   try {

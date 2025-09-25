@@ -63,6 +63,7 @@ model Roles {
 model Territories {
   territoryId   Int      @id @default(autoincrement())
   territoryName String   @unique
+  status        String   @default("ACTIVE") // ACTIVE or INACTIVE // ADDED FOR DEACTIVATE FUNCTIONALITY
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 

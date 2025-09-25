@@ -98,14 +98,14 @@ export default function SettingsPage() {
                 <label className="block text-sm font-medium mb-1">Email</label>
                 <p className="p-2 bg-gray-100 rounded">{session?.user?.email || 'N/A'}</p>
               </div>
-              <div>
+              {/* <div>
                 <label className="block text-sm font-medium mb-1">User ID</label>
                 <p className="p-2 bg-gray-100 rounded">{session?.user?.id || 'N/A'}</p>
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1">Role ID</label>
                 <p className="p-2 bg-gray-100 rounded">{session?.user?.roleId || 'N/A'}</p>
-              </div>
+              </div> */}
             </div>
           </CardContent>
         </Card>

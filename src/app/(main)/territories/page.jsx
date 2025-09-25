@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import axios from "axios";
+import toast, { Toaster } from "react-hot-toast";
 import {
   Card,
   CardHeader,
@@ -30,7 +31,11 @@ import {
   BarChart3, 
   AlertCircle, 
   CheckCircle, 
-  X
+  X,
+  ToggleLeft,
+  ToggleRight,
+  Eye,
+  EyeOff // ADDED FOR DEACTIVATE FUNCTIONALITY
 } from "lucide-react";
 
 // validation schema
@@ -45,6 +50,7 @@ export default function TerritoriesPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("ALL"); // ALL, ACTIVE, INACTIVE // ADDED FOR DEACTIVATE FUNCTIONALITY
 
   const {
     register,
@@ -83,8 +89,16 @@ export default function TerritoriesPage() {
           ...data,
           territoryId: editingTerritory.territoryId,
         });
+        toast.success(`Territory "${data.territoryName}" updated successfully!`, {
+          duration: 4000,
+          icon: '✅',
+        });
       } else {
         await axios.post("/api/territories", data);
+        toast.success(`Territory "${data.territoryName}" created successfully!`, {
+          duration: 4000,
+          icon: '🎉',
+        });
       }
       fetchTerritories();
       reset();
@@ -92,7 +106,12 @@ export default function TerritoriesPage() {
       setOpen(false);
     } catch (error) {
       console.error("Error saving territory:", error);
-      setError(error.response?.data?.error || "Failed to save territory");
+      const errorMessage = error.response?.data?.error || "Failed to save territory";
+      setError(errorMessage);
+      toast.error(errorMessage, {
+        duration: 5000,
+        icon: '❌',
+      });
     }
   };
 
@@ -102,21 +121,36 @@ export default function TerritoriesPage() {
     setOpen(true);
   };
 
-  const handleDelete = async (territoryId) => {
-    if (!confirm("Are you sure you want to delete this territory?")) return;
+  // ADDED FOR DEACTIVATE FUNCTIONALITY - START
+  const handleToggleStatus = async (territoryId) => {
     try {
-      await axios.delete("/api/territories", { data: { territoryId } });
+      const response = await axios.patch("/api/territories", { territoryId });
+      const territory = territories.find(t => t.territoryId === territoryId);
+      const newStatus = response.data.status;
+      
+      toast.success(`Territory "${territory?.territoryName || 'Unknown'}" ${newStatus === 'ACTIVE' ? 'activated' : 'deactivated'} successfully!`, {
+        duration: 4000,
+        icon: newStatus === 'ACTIVE' ? '✅' : '⏸️',
+      });
       fetchTerritories();
     } catch (error) {
-      console.error("Error deleting territory:", error);
-      setError(error.response?.data?.error || "Failed to delete territory");
+      console.error("Error toggling territory status:", error);
+      const errorMessage = error.response?.data?.error || "Failed to update territory status";
+      setError(errorMessage);
+      toast.error(errorMessage, {
+        duration: 5000,
+        icon: '❌',
+      });
     }
   };
+  // ADDED FOR DEACTIVATE FUNCTIONALITY - END
 
-  // Filter territories based on search term
-  const filteredTerritories = territories.filter(territory =>
-    territory.territoryName.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Filter territories based on search term and status // ADDED FOR DEACTIVATE FUNCTIONALITY
+  const filteredTerritories = territories.filter(territory => {
+    const matchesSearch = territory.territoryName.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus = statusFilter === "ALL" || territory.status === statusFilter; // ADDED FOR DEACTIVATE FUNCTIONALITY
+    return matchesSearch && matchesStatus;
+  });
 
   if (loading) {
     return (
@@ -185,6 +219,17 @@ export default function TerritoriesPage() {
                     className="pl-10 pr-4 py-2 w-full sm:w-64 border-gray-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-200"
                   />
                 </div>
+
+                {/* Status Filter - ADDED FOR DEACTIVATE FUNCTIONALITY */}
+                <select
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                  className="px-3 py-2 border border-gray-300 rounded-md focus:border-orange-500 focus:ring-2 focus:ring-orange-200 bg-white"
+                >
+                  <option value="ALL">All Territories</option>
+                  <option value="ACTIVE">Active Only</option>
+                  <option value="INACTIVE">Inactive Only</option>
+                </select>
 
                 {/* Add Territory Button */}
                 <Dialog open={open} onOpenChange={setOpen}>
@@ -289,6 +334,9 @@ export default function TerritoriesPage() {
                           Territory
                         </th>
                         <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Status {/* ADDED FOR DEACTIVATE FUNCTIONALITY */}
+                        </th>
+                        <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Created
                         </th>
                         <th className="px-6 py-4 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -316,6 +364,17 @@ export default function TerritoriesPage() {
                               </div>
                             </div>
                           </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            {/* ADDED FOR DEACTIVATE FUNCTIONALITY - START */}
+                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                              territory.status === 'ACTIVE' 
+                                ? 'bg-green-100 text-green-800' 
+                                : 'bg-red-100 text-red-800'
+                            }`}>
+                              {territory.status === 'ACTIVE' ? '🟢 Active' : '🔴 Inactive'}
+                            </span>
+                            {/* ADDED FOR DEACTIVATE FUNCTIONALITY - END */}
+                          </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                             {territory.createdAt ? 
                               new Date(territory.createdAt).toLocaleDateString() : 
@@ -333,15 +392,30 @@ export default function TerritoriesPage() {
                                 <Edit className="mr-1 w-4 h-4" />
                                 Edit
                               </Button>
+                              {/* ADDED FOR DEACTIVATE FUNCTIONALITY - START */}
                               <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() => handleDelete(territory.territoryId)}
-                                className="text-red-600 border-red-200 hover:bg-red-50 hover:border-red-300 transition-all duration-200"
+                                onClick={() => handleToggleStatus(territory.territoryId)}
+                                className={`transition-all duration-200 ${
+                                  territory.status === 'ACTIVE'
+                                    ? 'text-red-600 border-red-200 hover:bg-red-50 hover:border-red-300'
+                                    : 'text-green-600 border-green-200 hover:bg-green-50 hover:border-green-300'
+                                }`}
                               >
-                                <Trash2 className="mr-1 w-4 h-4" />
-                                Delete
+                                {territory.status === 'ACTIVE' ? (
+                                  <>
+                                    <EyeOff className="mr-1 w-4 h-4" />
+                                    Deactivate
+                                  </>
+                                ) : (
+                                  <>
+                                    <Eye className="mr-1 w-4 h-4" />
+                                    Activate
+                                  </>
+                                )}
                               </Button>
+                              {/* ADDED FOR DEACTIVATE FUNCTIONALITY - END */}
                             </div>
                           </td>
                         </tr>
@@ -366,7 +440,18 @@ export default function TerritoriesPage() {
                             </div>
                             <div>
                               <h3 className="font-semibold text-gray-900">{territory.territoryName}</h3>
-                              <p className="text-sm text-gray-500">ID: {territory.territoryId}</p>
+                              <div className="flex items-center gap-2">
+                                {/* ADDED FOR DEACTIVATE FUNCTIONALITY - START */}
+                                <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                                  territory.status === 'ACTIVE' 
+                                    ? 'bg-green-100 text-green-800' 
+                                    : 'bg-red-100 text-red-800'
+                                }`}>
+                                  {territory.status === 'ACTIVE' ? '🟢 Active' : '🔴 Inactive'}
+                                </span>
+                                {/* ADDED FOR DEACTIVATE FUNCTIONALITY - END */}
+                                <p className="text-sm text-gray-500">ID: {territory.territoryId}</p>
+                              </div>
                             </div>
                           </div>
                         </div>
@@ -386,14 +471,24 @@ export default function TerritoriesPage() {
                             >
                               <Edit className="w-4 h-4" />
                             </Button>
+                            {/* ADDED FOR DEACTIVATE FUNCTIONALITY - START */}
                             <Button
                               variant="outline"
                               size="sm"
-                              onClick={() => handleDelete(territory.territoryId)}
-                              className="text-red-600 border-red-200 hover:bg-red-50"
+                              onClick={() => handleToggleStatus(territory.territoryId)}
+                              className={`${
+                                territory.status === 'ACTIVE'
+                                  ? 'text-red-600 border-red-200 hover:bg-red-50'
+                                  : 'text-green-600 border-green-200 hover:bg-green-50'
+                              }`}
                             >
-                              <Trash2 className="w-4 h-4" />
+                              {territory.status === 'ACTIVE' ? (
+                                <EyeOff className="w-4 h-4" />
+                              ) : (
+                                <Eye className="w-4 h-4" />
+                              )}
                             </Button>
+                            {/* ADDED FOR DEACTIVATE FUNCTIONALITY - END */}
                           </div>
                         </div>
                       </CardContent>
@@ -405,6 +500,30 @@ export default function TerritoriesPage() {
           </CardContent>
         </Card>
       </div>
+      <Toaster 
+        position="top-right"
+        toastOptions={{
+          duration: 4000,
+          style: {
+            background: '#363636',
+            color: '#fff',
+          },
+          success: {
+            duration: 4000,
+            iconTheme: {
+              primary: '#4ade80',
+              secondary: '#fff',
+            },
+          },
+          error: {
+            duration: 5000,
+            iconTheme: {
+              primary: '#ef4444',
+              secondary: '#fff',
+            },
+          },
+        }}
+      />
     </div>
   );
 }

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import axios from "axios";
+import toast, { Toaster } from "react-hot-toast";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -179,6 +180,24 @@ export default function EmployeeTerritoriesPage() {
       // Refresh the assignments list
       await fetchAssignments();
       
+      // Show success message
+      const employeeName = employees.find(emp => emp.employeeId === data.employeeId)?.fullName || 'Employee';
+      const territoryNames = data.territoryIds.map(id => 
+        territories.find(t => t.territoryId === id)?.territoryName
+      ).filter(Boolean);
+      
+      if (editing) {
+        toast.success(`Territories updated for ${employeeName} successfully!`, {
+          duration: 4000,
+          icon: '✅',
+        });
+      } else {
+        toast.success(`${employeeName} assigned to ${territoryNames.length} territories successfully!`, {
+          duration: 4000,
+          icon: '🎯',
+        });
+      }
+      
       // Reset form and close dialog
       handleFormReset();
       setOpen(false);
@@ -187,11 +206,12 @@ export default function EmployeeTerritoriesPage() {
       console.error("Error saving assignment:", error);
       
       // Handle specific error messages
-      if (error.response?.data?.error) {
-        setError(error.response.data.error);
-      } else {
-        setError("Failed to save assignment. Please try again.");
-      }
+      const errorMessage = error.response?.data?.error || "Failed to save assignment. Please try again.";
+      setError(errorMessage);
+      toast.error(errorMessage, {
+        duration: 5000,
+        icon: '❌',
+      });
     } finally {
       setSubmitting(false);
     }
@@ -232,20 +252,32 @@ export default function EmployeeTerritoriesPage() {
   };
 
   const handleDelete = async (employeeId) => {
-    if (!confirm("Are you sure you want to delete all territory assignments for this employee?")) return;
+    const employee = employees.find(emp => emp.employeeId === employeeId);
+    const employeeName = employee?.fullName || 'Employee';
+    const employeeAssignments = assignments.filter(a => a.employeeId === employeeId);
+    
+    if (!confirm(`Are you sure you want to delete all territory assignments for ${employeeName}?`)) return;
     
     try {
       // Delete all assignments for this employee
-      const employeeAssignments = assignments.filter(a => a.employeeId === employeeId);
-      
       for (const assignment of employeeAssignments) {
         await axios.delete("/api/employee-territories", { data: { id: assignment.id } });
       }
       
+      toast.success(`All territory assignments removed for ${employeeName} successfully!`, {
+        duration: 4000,
+        icon: '🗑️',
+      });
+      
       fetchAssignments();
     } catch (error) {
       console.error("Error deleting assignments:", error);
-      setError("Failed to delete assignments. Please try again.");
+      const errorMessage = error.response?.data?.error || "Failed to delete assignments. Please try again.";
+      setError(errorMessage);
+      toast.error(errorMessage, {
+        duration: 5000,
+        icon: '❌',
+      });
     }
   };
 
@@ -582,6 +614,9 @@ export default function EmployeeTerritoriesPage() {
                         <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/4">
                           Email
                         </th>
+                        <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/6">
+                          Status
+                        </th>
                         <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/3">
                           Assigned Territories
                         </th>
@@ -614,6 +649,24 @@ export default function EmployeeTerritoriesPage() {
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                             {group.employee?.email || 'N/A'}
                           </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            {group.employee?.status && (
+                              <span
+                                className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                  group.employee.status === 'ACTIVE'
+                                    ? 'bg-green-100 text-green-800'
+                                    : group.employee.status === 'INACTIVE'
+                                    ? 'bg-red-100 text-red-800'
+                                    : 'bg-yellow-100 text-yellow-800'
+                                }`}
+                              >
+                                {group.employee.status === 'ACTIVE' && <CheckCircle className="w-3 h-3 mr-1" />}
+                                {group.employee.status === 'INACTIVE' && <X className="w-3 h-3 mr-1" />}
+                                {/* {group.employee.status === 'SUSPENDED' && <Pause className="w-3 h-3 mr-1" />} */}
+                                {group.employee.status}
+                              </span>
+                            )}
+                          </td>
                           <td className="px-6 py-4">
                             <div className="flex flex-wrap gap-1">
                               {group.territories.map((territory, index) => {
@@ -631,16 +684,16 @@ export default function EmployeeTerritoriesPage() {
                                   >
                                     <MapPin className="mr-1 w-3 h-3" />
                                     {territory?.territoryName || 'Unknown'}
-                                    {otherAssignments.length > 0 && (
+                                    {/* {otherAssignments.length > 0 && (
                                       <span className="ml-1 text-orange-600">({otherAssignments.length + 1})</span>
-                                    )}
+                                    )} */}
                                   </span>
                                 );
                               })}
                             </div>
-                            <div className="text-xs text-gray-500 mt-1">
+                            {/* <div className="text-xs text-gray-500 mt-1">
                               {group.territories.length} territory{group.territories.length !== 1 ? 'ies' : ''}
-                            </div>
+                            </div> */}
                           </td>
                           <td className="px-4 py-4 whitespace-nowrap text-center text-sm font-medium">
                             <div className="flex flex-col space-y-1 min-w-[120px]">
@@ -693,7 +746,7 @@ export default function EmployeeTerritoriesPage() {
                               <span
                                 className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium flex-shrink-0 ml-2 ${
                                   group.employee.status === 'ACTIVE'
-                                    ? 'bg-orange-100 text-orange-800'
+                                    ? 'bg-green-100 text-green-800'
                                     : group.employee.status === 'INACTIVE'
                                     ? 'bg-red-100 text-red-800'
                                     : 'bg-yellow-100 text-yellow-800'
@@ -701,6 +754,7 @@ export default function EmployeeTerritoriesPage() {
                               >
                                 {group.employee.status === 'ACTIVE' && <CheckCircle className="w-4 h-4" />}
                                 {group.employee.status === 'INACTIVE' && <X className="w-4 h-4" />}
+                                {group.employee.status === 'SUSPENDED' && <Pause className="w-4 h-4" />}
                                 <span className="ml-1">{group.employee.status}</span>
                               </span>
                             )}
@@ -764,6 +818,30 @@ export default function EmployeeTerritoriesPage() {
           </CardContent>
         </Card>
       </div>
+      <Toaster 
+        position="top-right"
+        toastOptions={{
+          duration: 4000,
+          style: {
+            background: '#363636',
+            color: '#fff',
+          },
+          success: {
+            duration: 4000,
+            iconTheme: {
+              primary: '#4ade80',
+              secondary: '#fff',
+            },
+          },
+          error: {
+            duration: 5000,
+            iconTheme: {
+              primary: '#ef4444',
+              secondary: '#fff',
+            },
+          },
+        }}
+      />
     </div>
   );
 }

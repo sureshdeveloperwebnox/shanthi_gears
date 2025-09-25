@@ -5,7 +5,6 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils"; // shadcn utility
-import LogoutButton from "./LogoutButton";
 
 // SVG Icons
 const DashboardIcon = () => (
@@ -214,7 +213,6 @@ export default function Sidebar({ session }) {
             </div>
           </div>
           <div className="space-y-2">
-            <LogoutButton />
             <p className="text-xs text-gray-500 text-center">
               © {new Date().getFullYear()} Shanthi Gears
             </p>
