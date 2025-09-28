@@ -754,8 +754,8 @@ export async function sendUserThankYouEmail(complaintData, territoryName) {
   }
 }
 
-// Function to send complaint notification email
-export async function sendComplaintNotification(complaintData, employeeData, territoryName) {
+// Function to send complaint notification email to multiple employees
+export async function sendComplaintNotification(complaintData, employeesData, territoryName) {
   try {
     // Check if SMTP credentials are configured
     if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
@@ -763,23 +763,54 @@ export async function sendComplaintNotification(complaintData, employeeData, ter
       return { success: false, error: 'SMTP credentials not configured' };
     }
 
-    const emailTemplate = createComplaintEmailTemplate(complaintData, employeeData, territoryName);
+    // Ensure employeesData is an array
+    const employees = Array.isArray(employeesData) ? employeesData : [employeesData];
     
-    const mailOptions = {
+    if (employees.length === 0) {
+      console.warn('No employees provided for email notification');
+      return { success: false, error: 'No employees provided' };
+    }
+
+    const employeeEmails = employees.map(emp => emp.email).filter(email => email);
+    
+    const ccEmail = process.env.COMPLAINT_CC_EMAIL || 'swethabellan@gmail.com';
+    
+    const employeeEmailTemplate = createComplaintEmailTemplate(complaintData, employees[0], territoryName);
+    
+    const employeeMailOptions = {
       from: `"Shanthi Gears Complaint System" <${process.env.SMTP_USER}>`,
-      to: employeeData.email,
-      subject: emailTemplate.subject,
-      text: emailTemplate.text,
-      html: emailTemplate.html,
+      to: employeeEmails.join(', '),
+      subject: employeeEmailTemplate.subject,
+      text: employeeEmailTemplate.text,
+      html: employeeEmailTemplate.html,
     };
 
-    const result = await transporter.sendMail(mailOptions);
-    console.log('Complaint notification email sent successfully:', result.messageId);
+    const ccEmailTemplate = createCCComplaintEmailTemplate(complaintData, territoryName, employees);
+    
+    const ccMailOptions = {
+      from: `"Shanthi Gears Complaint System" <${process.env.SMTP_USER}>`,
+      to: ccEmail,
+      subject: ccEmailTemplate.subject,
+      text: ccEmailTemplate.text,
+      html: ccEmailTemplate.html,
+    };
+
+    const [employeeResult, ccResult] = await Promise.all([
+      transporter.sendMail(employeeMailOptions),
+      transporter.sendMail(ccMailOptions)
+    ]);
+
+    console.log('Employee notification email sent successfully:', employeeResult.messageId);
+    console.log(`Sent to employees: ${employeeEmails.join(', ')}`);
+    console.log('CC email with buttons sent successfully:', ccResult.messageId);
+    console.log(`CC sent to: ${ccEmail}`);
     
     return { 
       success: true, 
-      messageId: result.messageId,
-      recipient: employeeData.email 
+      employeeMessageId: employeeResult.messageId,
+      ccMessageId: ccResult.messageId,
+      recipients: employeeEmails,
+      cc: ccEmail
     };
   } catch (error) {
     console.error('Error sending complaint notification email:', error);
@@ -788,6 +819,473 @@ export async function sendComplaintNotification(complaintData, employeeData, ter
       error: error.message 
     };
   }
+}
+
+// Email template for CC recipients with accept/reject buttons
+export function createCCComplaintEmailTemplate(complaintData, territoryName, employeesList) {
+  const {
+    contactPersonName,
+    mailId,
+    mobileNumber,
+    companyName,
+    gearboxSerialNumber,
+    dateOfCommissioning,
+    complaintDate,
+    applicationDetails,
+    natureOfComplaintWithPhotos,
+    inputMotorDetailsKw,
+    inputOutputConnectionDetails,
+    oilLevelDetails,
+    gradeOfOilUsed,
+    conditionOfOil,
+    conditionOfBreather,
+    sedimentInOilBottom,
+    alignmentInputOutput,
+    runningHoursPerDay,
+    startStopPerDay,
+    dismantledBeforeFailure,
+    ambientConditions,
+    loadSpectrum,
+    forcedLubricationPhotos,
+    conditionOfOtherParts,
+    lubricationCheckDetails,
+    inputSpeedDetails,
+    failureHistoryDetails
+  } = complaintData;
+
+  const formatDate = (date) => {
+    if (!date) return 'Not provided';
+    return new Date(date).toLocaleDateString('en-IN', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  };
+
+  // Get base URL for buttons
+  const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
+  
+  // Create employee list for display
+  const employeeListHtml = employeesList.map(emp => 
+    `<li>${emp.fullName} (${emp.email})</li>`
+  ).join('');
+
+  return {
+    subject: `[ACTION REQUIRED] New Complaint - ${companyName} (${territoryName})`,
+    html: `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Complaint Supervision Required</title>
+        <style>
+          body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f4f4f4;
+          }
+          .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+          }
+          .header {
+            background-color: #dc2626;
+            color: white;
+            padding: 20px;
+            border-radius: 5px;
+            margin-bottom: 30px;
+            text-align: center;
+          }
+          .action-section {
+            background-color: #fef3c7;
+            border: 2px solid #f59e0b;
+            padding: 25px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            text-align: center;
+          }
+          .action-buttons {
+            margin: 20px 0;
+          }
+          .btn {
+            display: inline-block;
+            padding: 15px 30px;
+            margin: 0 10px;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+            font-size: 16px;
+            text-align: center;
+            cursor: pointer;
+          }
+          .btn-accept {
+            background-color: #059669;
+            color: white;
+          }
+          .btn-reject {
+            background-color: #dc2626;
+            color: white;
+          }
+          .btn:hover {
+            opacity: 0.9;
+          }
+          .section {
+            margin-bottom: 25px;
+            padding: 15px;
+            border-left: 4px solid #dc2626;
+            background-color: #f9f9f9;
+          }
+          .section h3 {
+            margin-top: 0;
+            color: #dc2626;
+            border-bottom: 2px solid #dc2626;
+            padding-bottom: 5px;
+          }
+          .field {
+            margin-bottom: 10px;
+          }
+          .field-label {
+            font-weight: bold;
+            color: #555;
+            display: inline-block;
+            width: 200px;
+          }
+          .field-value {
+            color: #333;
+          }
+          .employee-list {
+            background-color: #e0f2fe;
+            border-left: 4px solid #0ea5e9;
+            padding: 15px;
+            margin: 20px 0;
+          }
+          .employee-list ul {
+            margin: 10px 0;
+            padding-left: 20px;
+          }
+          .footer {
+            margin-top: 30px;
+            padding: 20px;
+            background-color: #f0f0f0;
+            border-radius: 5px;
+            text-align: center;
+            color: #666;
+          }
+          .urgent {
+            background-color: #fef2f2;
+            border-left-color: #dc2626;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>🚨 Complaint Supervision Required</h1>
+            <p>Territory: ${territoryName}</p>
+            <p>Complaint ID: ${complaintData.complaintId}</p>
+          </div>
+
+          <div class="action-section">
+            <h2>⚡ Action Required</h2>
+            <p><strong>A new complaint has been assigned to the following employees:</strong></p>
+            <div class="employee-list">
+              <h4>📋 Assigned Employees:</h4>
+              <ul>
+                ${employeeListHtml}
+              </ul>
+            </div>
+            <p>Please review the complaint details below and take appropriate action:</p>
+            <div class="action-buttons">
+              <a href="${baseUrl}/api/complaint-action?action=accept&complaintId=${complaintData.complaintId}&supervisorEmail=${encodeURIComponent(process.env.COMPLAINT_CC_EMAIL || 'swethabellan@gmail.com')}" class="btn btn-accept">
+                ✅ ACCEPT & SUPERVISE
+              </a>
+              <a href="${baseUrl}/api/complaint-action?action=reject&complaintId=${complaintData.complaintId}&supervisorEmail=${encodeURIComponent(process.env.COMPLAINT_CC_EMAIL || 'swethabellan@gmail.com')}" class="btn btn-reject">
+                ❌ REJECT
+              </a>
+            </div>
+            <p><em>Note: Clicking "Accept" will notify the assigned employees that you are supervising this complaint.</em></p>
+          </div>
+
+          <div class="section urgent">
+            <h3>📞 Contact Information</h3>
+            <div class="field">
+              <span class="field-label">Contact Person:</span>
+              <span class="field-value">${contactPersonName}</span>
+            </div>
+            <div class="field">
+              <span class="field-label">Email:</span>
+              <span class="field-value">${mailId}</span>
+            </div>
+            <div class="field">
+              <span class="field-label">Mobile:</span>
+              <span class="field-value">${mobileNumber}</span>
+            </div>
+            <div class="field">
+              <span class="field-label">Company:</span>
+              <span class="field-value">${companyName}</span>
+            </div>
+            <div class="field">
+              <span class="field-label">Complaint Date:</span>
+              <span class="field-value">${formatDate(complaintDate)}</span>
+            </div>
+          </div>
+
+          <div class="section">
+            <h3>⚙️ Gearbox Details</h3>
+            <div class="field">
+              <span class="field-label">Serial Number:</span>
+              <span class="field-value">${gearboxSerialNumber || 'Not provided'}</span>
+            </div>
+            <div class="field">
+              <span class="field-label">Date of Commissioning:</span>
+              <span class="field-value">${formatDate(dateOfCommissioning)}</span>
+            </div>
+            <div class="field">
+              <span class="field-label">Application Details:</span>
+              <span class="field-value">${applicationDetails || 'Not provided'}</span>
+            </div>
+            <div class="field">
+              <span class="field-label">Motor Details (kW):</span>
+              <span class="field-value">${inputMotorDetailsKw || 'Not provided'}</span>
+            </div>
+          </div>
+
+          <div class="section urgent">
+            <h3>🔧 Nature of Complaint</h3>
+            <div class="field">
+              <span class="field-value">${natureOfComplaintWithPhotos || 'Not provided'}</span>
+            </div>
+          </div>
+
+          <div class="footer">
+            <p><strong>Supervision Required:</strong> Please review this complaint and indicate your acceptance or rejection.</p>
+            <p>This is an automated notification from the Shanthi Gears Complaint Management System.</p>
+            <p>Generated on: ${new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `,
+    text: `
+COMPLAINT SUPERVISION REQUIRED - Territory: ${territoryName}
+
+ACTION REQUIRED:
+A new complaint has been assigned to the following employees:
+${employeesList.map(emp => `- ${emp.fullName} (${emp.email})`).join('\n')}
+
+Complaint ID: ${complaintData.complaintId}
+
+Contact Information:
+- Contact Person: ${contactPersonName}
+- Email: ${mailId}
+- Mobile: ${mobileNumber}
+- Company: ${companyName}
+- Complaint Date: ${formatDate(complaintDate)}
+
+Gearbox Details:
+- Serial Number: ${gearboxSerialNumber || 'Not provided'}
+- Date of Commissioning: ${formatDate(dateOfCommissioning)}
+- Application Details: ${applicationDetails || 'Not provided'}
+- Motor Details (kW): ${inputMotorDetailsKw || 'Not provided'}
+
+Nature of Complaint:
+${natureOfComplaintWithPhotos || 'Not provided'}
+
+To accept or reject this complaint supervision, please visit:
+Accept: ${baseUrl}/api/complaint-action?action=accept&complaintId=${complaintData.complaintId}&supervisorEmail=${encodeURIComponent(process.env.COMPLAINT_CC_EMAIL || 'swethabellan@gmail.com')}
+Reject: ${baseUrl}/api/complaint-action?action=reject&complaintId=${complaintData.complaintId}&supervisorEmail=${encodeURIComponent(process.env.COMPLAINT_CC_EMAIL || 'swethabellan@gmail.com')}
+
+This is an automated notification from the Shanthi Gears Complaint Management System.
+Generated on: ${new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}
+    `
+  };
+}
+
+// Email template for acceptance confirmation
+export function createAcceptanceConfirmationTemplate(complaintData, territoryName, supervisorEmail) {
+  const {
+    contactPersonName,
+    companyName,
+    complaintDate
+  } = complaintData;
+
+  const formatDate = (date) => {
+    if (!date) return 'Not provided';
+    return new Date(date).toLocaleDateString('en-IN', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  };
+
+  return {
+    subject: `✅ Complaint Supervision Accepted - ${companyName} (${territoryName})`,
+    html: `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Complaint Supervision Accepted</title>
+        <style>
+          body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f4f4f4;
+          }
+          .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+          }
+          .header {
+            background-color: #059669;
+            color: white;
+            padding: 25px;
+            border-radius: 5px;
+            margin-bottom: 30px;
+            text-align: center;
+          }
+          .success-section {
+            background-color: #ecfdf5;
+            border: 2px solid #059669;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            text-align: center;
+          }
+          .section {
+            margin-bottom: 25px;
+            padding: 15px;
+            border-left: 4px solid #059669;
+            background-color: #f9f9f9;
+          }
+          .section h3 {
+            margin-top: 0;
+            color: #059669;
+            border-bottom: 2px solid #059669;
+            padding-bottom: 5px;
+          }
+          .field {
+            margin-bottom: 10px;
+          }
+          .field-label {
+            font-weight: bold;
+            color: #555;
+            display: inline-block;
+            width: 150px;
+          }
+          .field-value {
+            color: #333;
+          }
+          .footer {
+            margin-top: 30px;
+            padding: 20px;
+            background-color: #f0f0f0;
+            border-radius: 5px;
+            text-align: center;
+            color: #666;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>✅ Supervision Accepted</h1>
+            <p>Complaint ID: ${complaintData.complaintId}</p>
+          </div>
+
+          <div class="success-section">
+            <h2>🎉 Great News!</h2>
+            <p><strong>Your complaint supervision has been accepted by:</strong></p>
+            <p style="font-size: 18px; color: #059669;"><strong>${supervisorEmail}</strong></p>
+            <p>The supervisor will now oversee the resolution of this complaint and ensure it receives proper attention.</p>
+          </div>
+
+          <div class="section">
+            <h3>📋 Complaint Summary</h3>
+            <div class="field">
+              <span class="field-label">Complaint ID:</span>
+              <span class="field-value">${complaintData.complaintId}</span>
+            </div>
+            <div class="field">
+              <span class="field-label">Customer:</span>
+              <span class="field-value">${contactPersonName}</span>
+            </div>
+            <div class="field">
+              <span class="field-label">Company:</span>
+              <span class="field-value">${companyName}</span>
+            </div>
+            <div class="field">
+              <span class="field-label">Territory:</span>
+              <span class="field-value">${territoryName}</span>
+            </div>
+            <div class="field">
+              <span class="field-label">Date:</span>
+              <span class="field-value">${formatDate(complaintDate)}</span>
+            </div>
+          </div>
+
+          <div class="section">
+            <h3>📞 Next Steps</h3>
+            <ul>
+              <li>The supervisor will coordinate with you on the resolution approach</li>
+              <li>You may receive additional instructions or requests for information</li>
+              <li>Please ensure timely response to any queries from the supervisor</li>
+              <li>Keep the supervisor updated on your progress</li>
+            </ul>
+          </div>
+
+          <div class="footer">
+            <p><strong>Thank you for your dedication to customer service!</strong></p>
+            <p>This is an automated notification from the Shanthi Gears Complaint Management System.</p>
+            <p>Generated on: ${new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `,
+    text: `
+COMPLAINT SUPERVISION ACCEPTED
+
+Complaint ID: ${complaintData.complaintId}
+
+Great News!
+Your complaint supervision has been accepted by: ${supervisorEmail}
+
+The supervisor will now oversee the resolution of this complaint and ensure it receives proper attention.
+
+Complaint Summary:
+- Complaint ID: ${complaintData.complaintId}
+- Customer: ${contactPersonName}
+- Company: ${companyName}
+- Territory: ${territoryName}
+- Date: ${formatDate(complaintDate)}
+
+Next Steps:
+- The supervisor will coordinate with you on the resolution approach
+- You may receive additional instructions or requests for information
+- Please ensure timely response to any queries from the supervisor
+- Keep the supervisor updated on your progress
+
+Thank you for your dedication to customer service!
+
+This is an automated notification from the Shanthi Gears Complaint Management System.
+Generated on: ${new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}
+    `
+  };
 }
 
 export default transporter;

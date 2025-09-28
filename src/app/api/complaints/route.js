@@ -226,8 +226,8 @@ export async function POST(req) {
         console.warn('Failed to send user thank you email:', userEmailResult.error);
       }
 
-      // Find employee assigned to this territory and send notification
-      const employeeAssignment = await prisma.employeeTerritories.findFirst({
+      // Find all employees assigned to this territory and send notification
+      const employeeAssignments = await prisma.employeeTerritories.findMany({
         where: { 
           territoryId: parseInt(finalTerritoryId),
           employee: {
@@ -239,22 +239,27 @@ export async function POST(req) {
         }
       });
 
-      if (employeeAssignment && employeeAssignment.employee) {
-        console.log(`Sending email notification to employee: ${employeeAssignment.employee.fullName} (${employeeAssignment.employee.email})`);
+      if (employeeAssignments && employeeAssignments.length > 0) {
+        const employees = employeeAssignments.map(assignment => assignment.employee);
+        const employeeNames = employees.map(emp => `${emp.fullName} (${emp.email})`).join(', ');
+        console.log(`Sending email notification to employees: ${employeeNames}`);
         
         employeeEmailResult = await sendComplaintNotification(
           newComplaint, 
-          employeeAssignment.employee, 
+          employees, 
           territoryName
         );
         
         if (employeeEmailResult.success) {
-          console.log('Employee notification email sent successfully:', employeeEmailResult.messageId);
+          console.log('Employee notification email sent successfully:', employeeEmailResult.employeeMessageId);
+          console.log(`Recipients: ${employeeEmailResult.recipients.join(', ')}`);
+          console.log('CC email with buttons sent successfully:', employeeEmailResult.ccMessageId);
+          console.log(`CC: ${employeeEmailResult.cc}`);
         } else {
           console.warn('Failed to send employee notification email:', employeeEmailResult.error);
         }
       } else {
-        console.warn(`No active employee found for territory ID: ${finalTerritoryId}`);
+        console.warn(`No active employees found for territory ID: ${finalTerritoryId}`);
       }
     } catch (emailError) {
       console.error('Error sending emails:', emailError);
@@ -274,7 +279,10 @@ export async function POST(req) {
         } : null,
         employeeNotification: employeeEmailResult ? {
           sent: employeeEmailResult.success,
-          recipient: employeeEmailResult.recipient || null,
+          recipients: employeeEmailResult.recipients || null,
+          cc: employeeEmailResult.cc || null,
+          employeeMessageId: employeeEmailResult.employeeMessageId || null,
+          ccMessageId: employeeEmailResult.ccMessageId || null,
           error: employeeEmailResult.error || null
         } : null
       }
