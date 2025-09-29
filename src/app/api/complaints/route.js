@@ -148,8 +148,7 @@ export async function POST(req) {
       const territory = await prisma.territories.findFirst({
         where: {
           territoryName: {
-            contains: mappedData.territoryName,
-            mode: 'insensitive'
+            contains: mappedData.territoryName
           }
         }
       });
@@ -203,7 +202,7 @@ export async function POST(req) {
       }
     });
 
-    console.log('Created new complaint:', newComplaint.complaintId);
+    console.log('🔥🔥🔥🔥🔥Created new complaint:', newComplaint.complaintId);
 
     // Send emails: thank you to user and notification to employee
     let userEmailResult = null;
@@ -238,6 +237,8 @@ export async function POST(req) {
           employee: true
         }
       });
+      console.log('Employee assignments:', employeeAssignments);
+      
 
       if (employeeAssignments && employeeAssignments.length > 0) {
         const employees = employeeAssignments.map(assignment => assignment.employee);
@@ -249,12 +250,10 @@ export async function POST(req) {
           employees, 
           territoryName
         );
-        
         if (employeeEmailResult.success) {
-          console.log('Employee notification email sent successfully:', employeeEmailResult.employeeMessageId);
+          console.log(`✅ SUCCESS: Individual emails sent to ALL ${employees.length} employees assigned to ${territoryName}`);
+          console.log('Employee Message IDs:', employeeEmailResult.employeeMessageIds);
           console.log(`Recipients: ${employeeEmailResult.recipients.join(', ')}`);
-          console.log('CC email with buttons sent successfully:', employeeEmailResult.ccMessageId);
-          console.log(`CC: ${employeeEmailResult.cc}`);
         } else {
           console.warn('Failed to send employee notification email:', employeeEmailResult.error);
         }
@@ -279,10 +278,9 @@ export async function POST(req) {
         } : null,
         employeeNotification: employeeEmailResult ? {
           sent: employeeEmailResult.success,
+          recipient: employeeEmailResult.recipients ? employeeEmailResult.recipients.join(', ') : null,
           recipients: employeeEmailResult.recipients || null,
-          cc: employeeEmailResult.cc || null,
-          employeeMessageId: employeeEmailResult.employeeMessageId || null,
-          ccMessageId: employeeEmailResult.ccMessageId || null,
+          employeeMessageIds: employeeEmailResult.employeeMessageIds || null,
           error: employeeEmailResult.error || null
         } : null
       }
