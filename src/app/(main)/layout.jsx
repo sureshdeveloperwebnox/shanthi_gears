@@ -33,13 +33,7 @@ return (
     <header className="fixed top-0 right-0 left-0 lg:left-64 z-40 bg-white border-b border-gray-200 shadow-sm">
       <div className="flex justify-between items-center px-4 py-3 lg:px-6">
         <div className="flex items-center">
-          <Image 
-            src="/Logo.gif" 
-            alt="Shanthi Gears Logo" 
-            width={120} 
-            height={40} 
-            className="h-8 w-auto"
-          />
+          
         </div>
         <div className="flex items-center space-x-4">
           <LogoutButton />
