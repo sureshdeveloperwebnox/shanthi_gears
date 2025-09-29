@@ -899,7 +899,7 @@ export function createManagerApprovalEmailTemplate(complaintData, employees, ter
     });
   };
 
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+  const baseUrl = process.env.NEXTAUTH_URL || 'https://phpstack-1401173-5874180.cloudwaysapps.com';
   const complaintId = complaintData.complaintId;
 
   return {
