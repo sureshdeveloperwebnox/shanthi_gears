@@ -1,105 +1,114 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { createAcceptanceConfirmationTemplate } from "@/lib/email";
-import transporter from "@/lib/email";
+import { sendEmployeeAssignmentEmail } from "@/lib/email";
 
+// CORS headers function
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+};
+
+// Handle preflight request
+export async function OPTIONS() {
+  return new NextResponse(null, { status: 200, headers: corsHeaders });
+}
+
+// Handle complaint action (accept/reject employee assignment)
 export async function GET(req) {
   try {
     const { searchParams } = new URL(req.url);
-    const action = searchParams.get('action');
     const complaintId = searchParams.get('complaintId');
-    const supervisorEmail = searchParams.get('supervisorEmail');
+    const employeeId = searchParams.get('employeeId');
+    const action = searchParams.get('action');
 
-    if (!action || !complaintId) {
-      return new NextResponse(`
-        <html>
-          <head><title>Invalid Request</title></head>
-          <body style="font-family: Arial, sans-serif; padding: 40px; text-align: center;">
-            <h1 style="color: #dc2626;">❌ Invalid Request</h1>
-            <p>Missing required parameters. Please use the links provided in the email.</p>
-          </body>
-        </html>
-      `, {
-        status: 400,
-        headers: { 'Content-Type': 'text/html' },
-      });
+    console.log('Complaint action request:', { complaintId, employeeId, action });
+
+    // Validate required parameters
+    if (!complaintId || !employeeId || !action) {
+      return new NextResponse(
+        JSON.stringify({ 
+          error: 'Missing required parameters: complaintId, employeeId, action' 
+        }),
+        { 
+          status: 400, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
     }
 
-    // Get the complaint details
+    // Validate action
+    if (!['accept', 'reject'].includes(action)) {
+      return new NextResponse(
+        JSON.stringify({ 
+          error: 'Invalid action. Must be "accept" or "reject"' 
+        }),
+        { 
+          status: 400, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
+    }
+
+    // Get complaint details
     const complaint = await prisma.complaints.findUnique({
       where: { complaintId },
       include: {
-        territory: {
-          include: {
-            employeeTerritories: {
-              where: {
-                employee: {
-                  status: 'ACTIVE'
-                }
-              },
-              include: {
-                employee: true
-              }
-            }
-          }
-        }
+        territory: true
       }
     });
 
     if (!complaint) {
-      return new NextResponse(`
-        <html>
-          <head><title>Complaint Not Found</title></head>
-          <body style="font-family: Arial, sans-serif; padding: 40px; text-align: center;">
-            <h1 style="color: #dc2626;">❌ Complaint Not Found</h1>
-            <p>The complaint with ID ${complaintId} was not found.</p>
-          </body>
-        </html>
-      `, {
-        status: 404,
-        headers: { 'Content-Type': 'text/html' },
-      });
+      return new NextResponse(
+        JSON.stringify({ 
+          error: 'Complaint not found' 
+        }),
+        { 
+          status: 404, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
     }
 
-    if (action === 'accept') {
-      try {
-        // Get supervisor email from the request or use the CC email as fallback
-        const ccEmail = process.env.COMPLAINT_CC_EMAIL || 'swethabellan@gmail.com';
-        const actualSupervisorEmail = supervisorEmail || ccEmail;
+    // Get employee details
+    const employee = await prisma.employees.findUnique({
+      where: { employeeId }
+    });
 
-        // Send acceptance confirmation emails to all assigned employees
-        const employees = complaint.territory.employeeTerritories.map(et => et.employee);
-        
-        if (employees.length > 0) {
-          const emailTemplate = createAcceptanceConfirmationTemplate(
-            complaint, 
-            complaint.territory.territoryName, 
-            actualSupervisorEmail
-          );
-
-          // Send to all employees
-          const employeeEmails = employees.map(emp => emp.email).filter(email => email);
-          
-          if (employeeEmails.length > 0) {
-            const mailOptions = {
-              from: `"Shanthi Gears Complaint System" <${process.env.SMTP_USER}>`,
-              to: employeeEmails.join(', '),
-              subject: emailTemplate.subject,
-              text: emailTemplate.text,
-              html: emailTemplate.html,
-            };
-
-            await transporter.sendMail(mailOptions);
-            console.log(`Acceptance confirmation sent to employees: ${employeeEmails.join(', ')}`);
-          }
+    if (!employee) {
+      return new NextResponse(
+        JSON.stringify({ 
+          error: 'Employee not found' 
+        }),
+        { 
+          status: 404, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         }
+      );
+    }
 
-        return new NextResponse(`
-          <html>
+    const territoryName = complaint.territory?.territoryName || 'Unknown Territory';
+
+    if (action === 'accept') {
+      // Send assignment email to employee
+      try {
+        const emailResult = await sendEmployeeAssignmentEmail(
+          complaint, 
+          employee, 
+          territoryName
+        );
+
+        if (emailResult.success) {
+          console.log(`✅ Employee assignment email sent to ${employee.fullName} (${employee.email})`);
+          
+          // Return success page
+          return new NextResponse(`
+            <!DOCTYPE html>
+            <html>
             <head>
-              <title>Complaint Supervision Accepted</title>
               <meta charset="utf-8">
               <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              <title>Assignment Accepted</title>
               <style>
                 body {
                   font-family: Arial, sans-serif;
@@ -107,108 +116,66 @@ export async function GET(req) {
                   color: #333;
                   max-width: 600px;
                   margin: 0 auto;
-                  padding: 40px 20px;
+                  padding: 20px;
                   background-color: #f4f4f4;
                 }
                 .container {
                   background-color: white;
-                  padding: 40px;
+                  padding: 30px;
                   border-radius: 10px;
-                  box-shadow: 0 0 20px rgba(0,0,0,0.1);
+                  box-shadow: 0 0 10px rgba(0,0,0,0.1);
                   text-align: center;
                 }
-                .success-header {
-                  background-color: #059669;
-                  color: white;
-                  padding: 30px;
-                  border-radius: 8px;
-                  margin-bottom: 30px;
-                }
-                .success-header h1 {
-                  margin: 0;
-                  font-size: 28px;
-                }
-                .details {
+                .success {
                   background-color: #ecfdf5;
                   border: 2px solid #059669;
                   padding: 20px;
                   border-radius: 8px;
                   margin: 20px 0;
-                  text-align: left;
                 }
                 .btn {
                   display: inline-block;
+                  padding: 10px 20px;
                   background-color: #059669;
                   color: white;
-                  padding: 12px 24px;
                   text-decoration: none;
                   border-radius: 5px;
-                  margin-top: 20px;
-                  font-weight: bold;
-                }
-                .btn:hover {
-                  background-color: #047857;
+                  margin: 10px;
                 }
               </style>
             </head>
             <body>
               <div class="container">
-                <div class="success-header">
-                  <h1>✅ Supervision Accepted!</h1>
-                  <p>Thank you for accepting the supervision of this complaint.</p>
-                </div>
-                
-                <div class="details">
-                  <h3>📋 Complaint Details:</h3>
-                  <p><strong>Complaint ID:</strong> ${complaint.complaintId}</p>
+                <h1>✅ Assignment Accepted Successfully!</h1>
+                <div class="success">
+                  <h2>Employee Assignment Confirmed</h2>
+                  <p><strong>Employee:</strong> ${employee.fullName}</p>
+                  <p><strong>Email:</strong> ${employee.email}</p>
+                  <p><strong>Complaint ID:</strong> ${complaintId}</p>
                   <p><strong>Company:</strong> ${complaint.companyName}</p>
-                  <p><strong>Territory:</strong> ${complaint.territory.territoryName}</p>
-                  <p><strong>Contact Person:</strong> ${complaint.contactPersonName}</p>
-                  <p><strong>Date:</strong> ${new Date(complaint.complaintDate).toLocaleDateString('en-IN')}</p>
+                  <p><strong>Territory:</strong> ${territoryName}</p>
                 </div>
-
-                <p><strong>✉️ Confirmation emails have been sent to all assigned employees.</strong></p>
-                <p>They have been notified that you are now supervising this complaint and will coordinate the resolution process.</p>
-                
-                <a href="/dashboard" class="btn">Go to Dashboard</a>
+                <p>The employee has been notified via email and can now proceed with the complaint resolution process.</p>
+                <a href="/complaints" class="btn">View All Complaints</a>
               </div>
             </body>
-          </html>
-        `, {
-          status: 200,
-          headers: { 'Content-Type': 'text/html' },
-        });
-
+            </html>
+          `, {
+            status: 200,
+            headers: { ...corsHeaders, 'Content-Type': 'text/html' }
+          });
+        } else {
+          throw new Error(emailResult.error);
+        }
       } catch (emailError) {
-        console.error('Error sending acceptance confirmation emails:', emailError);
-        
+        console.error('Error sending employee assignment email:', emailError);
         return new NextResponse(`
+          <!DOCTYPE html>
           <html>
-            <head><title>Supervision Accepted</title></head>
-            <body style="font-family: Arial, sans-serif; padding: 40px; text-align: center;">
-              <div style="max-width: 600px; margin: 0 auto; background: white; padding: 40px; border-radius: 10px; box-shadow: 0 0 20px rgba(0,0,0,0.1);">
-                <h1 style="color: #059669;">✅ Supervision Accepted!</h1>
-                <p>Your acceptance has been recorded, but there was an issue sending confirmation emails to the employees.</p>
-                <p><strong>Complaint ID:</strong> ${complaint.complaintId}</p>
-                <p><strong>Company:</strong> ${complaint.companyName}</p>
-                <p>Please contact the employees directly to inform them of your supervision.</p>
-                <a href="/dashboard" style="display: inline-block; background-color: #059669; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin-top: 20px;">Go to Dashboard</a>
-              </div>
-            </body>
-          </html>
-        `, {
-          status: 200,
-          headers: { 'Content-Type': 'text/html' },
-        });
-      }
-
-    } else if (action === 'reject') {
-      return new NextResponse(`
-        <html>
           <head>
-            <title>Complaint Supervision Rejected</title>
             <meta charset="utf-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Assignment Error</title>
             <style>
               body {
                 font-family: Arial, sans-serif;
@@ -216,107 +183,178 @@ export async function GET(req) {
                 color: #333;
                 max-width: 600px;
                 margin: 0 auto;
-                padding: 40px 20px;
+                padding: 20px;
                 background-color: #f4f4f4;
               }
               .container {
                 background-color: white;
-                padding: 40px;
+                padding: 30px;
                 border-radius: 10px;
-                box-shadow: 0 0 20px rgba(0,0,0,0.1);
+                box-shadow: 0 0 10px rgba(0,0,0,0.1);
                 text-align: center;
               }
-              .reject-header {
-                background-color: #dc2626;
-                color: white;
-                padding: 30px;
-                border-radius: 8px;
-                margin-bottom: 30px;
-              }
-              .reject-header h1 {
-                margin: 0;
-                font-size: 28px;
-              }
-              .details {
+              .error {
                 background-color: #fef2f2;
                 border: 2px solid #dc2626;
                 padding: 20px;
                 border-radius: 8px;
                 margin: 20px 0;
-                text-align: left;
               }
               .btn {
                 display: inline-block;
+                padding: 10px 20px;
                 background-color: #dc2626;
                 color: white;
-                padding: 12px 24px;
                 text-decoration: none;
                 border-radius: 5px;
-                margin-top: 20px;
-                font-weight: bold;
-              }
-              .btn:hover {
-                background-color: #b91c1c;
+                margin: 10px;
               }
             </style>
           </head>
           <body>
             <div class="container">
-              <div class="reject-header">
-                <h1>❌ Supervision Rejected</h1>
-                <p>You have rejected the supervision of this complaint.</p>
+              <h1>❌ Assignment Failed</h1>
+              <div class="error">
+                <h2>Email Notification Error</h2>
+                <p>There was an error sending the assignment notification to the employee.</p>
+                <p><strong>Error:</strong> ${emailError.message}</p>
               </div>
-              
-              <div class="details">
-                <h3>📋 Complaint Details:</h3>
-                <p><strong>Complaint ID:</strong> ${complaint.complaintId}</p>
-                <p><strong>Company:</strong> ${complaint.companyName}</p>
-                <p><strong>Territory:</strong> ${complaint.territory.territoryName}</p>
-                <p><strong>Contact Person:</strong> ${complaint.contactPersonName}</p>
-                <p><strong>Date:</strong> ${new Date(complaint.complaintDate).toLocaleDateString('en-IN')}</p>
-              </div>
-
-              <p><strong>⚠️ This complaint will continue to be handled by the assigned employees without supervision.</strong></p>
-              <p>If you change your mind, you can still contact the employees directly to offer your supervision.</p>
-              
-              <a href="/dashboard" class="btn">Go to Dashboard</a>
+              <p>Please try again or contact the system administrator.</p>
+              <a href="/complaints" class="btn">Back to Complaints</a>
             </div>
           </body>
+          </html>
+        `, {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'text/html' }
+        });
+      }
+    } else if (action === 'reject') {
+      // Return rejection confirmation page
+      return new NextResponse(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Assignment Rejected</title>
+          <style>
+            body {
+              font-family: Arial, sans-serif;
+              line-height: 1.6;
+              color: #333;
+              max-width: 600px;
+              margin: 0 auto;
+              padding: 20px;
+              background-color: #f4f4f4;
+            }
+            .container {
+              background-color: white;
+              padding: 30px;
+              border-radius: 10px;
+              box-shadow: 0 0 10px rgba(0,0,0,0.1);
+              text-align: center;
+            }
+            .rejection {
+              background-color: #fef2f2;
+              border: 2px solid #dc2626;
+              padding: 20px;
+              border-radius: 8px;
+              margin: 20px 0;
+            }
+            .btn {
+              display: inline-block;
+              padding: 10px 20px;
+              background-color: #dc2626;
+              color: white;
+              text-decoration: none;
+              border-radius: 5px;
+              margin: 10px;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <h1>❌ Assignment Rejected</h1>
+            <div class="rejection">
+              <h2>Employee Assignment Rejected</h2>
+              <p><strong>Employee:</strong> ${employee.fullName}</p>
+              <p><strong>Email:</strong> ${employee.email}</p>
+              <p><strong>Complaint ID:</strong> ${complaintId}</p>
+              <p><strong>Company:</strong> ${complaint.companyName}</p>
+              <p><strong>Territory:</strong> ${territoryName}</p>
+            </div>
+            <p>This employee will not be assigned to handle this complaint.</p>
+            <a href="/complaints" class="btn">Back to Complaints</a>
+          </div>
+        </body>
         </html>
       `, {
         status: 200,
-        headers: { 'Content-Type': 'text/html' },
-      });
-
-    } else {
-      return new NextResponse(`
-        <html>
-          <head><title>Invalid Action</title></head>
-          <body style="font-family: Arial, sans-serif; padding: 40px; text-align: center;">
-            <h1 style="color: #dc2626;">❌ Invalid Action</h1>
-            <p>The action '${action}' is not recognized. Please use 'accept' or 'reject'.</p>
-          </body>
-        </html>
-      `, {
-        status: 400,
-        headers: { 'Content-Type': 'text/html' },
+        headers: { ...corsHeaders, 'Content-Type': 'text/html' }
       });
     }
 
   } catch (error) {
     console.error('Error processing complaint action:', error);
     return new NextResponse(`
+      <!DOCTYPE html>
       <html>
-        <head><title>Error</title></head>
-        <body style="font-family: Arial, sans-serif; padding: 40px; text-align: center;">
-          <h1 style="color: #dc2626;">❌ Error</h1>
-          <p>An error occurred while processing your request. Please try again later.</p>
-          <p><em>Error: ${error.message}</em></p>
-        </body>
+      <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>System Error</title>
+        <style>
+          body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f4f4f4;
+          }
+          .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            text-align: center;
+          }
+          .error {
+            background-color: #fef2f2;
+            border: 2px solid #dc2626;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+          }
+          .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #dc2626;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            margin: 10px;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <h1>❌ System Error</h1>
+          <div class="error">
+            <h2>An error occurred</h2>
+            <p>There was an error processing your request.</p>
+            <p><strong>Error:</strong> ${error.message}</p>
+          </div>
+          <p>Please try again or contact the system administrator.</p>
+          <a href="/complaints" class="btn">Back to Complaints</a>
+        </div>
+      </body>
       </html>
     `, {
       status: 500,
-      headers: { 'Content-Type': 'text/html' },
+      headers: { ...corsHeaders, 'Content-Type': 'text/html' }
     });
   }
 }

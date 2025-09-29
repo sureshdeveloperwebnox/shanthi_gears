@@ -676,6 +676,754 @@ console.log(employeeMailOptions ,'employeeMailOptions');
 }
 
 
+// Email template for manager approval with accept/reject buttons
+export function createManagerApprovalEmailTemplate(complaintData, employees, territoryName) {
+  const {
+    contactPersonName,
+    mailId,
+    mobileNumber,
+    companyName,
+    gearboxSerialNumber,
+    dateOfCommissioning,
+    complaintDate,
+    applicationDetails,
+    natureOfComplaintWithPhotos,
+    inputMotorDetailsKw,
+    inputOutputConnectionDetails,
+    oilLevelDetails,
+    gradeOfOilUsed,
+    conditionOfOil,
+    conditionOfBreather,
+    sedimentInOilBottom,
+    alignmentInputOutput,
+    runningHoursPerDay,
+    startStopPerDay,
+    dismantledBeforeFailure,
+    ambientConditions,
+    loadSpectrum,
+    forcedLubricationPhotos,
+    conditionOfOtherParts,
+    lubricationCheckDetails,
+    inputSpeedDetails,
+    failureHistoryDetails
+  } = complaintData;
+
+  const formatDate = (date) => {
+    if (!date) return 'Not provided';
+    return new Date(date).toLocaleDateString('en-IN', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  };
+
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+  const complaintId = complaintData.complaintId;
+
+  return {
+    subject: `Manager Approval Required - New Complaint from ${companyName} (${territoryName})`,
+    html: `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Manager Approval Required</title>
+        <style>
+          body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f4f4f4;
+          }
+          .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+          }
+          .header {
+            background-color: #dc2626;
+            color: white;
+            padding: 30px;
+            border-radius: 5px;
+            margin-bottom: 30px;
+            text-align: center;
+          }
+          .approval-section {
+            background-color: #fef2f2;
+            border: 2px solid #dc2626;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            text-align: center;
+          }
+          .employee-list {
+            background-color: #f0f9ff;
+            border: 1px solid #0ea5e9;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+          }
+          .employee-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            margin: 10px 0;
+            background-color: white;
+            border-radius: 5px;
+            border: 1px solid #e5e7eb;
+          }
+          .employee-info {
+            flex: 1;
+          }
+          .employee-actions {
+            display: flex;
+            gap: 10px;
+          }
+          .btn {
+            padding: 10px 20px;
+            border: 2px solid;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-block;
+            transition: all 0.3s ease;
+            font-size: 14px;
+          }
+          .btn-accept {
+            background-color: #ffffff;
+            color: #059669;
+            border-color: #059669;
+          }
+          .btn-accept:hover {
+            background-color: #059669;
+            color: white;
+          }
+          .btn-reject {
+            background-color: #ffffff;
+            color: #dc2626;
+            border-color: #dc2626;
+          }
+          .btn-reject:hover {
+            background-color: #dc2626;
+            color: white;
+          }
+          .section {
+            margin-bottom: 25px;
+            padding: 15px;
+            border-left: 4px solid #dc2626;
+            background-color: #f9f9f9;
+          }
+          .section h3 {
+            margin-top: 0;
+            color: #dc2626;
+            border-bottom: 2px solid #dc2626;
+            padding-bottom: 5px;
+          }
+          .field {
+            margin-bottom: 10px;
+          }
+          .field-label {
+            font-weight: bold;
+            color: #555;
+            display: inline-block;
+            width: 200px;
+          }
+          .field-value {
+            color: #333;
+          }
+          .footer {
+            margin-top: 30px;
+            padding: 20px;
+            background-color: #f0f0f0;
+            border-radius: 5px;
+            text-align: center;
+            color: #666;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>🔔 Manager Approval Required</h1>
+            <p>New Complaint Submission - Action Required</p>
+            <p>Complaint ID: ${complaintId}</p>
+          </div>
+
+          <div class="approval-section">
+            <h2>⚠️ Employee Assignment Required</h2>
+            <p><strong>A new complaint has been submitted and requires your approval for employee assignment.</strong></p>
+            <p>Please review the complaint details below and assign employees by clicking Accept or Reject for each employee.</p>
+          </div>
+
+          <div class="employee-list">
+            <h3>👥 Available Employees for Assignment</h3>
+            ${employees.map(employee => `
+              <div class="employee-item">
+                <div class="employee-info">
+                  <strong>${employee.fullName}</strong><br>
+                  <span style="color: #666;">${employee.designation}</span><br>
+                  <span style="color: #888;">${employee.email}</span>
+                </div>
+                <div class="employee-actions">
+                  <a href="${baseUrl}/api/complaint-action?complaintId=${complaintId}&employeeId=${employee.employeeId}&action=accept" 
+                     class="btn btn-accept">Accept Assignment</a>
+                  <a href="${baseUrl}/api/complaint-action?complaintId=${complaintId}&employeeId=${employee.employeeId}&action=reject" 
+                     class="btn btn-reject">Reject Assignment</a>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+
+          <div class="section">
+            <h3>📋 Customer Information</h3>
+            <div class="field">
+              <span class="field-label">Contact Person:</span>
+              <span class="field-value">${contactPersonName}</span>
+            </div>
+            <div class="field">
+              <span class="field-label">Company:</span>
+              <span class="field-value">${companyName}</span>
+            </div>
+            <div class="field">
+              <span class="field-label">Email:</span>
+              <span class="field-value">${mailId}</span>
+            </div>
+            <div class="field">
+              <span class="field-label">Mobile:</span>
+              <span class="field-value">${mobileNumber || 'Not provided'}</span>
+            </div>
+            <div class="field">
+              <span class="field-label">Territory:</span>
+              <span class="field-value">${territoryName}</span>
+            </div>
+          </div>
+
+          <div class="section">
+            <h3>⚙️ Gearbox Information</h3>
+            <div class="field">
+              <span class="field-label">Serial Number:</span>
+              <span class="field-value">${gearboxSerialNumber || 'Not provided'}</span>
+            </div>
+            <div class="field">
+              <span class="field-label">Date of Commissioning:</span>
+              <span class="field-value">${formatDate(dateOfCommissioning)}</span>
+            </div>
+            <div class="field">
+              <span class="field-label">Complaint Date:</span>
+              <span class="field-value">${formatDate(complaintDate)}</span>
+            </div>
+            <div class="field">
+              <span class="field-label">Application Details:</span>
+              <span class="field-value">${applicationDetails || 'Not provided'}</span>
+            </div>
+            <div class="field">
+              <span class="field-label">Motor Details (kW):</span>
+              <span class="field-value">${inputMotorDetailsKw || 'Not provided'}</span>
+            </div>
+          </div>
+
+          <div class="section">
+            <h3>🔧 Complaint Details</h3>
+            <div class="field">
+              <span class="field-label">Nature of Complaint:</span>
+              <span class="field-value">${natureOfComplaintWithPhotos || 'Not provided'}</span>
+            </div>
+            <div class="field">
+              <span class="field-label">Input/Output Connection:</span>
+              <span class="field-value">${inputOutputConnectionDetails || 'Not provided'}</span>
+            </div>
+            <div class="field">
+              <span class="field-label">Alignment Input/Output:</span>
+              <span class="field-value">${alignmentInputOutput || 'Not provided'}</span>
+            </div>
+            <div class="field">
+              <span class="field-label">Input Speed Details:</span>
+              <span class="field-value">${inputSpeedDetails || 'Not provided'}</span>
+            </div>
+          </div>
+
+          <div class="section">
+            <h3>🛢️ Oil & Lubrication Details</h3>
+            <div class="field">
+              <span class="field-label">Oil Level Details:</span>
+              <span class="field-value">${oilLevelDetails || 'Not provided'}</span>
+            </div>
+            <div class="field">
+              <span class="field-label">Grade of Oil Used:</span>
+              <span class="field-value">${gradeOfOilUsed || 'Not provided'}</span>
+            </div>
+            <div class="field">
+              <span class="field-label">Condition of Oil:</span>
+              <span class="field-value">${conditionOfOil || 'Not provided'}</span>
+            </div>
+            <div class="field">
+              <span class="field-label">Condition of Breather:</span>
+              <span class="field-value">${conditionOfBreather || 'Not provided'}</span>
+            </div>
+            <div class="field">
+              <span class="field-label">Sediment in Oil Bottom:</span>
+              <span class="field-value">${sedimentInOilBottom || 'Not provided'}</span>
+            </div>
+            <div class="field">
+              <span class="field-label">Lubrication Check Details:</span>
+              <span class="field-value">${lubricationCheckDetails || 'Not provided'}</span>
+            </div>
+          </div>
+
+          <div class="section">
+            <h3>⏰ Operational Details</h3>
+            <div class="field">
+              <span class="field-label">Running Hours/Day:</span>
+              <span class="field-value">${runningHoursPerDay || 'Not provided'}</span>
+            </div>
+            <div class="field">
+              <span class="field-label">Start/Stop per Day:</span>
+              <span class="field-value">${startStopPerDay || 'Not provided'}</span>
+            </div>
+            <div class="field">
+              <span class="field-label">Ambient Conditions:</span>
+              <span class="field-value">${ambientConditions || 'Not provided'}</span>
+            </div>
+            <div class="field">
+              <span class="field-label">Load Spectrum:</span>
+              <span class="field-value">${loadSpectrum || 'Not provided'}</span>
+            </div>
+          </div>
+
+          <div class="section">
+            <h3>🔍 Maintenance & Failure Details</h3>
+            <div class="field">
+              <span class="field-label">Dismantled Before Failure:</span>
+              <span class="field-value">${dismantledBeforeFailure || 'Not provided'}</span>
+            </div>
+            <div class="field">
+              <span class="field-label">Condition of Other Parts:</span>
+              <span class="field-value">${conditionOfOtherParts || 'Not provided'}</span>
+            </div>
+            <div class="field">
+              <span class="field-label">Failure History Details:</span>
+              <span class="field-value">${failureHistoryDetails || 'Not provided'}</span>
+            </div>
+            <div class="field">
+              <span class="field-label">Forced Lubrication Photos:</span>
+              <span class="field-value">${forcedLubricationPhotos || 'Not provided'}</span>
+            </div>
+          </div>
+
+          <div class="footer">
+            <p><strong>Action Required:</strong> Please review the complaint details and assign employees by clicking Accept or Reject for each employee.</p>
+            <p>This is an automated notification from the Shanthi Gears Complaint Management System.</p>
+            <p>Generated on: ${new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `,
+    text: `
+MANAGER APPROVAL REQUIRED - New Complaint Submission
+
+Complaint ID: ${complaintId}
+
+A new complaint has been submitted and requires your approval for employee assignment.
+
+AVAILABLE EMPLOYEES FOR ASSIGNMENT:
+${employees.map(employee => `
+- ${employee.fullName} (${employee.designation})
+  Email: ${employee.email}
+  Accept: ${baseUrl}/api/complaint-action?complaintId=${complaintId}&employeeId=${employee.employeeId}&action=accept
+  Reject: ${baseUrl}/api/complaint-action?complaintId=${complaintId}&employeeId=${employee.employeeId}&action=reject
+`).join('')}
+
+CUSTOMER INFORMATION:
+- Contact Person: ${contactPersonName}
+- Company: ${companyName}
+- Email: ${mailId}
+- Mobile: ${mobileNumber || 'Not provided'}
+- Territory: ${territoryName}
+
+GEARBOX INFORMATION:
+- Serial Number: ${gearboxSerialNumber || 'Not provided'}
+- Date of Commissioning: ${formatDate(dateOfCommissioning)}
+- Complaint Date: ${formatDate(complaintDate)}
+- Application Details: ${applicationDetails || 'Not provided'}
+- Motor Details (kW): ${inputMotorDetailsKw || 'Not provided'}
+
+COMPLAINT DETAILS:
+- Nature of Complaint: ${natureOfComplaintWithPhotos || 'Not provided'}
+- Input/Output Connection: ${inputOutputConnectionDetails || 'Not provided'}
+- Alignment Input/Output: ${alignmentInputOutput || 'Not provided'}
+- Input Speed Details: ${inputSpeedDetails || 'Not provided'}
+
+OIL & LUBRICATION DETAILS:
+- Oil Level Details: ${oilLevelDetails || 'Not provided'}
+- Grade of Oil Used: ${gradeOfOilUsed || 'Not provided'}
+- Condition of Oil: ${conditionOfOil || 'Not provided'}
+- Condition of Breather: ${conditionOfBreather || 'Not provided'}
+- Sediment in Oil Bottom: ${sedimentInOilBottom || 'Not provided'}
+- Lubrication Check Details: ${lubricationCheckDetails || 'Not provided'}
+
+OPERATIONAL DETAILS:
+- Running Hours/Day: ${runningHoursPerDay || 'Not provided'}
+- Start/Stop per Day: ${startStopPerDay || 'Not provided'}
+- Ambient Conditions: ${ambientConditions || 'Not provided'}
+- Load Spectrum: ${loadSpectrum || 'Not provided'}
+
+MAINTENANCE & FAILURE DETAILS:
+- Dismantled Before Failure: ${dismantledBeforeFailure || 'Not provided'}
+- Condition of Other Parts: ${conditionOfOtherParts || 'Not provided'}
+- Failure History Details: ${failureHistoryDetails || 'Not provided'}
+- Forced Lubrication Photos: ${forcedLubricationPhotos || 'Not provided'}
+
+ACTION REQUIRED: Please review the complaint details and assign employees by clicking Accept or Reject for each employee.
+
+This is an automated notification from the Shanthi Gears Complaint Management System.
+Generated on: ${new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}
+    `
+  };
+}
+
+// Email template for employee assignment acceptance
+export function createEmployeeAssignmentEmailTemplate(complaintData, employeeData, territoryName) {
+  const {
+    contactPersonName,
+    mailId,
+    mobileNumber,
+    companyName,
+    gearboxSerialNumber,
+    dateOfCommissioning,
+    complaintDate,
+    applicationDetails,
+    natureOfComplaintWithPhotos,
+    inputMotorDetailsKw,
+    inputOutputConnectionDetails,
+    oilLevelDetails,
+    gradeOfOilUsed,
+    conditionOfOil,
+    conditionOfBreather,
+    sedimentInOilBottom,
+    alignmentInputOutput,
+    runningHoursPerDay,
+    startStopPerDay,
+    dismantledBeforeFailure,
+    ambientConditions,
+    loadSpectrum,
+    forcedLubricationPhotos,
+    conditionOfOtherParts,
+    lubricationCheckDetails,
+    inputSpeedDetails,
+    failureHistoryDetails
+  } = complaintData;
+
+  const formatDate = (date) => {
+    if (!date) return 'Not provided';
+    return new Date(date).toLocaleDateString('en-IN', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  };
+
+  return {
+    subject: `✅ Complaint Assignment Accepted - ${companyName} (${territoryName})`,
+    html: `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Complaint Assignment Accepted</title>
+        <style>
+          body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f4f4f4;
+          }
+          .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+          }
+          .header {
+            background-color: #059669;
+            color: white;
+            padding: 30px;
+            border-radius: 5px;
+            margin-bottom: 30px;
+            text-align: center;
+          }
+          .success-section {
+            background-color: #ecfdf5;
+            border: 2px solid #059669;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            text-align: center;
+          }
+          .section {
+            margin-bottom: 25px;
+            padding: 15px;
+            border-left: 4px solid #059669;
+            background-color: #f9f9f9;
+          }
+          .section h3 {
+            margin-top: 0;
+            color: #059669;
+            border-bottom: 2px solid #059669;
+            padding-bottom: 5px;
+          }
+          .field {
+            margin-bottom: 10px;
+          }
+          .field-label {
+            font-weight: bold;
+            color: #555;
+            display: inline-block;
+            width: 200px;
+          }
+          .field-value {
+            color: #333;
+          }
+          .footer {
+            margin-top: 30px;
+            padding: 20px;
+            background-color: #f0f0f0;
+            border-radius: 5px;
+            text-align: center;
+            color: #666;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>✅ Complaint Assignment Accepted</h1>
+            <p>You have been assigned to handle this complaint</p>
+            <p>Complaint ID: ${complaintData.complaintId}</p>
+          </div>
+
+          <div class="success-section">
+            <h2>🎉 Assignment Confirmed!</h2>
+            <p><strong>Dear ${employeeData.fullName},</strong></p>
+            <p>You have been successfully assigned to handle the complaint from <strong>${companyName}</strong> in the <strong>${territoryName}</strong> territory.</p>
+            <p>Please proceed with the complaint resolution process and contact the customer as soon as possible.</p>
+          </div>
+
+          <div class="section">
+            <h3>📋 Customer Information</h3>
+            <div class="field">
+              <span class="field-label">Contact Person:</span>
+              <span class="field-value">${contactPersonName}</span>
+            </div>
+            <div class="field">
+              <span class="field-label">Company:</span>
+              <span class="field-value">${companyName}</span>
+            </div>
+            <div class="field">
+              <span class="field-label">Email:</span>
+              <span class="field-value">${mailId}</span>
+            </div>
+            <div class="field">
+              <span class="field-label">Mobile:</span>
+              <span class="field-value">${mobileNumber || 'Not provided'}</span>
+            </div>
+            <div class="field">
+              <span class="field-label">Territory:</span>
+              <span class="field-value">${territoryName}</span>
+            </div>
+          </div>
+
+          <div class="section">
+            <h3>⚙️ Gearbox Information</h3>
+            <div class="field">
+              <span class="field-label">Serial Number:</span>
+              <span class="field-value">${gearboxSerialNumber || 'Not provided'}</span>
+            </div>
+            <div class="field">
+              <span class="field-label">Date of Commissioning:</span>
+              <span class="field-value">${formatDate(dateOfCommissioning)}</span>
+            </div>
+            <div class="field">
+              <span class="field-label">Complaint Date:</span>
+              <span class="field-value">${formatDate(complaintDate)}</span>
+            </div>
+            <div class="field">
+              <span class="field-label">Application Details:</span>
+              <span class="field-value">${applicationDetails || 'Not provided'}</span>
+            </div>
+            <div class="field">
+              <span class="field-label">Motor Details (kW):</span>
+              <span class="field-value">${inputMotorDetailsKw || 'Not provided'}</span>
+            </div>
+          </div>
+
+          <div class="section">
+            <h3>🔧 Complaint Details</h3>
+            <div class="field">
+              <span class="field-label">Nature of Complaint:</span>
+              <span class="field-value">${natureOfComplaintWithPhotos || 'Not provided'}</span>
+            </div>
+            <div class="field">
+              <span class="field-label">Input/Output Connection:</span>
+              <span class="field-value">${inputOutputConnectionDetails || 'Not provided'}</span>
+            </div>
+            <div class="field">
+              <span class="field-label">Alignment Input/Output:</span>
+              <span class="field-value">${alignmentInputOutput || 'Not provided'}</span>
+            </div>
+            <div class="field">
+              <span class="field-label">Input Speed Details:</span>
+              <span class="field-value">${inputSpeedDetails || 'Not provided'}</span>
+            </div>
+          </div>
+
+          <div class="section">
+            <h3>🛢️ Oil & Lubrication Details</h3>
+            <div class="field">
+              <span class="field-label">Oil Level Details:</span>
+              <span class="field-value">${oilLevelDetails || 'Not provided'}</span>
+            </div>
+            <div class="field">
+              <span class="field-label">Grade of Oil Used:</span>
+              <span class="field-value">${gradeOfOilUsed || 'Not provided'}</span>
+            </div>
+            <div class="field">
+              <span class="field-label">Condition of Oil:</span>
+              <span class="field-value">${conditionOfOil || 'Not provided'}</span>
+            </div>
+            <div class="field">
+              <span class="field-label">Condition of Breather:</span>
+              <span class="field-value">${conditionOfBreather || 'Not provided'}</span>
+            </div>
+            <div class="field">
+              <span class="field-label">Sediment in Oil Bottom:</span>
+              <span class="field-value">${sedimentInOilBottom || 'Not provided'}</span>
+            </div>
+            <div class="field">
+              <span class="field-label">Lubrication Check Details:</span>
+              <span class="field-value">${lubricationCheckDetails || 'Not provided'}</span>
+            </div>
+          </div>
+
+          <div class="section">
+            <h3>⏰ Operational Details</h3>
+            <div class="field">
+              <span class="field-label">Running Hours/Day:</span>
+              <span class="field-value">${runningHoursPerDay || 'Not provided'}</span>
+            </div>
+            <div class="field">
+              <span class="field-label">Start/Stop per Day:</span>
+              <span class="field-value">${startStopPerDay || 'Not provided'}</span>
+            </div>
+            <div class="field">
+              <span class="field-label">Ambient Conditions:</span>
+              <span class="field-value">${ambientConditions || 'Not provided'}</span>
+            </div>
+            <div class="field">
+              <span class="field-label">Load Spectrum:</span>
+              <span class="field-value">${loadSpectrum || 'Not provided'}</span>
+            </div>
+          </div>
+
+          <div class="section">
+            <h3>🔍 Maintenance & Failure Details</h3>
+            <div class="field">
+              <span class="field-label">Dismantled Before Failure:</span>
+              <span class="field-value">${dismantledBeforeFailure || 'Not provided'}</span>
+            </div>
+            <div class="field">
+              <span class="field-label">Condition of Other Parts:</span>
+              <span class="field-value">${conditionOfOtherParts || 'Not provided'}</span>
+            </div>
+            <div class="field">
+              <span class="field-label">Failure History Details:</span>
+              <span class="field-value">${failureHistoryDetails || 'Not provided'}</span>
+            </div>
+            <div class="field">
+              <span class="field-label">Forced Lubrication Photos:</span>
+              <span class="field-value">${forcedLubricationPhotos || 'Not provided'}</span>
+            </div>
+          </div>
+
+          <div class="footer">
+            <p><strong>Next Steps:</strong> Please contact the customer within 24-48 hours and begin the complaint resolution process.</p>
+            <p>This is an automated notification from the Shanthi Gears Complaint Management System.</p>
+            <p>Generated on: ${new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `,
+    text: `
+COMPLAINT ASSIGNMENT ACCEPTED
+
+Complaint ID: ${complaintData.complaintId}
+
+Dear ${employeeData.fullName},
+
+You have been successfully assigned to handle the complaint from ${companyName} in the ${territoryName} territory.
+
+Please proceed with the complaint resolution process and contact the customer as soon as possible.
+
+CUSTOMER INFORMATION:
+- Contact Person: ${contactPersonName}
+- Company: ${companyName}
+- Email: ${mailId}
+- Mobile: ${mobileNumber || 'Not provided'}
+- Territory: ${territoryName}
+
+GEARBOX INFORMATION:
+- Serial Number: ${gearboxSerialNumber || 'Not provided'}
+- Date of Commissioning: ${formatDate(dateOfCommissioning)}
+- Complaint Date: ${formatDate(complaintDate)}
+- Application Details: ${applicationDetails || 'Not provided'}
+- Motor Details (kW): ${inputMotorDetailsKw || 'Not provided'}
+
+COMPLAINT DETAILS:
+- Nature of Complaint: ${natureOfComplaintWithPhotos || 'Not provided'}
+- Input/Output Connection: ${inputOutputConnectionDetails || 'Not provided'}
+- Alignment Input/Output: ${alignmentInputOutput || 'Not provided'}
+- Input Speed Details: ${inputSpeedDetails || 'Not provided'}
+
+OIL & LUBRICATION DETAILS:
+- Oil Level Details: ${oilLevelDetails || 'Not provided'}
+- Grade of Oil Used: ${gradeOfOilUsed || 'Not provided'}
+- Condition of Oil: ${conditionOfOil || 'Not provided'}
+- Condition of Breather: ${conditionOfBreather || 'Not provided'}
+- Sediment in Oil Bottom: ${sedimentInOilBottom || 'Not provided'}
+- Lubrication Check Details: ${lubricationCheckDetails || 'Not provided'}
+
+OPERATIONAL DETAILS:
+- Running Hours/Day: ${runningHoursPerDay || 'Not provided'}
+- Start/Stop per Day: ${startStopPerDay || 'Not provided'}
+- Ambient Conditions: ${ambientConditions || 'Not provided'}
+- Load Spectrum: ${loadSpectrum || 'Not provided'}
+
+MAINTENANCE & FAILURE DETAILS:
+- Dismantled Before Failure: ${dismantledBeforeFailure || 'Not provided'}
+- Condition of Other Parts: ${conditionOfOtherParts || 'Not provided'}
+- Failure History Details: ${failureHistoryDetails || 'Not provided'}
+- Forced Lubrication Photos: ${forcedLubricationPhotos || 'Not provided'}
+
+NEXT STEPS: Please contact the customer within 24-48 hours and begin the complaint resolution process.
+
+This is an automated notification from the Shanthi Gears Complaint Management System.
+Generated on: ${new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}
+    `
+  };
+}
+
 // Email template for acceptance confirmation
 export function createAcceptanceConfirmationTemplate(complaintData, territoryName, supervisorEmail) {
   const {
@@ -854,6 +1602,78 @@ This is an automated notification from the Shanthi Gears Complaint Management Sy
 Generated on: ${new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}
     `
   };
+}
+
+// Function to send manager approval email
+export async function sendManagerApprovalEmail(complaintData, employees, territoryName, managerEmail) {
+  try {
+    // Check if SMTP credentials are configured
+    if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
+      console.warn('SMTP credentials not configured. Manager approval email skipped.');
+      return { success: false, error: 'SMTP credentials not configured' };
+    }
+
+    const emailTemplate = createManagerApprovalEmailTemplate(complaintData, employees, territoryName);
+    
+    const mailOptions = {
+      from: `"Shanthi Gears Complaint System" <${process.env.SMTP_USER}>`,
+      to: managerEmail,
+      subject: emailTemplate.subject,
+      text: emailTemplate.text,
+      html: emailTemplate.html,
+    };
+
+    const result = await transporter.sendMail(mailOptions);
+    console.log('Manager approval email sent successfully:', result.messageId);
+    
+    return { 
+      success: true, 
+      messageId: result.messageId,
+      recipient: managerEmail
+    };
+  } catch (error) {
+    console.error('Error sending manager approval email:', error);
+    return { 
+      success: false, 
+      error: error.message 
+    };
+  }
+}
+
+// Function to send employee assignment email
+export async function sendEmployeeAssignmentEmail(complaintData, employeeData, territoryName) {
+  try {
+    // Check if SMTP credentials are configured
+    if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
+      console.warn('SMTP credentials not configured. Employee assignment email skipped.');
+      return { success: false, error: 'SMTP credentials not configured' };
+    }
+
+    const emailTemplate = createEmployeeAssignmentEmailTemplate(complaintData, employeeData, territoryName);
+    
+    const mailOptions = {
+      from: `"Shanthi Gears Complaint System" <${process.env.SMTP_USER}>`,
+      to: employeeData.email,
+      subject: emailTemplate.subject,
+      text: emailTemplate.text,
+      html: emailTemplate.html,
+    };
+
+    const result = await transporter.sendMail(mailOptions);
+    console.log('Employee assignment email sent successfully:', result.messageId);
+    
+    return { 
+      success: true, 
+      messageId: result.messageId,
+      recipient: employeeData.email 
+    };
+  } catch (error) {
+    console.error('Error sending employee assignment email:', error);
+    return { 
+      success: false, 
+      error: error.message 
+    };
+  }
 }
 
 export default transporter;
