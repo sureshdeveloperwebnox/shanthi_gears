@@ -16,7 +16,7 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-// Email template for complaint notification - Simplified for employees
+// Email template for complaint notification - Full details for employees
 export function createComplaintEmailTemplate(complaintData, employeeData, territoryName) {
   const {
     contactPersonName,
@@ -24,8 +24,28 @@ export function createComplaintEmailTemplate(complaintData, employeeData, territ
     mobileNumber,
     companyName,
     gearboxSerialNumber,
+    dateOfCommissioning,
     complaintDate,
-    natureOfComplaintWithPhotos
+    applicationDetails,
+    natureOfComplaintWithPhotos,
+    inputMotorDetailsKw,
+    inputOutputConnectionDetails,
+    oilLevelDetails,
+    gradeOfOilUsed,
+    conditionOfOil,
+    conditionOfBreather,
+    sedimentInOilBottom,
+    alignmentInputOutput,
+    runningHoursPerDay,
+    startStopPerDay,
+    dismantledBeforeFailure,
+    ambientConditions,
+    loadSpectrum,
+    forcedLubricationPhotos,
+    conditionOfOtherParts,
+    lubricationCheckDetails,
+    inputSpeedDetails,
+    failureHistoryDetails
   } = complaintData;
 
   const formatDate = (date) => {
@@ -119,21 +139,45 @@ export function createComplaintEmailTemplate(complaintData, employeeData, territ
           </div>
 
           <div class="complaint-details">
-            <h2>📋 Complaint Details</h2>
+            <h2>📋 Customer Information</h2>
             
             <div class="field">
-              <span class="field-label">Customer Information:</span>
-              <div class="field-value">
-                <strong>${contactPersonName}</strong><br>
-                ${companyName}<br>
-                📧 ${mailId}<br>
-                📱 ${mobileNumber || 'Not provided'}
-              </div>
+              <span class="field-label">Contact Person:</span>
+              <div class="field-value">${contactPersonName}</div>
             </div>
 
             <div class="field">
-              <span class="field-label">Gearbox Serial Number:</span>
+              <span class="field-label">Company:</span>
+              <div class="field-value">${companyName}</div>
+            </div>
+
+            <div class="field">
+              <span class="field-label">Email:</span>
+              <div class="field-value">${mailId}</div>
+            </div>
+
+            <div class="field">
+              <span class="field-label">Mobile:</span>
+              <div class="field-value">${mobileNumber || 'Not provided'}</div>
+            </div>
+
+            <div class="field">
+              <span class="field-label">Territory:</span>
+              <div class="field-value">${territoryName}</div>
+            </div>
+          </div>
+
+          <div class="complaint-details">
+            <h2>⚙️ Gearbox Information</h2>
+            
+            <div class="field">
+              <span class="field-label">Serial Number:</span>
               <div class="field-value">${gearboxSerialNumber || 'Not provided'}</div>
+            </div>
+
+            <div class="field">
+              <span class="field-label">Date of Commissioning:</span>
+              <div class="field-value">${formatDate(dateOfCommissioning)}</div>
             </div>
 
             <div class="field">
@@ -142,10 +186,121 @@ export function createComplaintEmailTemplate(complaintData, employeeData, territ
             </div>
 
             <div class="field">
+              <span class="field-label">Application Details:</span>
+              <div class="field-value">${applicationDetails || 'Not provided'}</div>
+            </div>
+
+            <div class="field">
+              <span class="field-label">Motor Details (kW):</span>
+              <div class="field-value">${inputMotorDetailsKw || 'Not provided'}</div>
+            </div>
+          </div>
+
+          <div class="complaint-details">
+            <h2>🔧 Complaint Details</h2>
+            
+            <div class="field">
               <span class="field-label">Nature of Complaint:</span>
               <div class="complaint-description">
                 ${natureOfComplaintWithPhotos || 'No details provided'}
               </div>
+            </div>
+
+            <div class="field">
+              <span class="field-label">Input/Output Connection:</span>
+              <div class="field-value">${inputOutputConnectionDetails || 'Not provided'}</div>
+            </div>
+
+            <div class="field">
+              <span class="field-label">Alignment Input/Output:</span>
+              <div class="field-value">${alignmentInputOutput || 'Not provided'}</div>
+            </div>
+
+            <div class="field">
+              <span class="field-label">Input Speed Details:</span>
+              <div class="field-value">${inputSpeedDetails || 'Not provided'}</div>
+            </div>
+          </div>
+
+          <div class="complaint-details">
+            <h2>🛢️ Oil & Lubrication Details</h2>
+            
+            <div class="field">
+              <span class="field-label">Oil Level Details:</span>
+              <div class="field-value">${oilLevelDetails || 'Not provided'}</div>
+            </div>
+
+            <div class="field">
+              <span class="field-label">Grade of Oil Used:</span>
+              <div class="field-value">${gradeOfOilUsed || 'Not provided'}</div>
+            </div>
+
+            <div class="field">
+              <span class="field-label">Condition of Oil:</span>
+              <div class="field-value">${conditionOfOil || 'Not provided'}</div>
+            </div>
+
+            <div class="field">
+              <span class="field-label">Condition of Breather:</span>
+              <div class="field-value">${conditionOfBreather || 'Not provided'}</div>
+            </div>
+
+            <div class="field">
+              <span class="field-label">Sediment in Oil Bottom:</span>
+              <div class="field-value">${sedimentInOilBottom || 'Not provided'}</div>
+            </div>
+
+            <div class="field">
+              <span class="field-label">Lubrication Check Details:</span>
+              <div class="field-value">${lubricationCheckDetails || 'Not provided'}</div>
+            </div>
+          </div>
+
+          <div class="complaint-details">
+            <h2>⏰ Operational Details</h2>
+            
+            <div class="field">
+              <span class="field-label">Running Hours/Day:</span>
+              <div class="field-value">${runningHoursPerDay || 'Not provided'}</div>
+            </div>
+
+            <div class="field">
+              <span class="field-label">Start/Stop per Day:</span>
+              <div class="field-value">${startStopPerDay || 'Not provided'}</div>
+            </div>
+
+            <div class="field">
+              <span class="field-label">Ambient Conditions:</span>
+              <div class="field-value">${ambientConditions || 'Not provided'}</div>
+            </div>
+
+            <div class="field">
+              <span class="field-label">Load Spectrum:</span>
+              <div class="field-value">${loadSpectrum || 'Not provided'}</div>
+            </div>
+          </div>
+
+          <div class="complaint-details">
+            <h2>🔍 Maintenance & Failure Details</h2>
+            
+            <div class="field">
+              <span class="field-label">Dismantled Before Failure:</span>
+              <div class="field-value">${dismantledBeforeFailure || 'Not provided'}</div>
+            </div>
+
+            <div class="field">
+              <span class="field-label">Condition of Other Parts:</span>
+              <div class="field-value">${conditionOfOtherParts || 'Not provided'}</div>
+            </div>
+
+            <div class="field">
+              <span class="field-label">Failure History Details:</span>
+              <div class="field-value">${failureHistoryDetails || 'Not provided'}</div>
+            </div>
+
+            <div class="field">
+              <span class="field-label">Forced Lubrication Photos:</span>
+              <div class="field-value">${forcedLubricationPhotos || 'Not provided'}</div>
             </div>
           </div>
 
@@ -164,17 +319,44 @@ NEW COMPLAINT RECEIVED - Territory: ${territoryName}
 Complaint ID: ${complaintData.complaintId}
 
 CUSTOMER INFORMATION:
-- Name: ${contactPersonName}
+- Contact Person: ${contactPersonName}
 - Company: ${companyName}
 - Email: ${mailId}
 - Mobile: ${mobileNumber || 'Not provided'}
+- Territory: ${territoryName}
 
-GEARBOX DETAILS:
+GEARBOX INFORMATION:
 - Serial Number: ${gearboxSerialNumber || 'Not provided'}
+- Date of Commissioning: ${formatDate(dateOfCommissioning)}
+- Complaint Date: ${formatDate(complaintDate)}
+- Application Details: ${applicationDetails || 'Not provided'}
+- Motor Details (kW): ${inputMotorDetailsKw || 'Not provided'}
 
 COMPLAINT DETAILS:
-- Date: ${formatDate(complaintDate)}
 - Nature of Complaint: ${natureOfComplaintWithPhotos || 'No details provided'}
+- Input/Output Connection: ${inputOutputConnectionDetails || 'Not provided'}
+- Alignment Input/Output: ${alignmentInputOutput || 'Not provided'}
+- Input Speed Details: ${inputSpeedDetails || 'Not provided'}
+
+OIL & LUBRICATION DETAILS:
+- Oil Level Details: ${oilLevelDetails || 'Not provided'}
+- Grade of Oil Used: ${gradeOfOilUsed || 'Not provided'}
+- Condition of Oil: ${conditionOfOil || 'Not provided'}
+- Condition of Breather: ${conditionOfBreather || 'Not provided'}
+- Sediment in Oil Bottom: ${sedimentInOilBottom || 'Not provided'}
+- Lubrication Check Details: ${lubricationCheckDetails || 'Not provided'}
+
+OPERATIONAL DETAILS:
+- Running Hours/Day: ${runningHoursPerDay || 'Not provided'}
+- Start/Stop per Day: ${startStopPerDay || 'Not provided'}
+- Ambient Conditions: ${ambientConditions || 'Not provided'}
+- Load Spectrum: ${loadSpectrum || 'Not provided'}
+
+MAINTENANCE & FAILURE DETAILS:
+- Dismantled Before Failure: ${dismantledBeforeFailure || 'Not provided'}
+- Condition of Other Parts: ${conditionOfOtherParts || 'Not provided'}
+- Failure History Details: ${failureHistoryDetails || 'Not provided'}
+- Forced Lubrication Photos: ${forcedLubricationPhotos || 'Not provided'}
 
 ACTION REQUIRED: Please contact the customer and take appropriate action.
 
@@ -775,26 +957,33 @@ export function createManagerApprovalEmailTemplate(complaintData, employees, ter
             padding: 15px;
             margin: 10px 0;
             background-color: white;
-            border-radius: 5px;
+            border-radius: 6px;
             border: 1px solid #e5e7eb;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
           }
           .employee-info {
             flex: 1;
+            margin-right: 15px;
+            line-height: 1.4;
           }
           .employee-actions {
             display: flex;
-            gap: 10px;
+            gap: 8px;
+            flex-shrink: 0;
           }
           .btn {
-            padding: 10px 20px;
-            border: 2px solid;
-            border-radius: 8px;
+            padding: 8px 16px;
+            border: 1px solid;
+            border-radius: 4px;
             text-decoration: none;
-            font-weight: 600;
+            font-weight: 500;
             cursor: pointer;
             display: inline-block;
-            transition: all 0.3s ease;
-            font-size: 14px;
+            transition: all 0.2s ease;
+            font-size: 12px;
+            min-width: 100px;
+            text-align: center;
+            white-space: nowrap;
           }
           .btn-accept {
             background-color: #ffffff;
@@ -867,15 +1056,15 @@ export function createManagerApprovalEmailTemplate(complaintData, employees, ter
             ${employees.map(employee => `
               <div class="employee-item">
                 <div class="employee-info">
-                  <strong>${employee.fullName}</strong><br>
-                  <span style="color: #666;">${employee.designation}</span><br>
-                  <span style="color: #888;">${employee.email}</span>
+                  <div style="font-weight: 600; color: #1f2937; margin-bottom: 4px;">${employee.fullName}</div>
+                  <div style="color: #6b7280; font-size: 13px; margin-bottom: 2px;">${employee.designation}</div>
+                  <div style="color: #9ca3af; font-size: 12px;">${employee.email}</div>
                 </div>
                 <div class="employee-actions">
                   <a href="${baseUrl}/api/complaint-action?complaintId=${complaintId}&employeeId=${employee.employeeId}&action=accept" 
-                     class="btn btn-accept">Accept Assignment</a>
+                     class="btn btn-accept">Accept</a>
                   <a href="${baseUrl}/api/complaint-action?complaintId=${complaintId}&employeeId=${employee.employeeId}&action=reject" 
-                     class="btn btn-reject">Reject Assignment</a>
+                     class="btn btn-reject">Reject</a>
                 </div>
               </div>
             `).join('')}
