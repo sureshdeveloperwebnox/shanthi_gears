@@ -20,10 +20,11 @@ export async function GET(req) {
   try {
     console.log('GET /api/complaints - Fetching complaints from database...');
     
-    // Fetch complaints from local database with territory information
+    // Fetch complaints from local database with territory and country information
     const complaints = await prisma.complaints.findMany({
       include: {
-        territory: true
+        territory: true,
+        country: true
       },
       orderBy: {
         createdAt: 'desc'
@@ -42,6 +43,11 @@ export async function GET(req) {
       territoryId: complaint.territoryId,
       territory: {
         territoryName: complaint.territory.territoryName
+      },
+      countryId: complaint.countryId,
+      country: {
+        countryId: complaint.country.countryId,
+        countryName: complaint.country.countryName
       },
       gearboxSerialNumber: complaint.gearboxSerialNumber,
       dateOfCommissioning: complaint.dateOfCommissioning,

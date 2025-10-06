@@ -36,7 +36,10 @@ import {
 export default function ComplaintsPage() {
   const [complaints, setComplaints] = useState([]);
   const [territories, setTerritories] = useState([]);
+  const [filteredTerritories, setFilteredTerritories] = useState([]);
+  const [countries, setCountries] = useState([]);
   const [employees, setEmployees] = useState([]);
+  const [employeeTerritories, setEmployeeTerritories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [search, setSearch] = useState('');
@@ -44,6 +47,7 @@ export default function ComplaintsPage() {
   const [filters, setFilters] = useState({
     dateFrom: '',
     dateTo: '',
+    country: '',
     territory: '',
     status: '',
     email: ''
@@ -87,16 +91,33 @@ export default function ComplaintsPage() {
   };
 
   // Fetch territories from API
-  const fetchTerritories = async () => {
+  const fetchTerritories = async (countryId = null) => {
     try {
-      const res = await fetch('/api/territories');
+      const url = countryId ? `/api/territories?countryId=${countryId}` : '/api/territories';
+      const res = await fetch(url);
       if (!res.ok) throw new Error(`Error: ${res.status}`);
       const data = await res.json();
       console.log('Fetched territories:', data); // Debug log
-      setTerritories(Array.isArray(data) ? data : []);
+      const territoriesArray = Array.isArray(data) ? data : [];
+      setTerritories(territoriesArray);
+      setFilteredTerritories(territoriesArray);
     } catch (err) {
       console.error('Error fetching territories:', err);
       // Don't set error state for territories, just log it
+    }
+  };
+
+  // Fetch countries from API
+  const fetchCountries = async () => {
+    try {
+      const res = await fetch('/api/countries');
+      if (!res.ok) throw new Error(`Error: ${res.status}`);
+      const data = await res.json();
+      console.log('Fetched countries:', data); // Debug log
+      setCountries(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error('Error fetching countries:', err);
+      // Don't set error state for countries, just log it
     }
   };
 
@@ -114,6 +135,20 @@ export default function ComplaintsPage() {
     }
   };
 
+  // Fetch employee-territory assignments from API
+  const fetchEmployeeTerritories = async () => {
+    try {
+      const res = await fetch('/api/employee-territories');
+      if (!res.ok) throw new Error(`Error: ${res.status}`);
+      const data = await res.json();
+      console.log('Fetched employee-territories:', data); // Debug log
+      setEmployeeTerritories(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error('Error fetching employee-territories:', err);
+      // Don't set error state for employee-territories, just log it
+    }
+  };
+
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
@@ -121,7 +156,9 @@ export default function ComplaintsPage() {
       await Promise.all([
         fetchComplaints(),
         fetchTerritories(),
-        fetchEmployees()
+        fetchCountries(),
+        fetchEmployees(),
+        fetchEmployeeTerritories()
       ]);
       setLoading(false);
     };
@@ -135,6 +172,23 @@ export default function ComplaintsPage() {
     console.log('Number of complaints:', complaints.length);
     console.log('Complaints details:', JSON.stringify(complaints, null, 2));
   }, [complaints]);
+
+  // Handle country filter change
+  const handleCountryChange = async (countryId) => {
+    setFilters(prev => ({ 
+      ...prev, 
+      country: countryId, 
+      territory: '' // Reset territory when country changes
+    }));
+    setCurrentPage(1);
+    
+    // Fetch territories for the selected country
+    if (countryId) {
+      await fetchTerritories(countryId);
+    } else {
+      await fetchTerritories(); // Fetch all territories
+    }
+  };
 
   // Helper function to format date for comparison
   const formatDateForComparison = (dateStr) => {
@@ -164,11 +218,17 @@ export default function ComplaintsPage() {
     const matchesTerritory = !filters.territory || 
       (c.territory && c.territory.territoryName && c.territory.territoryName.toLowerCase().includes(filters.territory.toLowerCase()));
 
-    // Employee email filter - filter complaints where the contact email matches selected employee email
-    const matchesEmail = !filters.email || 
-      (c.mailId && c.mailId.toLowerCase() === filters.email.toLowerCase());
+    // Country filter
+    const matchesCountry = !filters.country || 
+      (c.country && c.country.countryId && c.country.countryId.toString() === filters.country);
 
-    return matchesSearch && matchesDateRange && matchesTerritory && matchesEmail;
+    // Employee filter - filter complaints assigned to the selected employee's territory
+    const matchesEmployee = !filters.email || 
+      (c.territoryId && employeeTerritories.some(et => 
+        et.employee.email === filters.email && et.territoryId === c.territoryId
+      ));
+
+    return matchesSearch && matchesDateRange && matchesTerritory && matchesCountry && matchesEmployee;
   });
 
   // Pagination logic
@@ -179,9 +239,11 @@ export default function ComplaintsPage() {
   );
 
   const clearFilters = () => {
-    setFilters({ dateFrom: '', dateTo: '', territory: '', status: '', email: '' });
+    setFilters({ dateFrom: '', dateTo: '', country: '', territory: '', status: '', email: '' });
     setSearchTerm('');
     setCurrentPage(1);
+    // Reset territories to show all
+    fetchTerritories();
   };
 
   // Handle viewing complaint details
@@ -266,7 +328,7 @@ export default function ComplaintsPage() {
             </div>
 
             {/* Filter Controls */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4 mb-4">
               <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-700">From Date</label>
                 <Input
@@ -294,6 +356,22 @@ export default function ComplaintsPage() {
               </div>
               
               <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">Country</label>
+                <select
+                  value={filters.country}
+                  onChange={(e) => handleCountryChange(e.target.value)}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:border-orange-500 focus:ring-2 focus:ring-orange-200"
+                >
+                  <option value="">All Countries</option>
+                  {countries.map(country => (
+                    <option key={country.countryId} value={country.countryId}>
+                      {country.countryName}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-700">Territory</label>
                 <select
                   value={filters.territory}
@@ -302,9 +380,10 @@ export default function ComplaintsPage() {
                     setCurrentPage(1);
                   }}
                   className="w-full border border-gray-300 rounded-md px-3 py-2 focus:border-orange-500 focus:ring-2 focus:ring-orange-200"
+                  disabled={!filters.country}
                 >
-                  <option value="">All Territories</option>
-                  {territories.map(territory => (
+                  <option value="">{filters.country ? "All Territories" : "Select Country First"}</option>
+                  {filteredTerritories.map(territory => (
                     <option key={territory.territoryId} value={territory.territoryName}>
                       {territory.territoryName}
                     </option>
@@ -349,7 +428,7 @@ export default function ComplaintsPage() {
                 <Filter className="mr-2 w-4 h-4" />
                 Showing {filteredComplaints.length} of {complaints.length} complaints
               </div>
-              {(searchTerm || filters.dateFrom || filters.dateTo || filters.territory || filters.email) && (
+              {(searchTerm || filters.dateFrom || filters.dateTo || filters.country || filters.territory || filters.email) && (
                 <div className="text-sm text-orange-600 font-medium flex items-center">
                   <Search className="mr-1 w-4 h-4" />
                   Filters active
@@ -402,16 +481,16 @@ export default function ComplaintsPage() {
                   <FileText className="w-8 h-8 text-gray-400" />
                 </div>
                 <h3 className="text-xl font-semibold text-gray-800 mb-2">
-                  {searchTerm || filters.dateFrom || filters.dateTo || filters.territory || filters.email ? 
+                  {searchTerm || filters.dateFrom || filters.dateTo || filters.country || filters.territory || filters.email ? 
                     "No complaints found" : "No complaints yet"}
                 </h3>
                 <p className="text-gray-600 mb-6">
-                  {searchTerm || filters.dateFrom || filters.dateTo || filters.territory || filters.email ?
+                  {searchTerm || filters.dateFrom || filters.dateTo || filters.country || filters.territory || filters.email ?
                     "No complaints match your current filters" :
                     "Complaints will appear here when submitted through your forms"
                   }
                 </p>
-                {(searchTerm || filters.dateFrom || filters.dateTo || filters.territory || filters.email) && (
+                {(searchTerm || filters.dateFrom || filters.dateTo || filters.country || filters.territory || filters.email) && (
                   <Button
                     onClick={clearFilters}
                     className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700"
