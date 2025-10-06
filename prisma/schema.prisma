@@ -7,104 +7,109 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum EmployeeStatus {
-  ACTIVE
-  INACTIVE
-  SUSPENDED
-}
-
 model EmployeeTerritories {
-  id          String     @id @default(uuid())
+  id          String      @id @default(uuid())
   employeeId  String
   territoryId Int
   assignedAt  DateTime
+  employee    Employees   @relation(fields: [employeeId], references: [employeeId])
+  territory   Territories @relation(fields: [territoryId], references: [territoryId])
 
-  employee   Employees   @relation(fields: [employeeId], references: [employeeId])
-  territory  Territories @relation(fields: [territoryId], references: [territoryId])
-
+  @@index([employeeId], map: "employee_territories_employeeId_fkey")
+  @@index([territoryId], map: "employee_territories_territoryId_fkey")
   @@map("employee_territories")
 }
 
 model Employees {
-  employeeId String         @id @default(uuid())
- //userId     String
-  fullName   String
-  designation String
-  email      String         @unique
-  status     EmployeeStatus
-  createdAt  DateTime       @default(now())
-  updatedAt  DateTime       @updatedAt
-
-  //user                Users?                @relation(fields: [userId], references: [userId])
+  employeeId          String                @id @default(uuid())
+  fullName            String
+  designation         String
+  email               String                @unique
+  status              EmployeeStatus
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime              @updatedAt
   employeeTerritories EmployeeTerritories[]
 }
 
 model Users {
-  userId       String    @id @default(uuid())
- roleId       String
- username     String    @unique
-  email        String    @unique
+  userId       String   @id @default(uuid())
+  roleId       String
+  username     String   @unique
+  email        String   @unique
   passwordHash String
- createdAt    DateTime  @default(now())
- updatedAt    DateTime  @updatedAt
-
- //role      Roles     @relation(fields: [roleId], references: [roleId])
- //employees Employees[]
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }
 
 model Roles {
   roleId    String   @id @default(uuid())
   roleName  String   @unique
   createdAt DateTime @default(now())
-
-  //users Users[]
 }
 
 model Territories {
-  territoryId   Int      @id @default(autoincrement())
-  territoryName String   @unique
-  status        String   @default("ACTIVE") // ACTIVE or INACTIVE // ADDED FOR DEACTIVATE FUNCTIONALITY
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-
-  employeeTerritories EmployeeTerritories[]
+  territoryId         Int                   @id @default(autoincrement())
+  territoryName       String                @unique
+  countryId           Int
+  createdAt           DateTime              @default(now())
+  status              String                @default("ACTIVE")
+  updatedAt           DateTime              @updatedAt
   complaints          Complaints[]
+  employeeTerritories EmployeeTerritories[]
+  country Country @relation(fields: [countryId], references: [countryId])
+}
+
+model Country {
+  countryId   Int      @id @default(autoincrement())
+  countryName String   @db.VarChar(250)
+  createdAt   DateTime @default(now()) @db.Timestamp(0)
+  updatedAt   DateTime @default(dbgenerated("('0000-00-00 00:00:00')")) @updatedAt @db.Timestamp(0)
+  complaints Complaints[]
+  territories Territories[]
 }
 
 model Complaints {
-  complaintId               String    @id @default(uuid())
-  contactPersonName         String
-  mailId                    String
-  mobileNumber              String
-  companyName               String
-  territoryId               Int
-  gearboxSerialNumber       String
-  dateOfCommissioning       DateTime
-  complaintDate             DateTime  // <-- Added date field
-  applicationDetails        String
-  natureOfComplaintWithPhotos String
-  inputMotorDetailsKw       Decimal
+  complaintId                  String      @id @default(uuid())
+  contactPersonName            String
+  mailId                       String
+  mobileNumber                 String
+  companyName                  String
+  territoryId                  Int
+  countryId                    Int
+  gearboxSerialNumber          String
+  dateOfCommissioning          DateTime
+  complaintDate                DateTime
+  applicationDetails           String
+  natureOfComplaintWithPhotos  String
+  inputMotorDetailsKw          Decimal
   inputOutputConnectionDetails String
-  oilLevelDetails           String
-  gradeOfOilUsed            String
-  conditionOfOil            String
-  conditionOfBreather       String
-  sedimentInOilBottom       String
-  alignmentInputOutput      String
-  runningHoursPerDay        Int
-  startStopPerDay           Int
-  dismantledBeforeFailure   String
-  ambientConditions         String
-  loadSpectrum              String
-  forcedLubricationPhotos   String
-  conditionOfOtherParts     String
-  lubricationCheckDetails   String
-  inputSpeedDetails         String
-  failureHistoryDetails     String
-  createdAt                 DateTime  @default(now())
-  updatedAt                 DateTime  @updatedAt
+  oilLevelDetails              String
+  gradeOfOilUsed               String
+  conditionOfOil               String
+  conditionOfBreather          String
+  sedimentInOilBottom          String
+  alignmentInputOutput         String
+  runningHoursPerDay           Int
+  startStopPerDay              Int
+  dismantledBeforeFailure      String
+  ambientConditions            String
+  loadSpectrum                 String
+  forcedLubricationPhotos      String
+  conditionOfOtherParts        String
+  lubricationCheckDetails      String
+  inputSpeedDetails            String
+  failureHistoryDetails        String
+  createdAt                    DateTime    @default(now())
+  updatedAt                    DateTime    @updatedAt
+  territory                    Territories @relation(fields: [territoryId], references: [territoryId])
+  country                      Country     @relation(fields: [countryId], references: [countryId])
 
-  territory Territories @relation(fields: [territoryId], references: [territoryId])
-
+  @@index([territoryId], map: "complaints_territoryId_fkey")
   @@map("complaints")
+}
+
+enum EmployeeStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
 }

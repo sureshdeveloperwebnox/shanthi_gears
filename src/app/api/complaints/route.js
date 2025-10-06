@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { sendComplaintNotification, sendUserThankYouEmail, sendManagerApprovalEmail, sendEmployeeAssignmentEmail } from "@/lib/email";
+import { generateComplaintId } from "@/lib/complaintIdGenerator";
 
 // CORS headers function
 const corsHeaders = {
@@ -94,9 +95,11 @@ export async function POST(req) {
       mobileNumber: body.mobile_number || body.mobileNumber || '',
       companyName: body.company_name || body.companyName || '',
       
-      // Territory (assuming it comes as territory name, we'll need to find the ID)
+      // Territory and Country (assuming they come as names, we'll need to find the IDs)
       territoryName: body.territory_name || body.territoryName || '',
       territoryId: body.territory_id || body.territoryId || null,
+      countryName: body.country_name || body.countryName || '',
+      countryId: body.country_id || body.countryId || null,
       
       // Gearbox details
       gearboxSerialNumber: body.gearbox_serial_number || body.gearboxSerialNumber || '',
@@ -142,15 +145,35 @@ export async function POST(req) {
       );
     }
 
+    // Find country ID if country name is provided
+    let finalCountryId = mappedData.countryId;
+    if (!finalCountryId && mappedData.countryName) {
+      const country = await prisma.country.findFirst({
+        where: {
+          countryName: {
+            contains: mappedData.countryName
+          }
+        }
+      });
+      finalCountryId = country?.countryId;
+    }
+
     // Find territory ID if territory name is provided
     let finalTerritoryId = mappedData.territoryId;
     if (!finalTerritoryId && mappedData.territoryName) {
-      const territory = await prisma.territories.findFirst({
-        where: {
-          territoryName: {
-            contains: mappedData.territoryName
-          }
+      const territoryWhere = {
+        territoryName: {
+          contains: mappedData.territoryName
         }
+      };
+      
+      // If we have a country ID, filter by country as well
+      if (finalCountryId) {
+        territoryWhere.countryId = finalCountryId;
+      }
+      
+      const territory = await prisma.territories.findFirst({
+        where: territoryWhere
       });
       finalTerritoryId = territory?.territoryId;
     }
@@ -159,6 +182,7 @@ export async function POST(req) {
     if (!finalTerritoryId) {
       const firstTerritory = await prisma.territories.findFirst();
       finalTerritoryId = firstTerritory?.territoryId;
+      finalCountryId = firstTerritory?.countryId;
     }
 
     if (!finalTerritoryId) {
@@ -168,14 +192,30 @@ export async function POST(req) {
       );
     }
 
+    if (!finalCountryId) {
+      return NextResponse.json(
+        { error: 'No country found. Please ensure countries exist in the database.' },
+        { status: 400, headers: corsHeaders }
+      );
+    }
+
+
+
+
+
+    // Generate custom complaint ID
+    const customComplaintId = await generateComplaintId();
+
     // Create new complaint in database
     const newComplaint = await prisma.complaints.create({
       data: {
+        complaintId: customComplaintId,
         contactPersonName: mappedData.contactPersonName,
         mailId: mappedData.mailId,
         mobileNumber: mappedData.mobileNumber,
         companyName: mappedData.companyName,
         territoryId: parseInt(finalTerritoryId),
+        countryId: parseInt(finalCountryId),
         gearboxSerialNumber: mappedData.gearboxSerialNumber,
         dateOfCommissioning: mappedData.dateOfCommissioning ? new Date(mappedData.dateOfCommissioning) : new Date(),
         complaintDate: mappedData.complaintDate ? new Date(mappedData.complaintDate) : new Date(),

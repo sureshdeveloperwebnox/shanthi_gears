@@ -429,6 +429,9 @@ export default function ComplaintsPage() {
                     <thead className="bg-gray-50 border-b">
                       <tr>
                         <th className="px-4 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Complaint ID
+                        </th>
+                        <th className="px-4 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Contact Info
                         </th>
                         <th className="px-4 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -455,6 +458,22 @@ export default function ComplaintsPage() {
                           className="hover:bg-orange-50 transition-colors duration-200"
                           style={{ animationDelay: `${index * 0.1}s` }}
                         >
+                          <td className="px-4 py-4">
+                            <div className="flex items-center min-w-0">
+                              <div className="bg-blue-100 p-2 rounded-full mr-3 flex-shrink-0">
+                                <FileText className="w-4 h-4 text-blue-600" />
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <div className="text-sm font-mono font-medium text-gray-900 truncate" 
+                                     title={complaint.complaintId}>
+                                  {complaint.complaintId || 'N/A'}
+                                </div>
+                                <div className="text-xs text-gray-500">
+                                  ID
+                                </div>
+                              </div>
+                            </div>
+                          </td>
                           <td className="px-4 py-4">
                             <div className="flex items-center min-w-0">
                               <div className="bg-orange-100 p-2 rounded-full mr-3 flex-shrink-0">
@@ -551,6 +570,22 @@ export default function ComplaintsPage() {
                       style={{ animationDelay: `${index * 0.1}s` }}
                     >
                       <CardContent className="p-4">
+                        <div className="mb-3 pb-2 border-b border-gray-100">
+                          <div className="flex items-center">
+                            <div className="bg-blue-100 p-2 rounded-full mr-3 flex-shrink-0">
+                              <FileText className="w-4 h-4 text-blue-600" />
+                            </div>
+                            <div>
+                              <div className="text-sm font-mono font-medium text-gray-900" 
+                                   title={complaint.complaintId}>
+                                {complaint.complaintId || 'N/A'}
+                              </div>
+                              <div className="text-xs text-gray-500">
+                                Complaint ID
+                              </div>
+                            </div>
+                          </div>
+                        </div>
                         <div className="flex items-start justify-between mb-3">
                             <div className="flex items-center min-w-0 flex-1">
                               <div className="bg-orange-100 p-2 rounded-full mr-3 flex-shrink-0">

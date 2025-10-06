@@ -41,10 +41,12 @@ import {
 // validation schema
 const territorySchema = z.object({
   territoryName: z.string().min(2, "Name must be at least 2 characters"),
+  countryId: z.string().min(1, "Please select a country"),
 });
 
 export default function TerritoriesPage() {
   const [territories, setTerritories] = useState([]);
+  const [countries, setCountries] = useState([]);
   const [open, setOpen] = useState(false);
   const [editingTerritory, setEditingTerritory] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -65,6 +67,7 @@ export default function TerritoriesPage() {
 
   useEffect(() => {
     fetchTerritories();
+    fetchCountries();
   }, []);
 
   const fetchTerritories = async () => {
@@ -78,6 +81,15 @@ export default function TerritoriesPage() {
       console.error("Error fetching territories:", err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchCountries = async () => {
+    try {
+      const res = await axios.get("/api/countries");
+      setCountries(res.data);
+    } catch (err) {
+      console.error("Error fetching countries:", err);
     }
   };
 
@@ -117,7 +129,10 @@ export default function TerritoriesPage() {
 
   const handleEdit = (territory) => {
     setEditingTerritory(territory);
-    reset({ territoryName: territory.territoryName });
+    reset({ 
+      territoryName: territory.territoryName,
+      countryId: territory.countryId?.toString() || ''
+    });
     setOpen(true);
   };
 
@@ -256,6 +271,28 @@ export default function TerritoriesPage() {
                     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
                       <div className="space-y-2">
                         <label className="text-sm font-medium text-gray-700">
+                          Country
+                        </label>
+                        <select
+                          {...register("countryId")}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:border-orange-500 focus:ring-2 focus:ring-orange-200 bg-white"
+                        >
+                          <option value="">Select a country...</option>
+                          {countries.map((country) => (
+                            <option key={country.countryId} value={country.countryId}>
+                              {country.countryName}
+                            </option>
+                          ))}
+                        </select>
+                        {errors.countryId && (
+                          <p className="text-red-500 text-sm flex items-center">
+                            <AlertCircle className="mr-1 w-4 h-4" />
+                            {errors.countryId.message}
+                          </p>
+                        )}
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium text-gray-700">
                           Territory Name
                         </label>
                         <Input
@@ -334,6 +371,9 @@ export default function TerritoriesPage() {
                           Territory
                         </th>
                         <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Country
+                        </th>
+                        <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Status {/* ADDED FOR DEACTIVATE FUNCTIONALITY */}
                         </th>
                         <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -361,6 +401,18 @@ export default function TerritoriesPage() {
                                   {territory.territoryName}
                                 </div>
                                 
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="flex items-center">
+                              <div className="bg-blue-100 p-2 rounded-full mr-3">
+                                <MapPin className="w-4 h-4 text-blue-600" />
+                              </div>
+                              <div>
+                                <div className="text-sm font-medium text-gray-900">
+                                  {territory.country?.countryName || 'N/A'}
+                                </div>
                               </div>
                             </div>
                           </td>
@@ -440,6 +492,7 @@ export default function TerritoriesPage() {
                             </div>
                             <div>
                               <h3 className="font-semibold text-gray-900">{territory.territoryName}</h3>
+                              <p className="text-sm text-blue-600 font-medium">{territory.country?.countryName || 'N/A'}</p>
                               <div className="flex items-center gap-2">
                                 {/* ADDED FOR DEACTIVATE FUNCTIONALITY - START */}
                                 <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${

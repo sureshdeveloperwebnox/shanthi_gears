@@ -13,18 +13,29 @@ export async function OPTIONS() {
   return new NextResponse(null, { status: 200, headers: corsHeaders });
 }
 
-// GET all territories
-export async function GET() {
+// GET all territories (with optional country filter)
+export async function GET(req) {
   try {
     console.log('Fetching territories from database...');
     
+    // Get query parameters
+    const { searchParams } = new URL(req.url);
+    const countryId = searchParams.get('countryId');
+    
+    // Build where clause
+    const whereClause = countryId ? { countryId: parseInt(countryId) } : {};
+    
     const territories = await prisma.territories.findMany({
+      where: whereClause,
+      include: {
+        country: true
+      },
       orderBy: {
         territoryName: 'asc'
       }
     });
     
-    console.log(`Found ${territories.length} territories`);
+    console.log(`Found ${territories.length} territories${countryId ? ` for country ${countryId}` : ''}`);
     return NextResponse.json(territories, { headers: corsHeaders });
   } catch (err) {
     console.error('Error fetching territories:', err);
@@ -36,11 +47,37 @@ export async function GET() {
 export async function POST(req) {
   try {
     const body = await req.json();
+    
+    // Validate required fields
+    if (!body.territoryName) {
+      return NextResponse.json(
+        { error: "Territory name is required" }, 
+        { status: 400, headers: corsHeaders }
+      );
+    }
+
+    if (!body.countryId) {
+      return NextResponse.json(
+        { error: "Country ID is required" }, 
+        { status: 400, headers: corsHeaders }
+      );
+    }
+
     const newTerritory = await prisma.territories.create({
-      data: { territoryName: body.territoryName },
+      data: { 
+        territoryName: body.territoryName,
+        countryId: parseInt(body.countryId),
+        status: body.status || 'ACTIVE'
+      },
+      include: {
+        country: true
+      }
     });
+    
+    console.log(`Created new territory: ${newTerritory.territoryName} in ${newTerritory.country.countryName}`);
     return NextResponse.json(newTerritory, { headers: corsHeaders });
   } catch (err) {
+    console.error('Error creating territory:', err);
     return NextResponse.json({ error: err.message }, { status: 500, headers: corsHeaders });
   }
 }
@@ -49,15 +86,42 @@ export async function POST(req) {
 export async function PUT(req) {
   try {
     const body = await req.json();
-    if (!body.territoryId)
-      return NextResponse.json({ error: "Territory ID required" }, { status: 400, headers: corsHeaders });
+    
+    if (!body.territoryId) {
+      return NextResponse.json(
+        { error: "Territory ID is required" }, 
+        { status: 400, headers: corsHeaders }
+      );
+    }
+
+    if (!body.territoryName) {
+      return NextResponse.json(
+        { error: "Territory name is required" }, 
+        { status: 400, headers: corsHeaders }
+      );
+    }
+
+    const updateData = {
+      territoryName: body.territoryName
+    };
+
+    // Include countryId if provided
+    if (body.countryId) {
+      updateData.countryId = parseInt(body.countryId);
+    }
 
     const updated = await prisma.territories.update({
       where: { territoryId: body.territoryId },
-      data: { territoryName: body.territoryName },
+      data: updateData,
+      include: {
+        country: true
+      }
     });
+    
+    console.log(`Updated territory: ${updated.territoryName}`);
     return NextResponse.json(updated, { headers: corsHeaders });
   } catch (err) {
+    console.error('Error updating territory:', err);
     return NextResponse.json({ error: err.message }, { status: 500, headers: corsHeaders });
   }
 }
