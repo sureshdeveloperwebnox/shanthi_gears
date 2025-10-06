@@ -36,6 +36,7 @@ import {
 export default function ComplaintsPage() {
   const [complaints, setComplaints] = useState([]);
   const [territories, setTerritories] = useState([]);
+  const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [search, setSearch] = useState('');
@@ -44,7 +45,8 @@ export default function ComplaintsPage() {
     dateFrom: '',
     dateTo: '',
     territory: '',
-    status: ''
+    status: '',
+    email: ''
   });
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedComplaint, setSelectedComplaint] = useState(null);
@@ -98,13 +100,28 @@ export default function ComplaintsPage() {
     }
   };
 
+  // Fetch employees from API
+  const fetchEmployees = async () => {
+    try {
+      const res = await fetch('/api/employees?activeOnly=true');
+      if (!res.ok) throw new Error(`Error: ${res.status}`);
+      const data = await res.json();
+      console.log('Fetched employees:', data); // Debug log
+      setEmployees(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error('Error fetching employees:', err);
+      // Don't set error state for employees, just log it
+    }
+  };
+
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
       setError(null); // Clear any previous errors
       await Promise.all([
         fetchComplaints(),
-        fetchTerritories()
+        fetchTerritories(),
+        fetchEmployees()
       ]);
       setLoading(false);
     };
@@ -126,6 +143,7 @@ export default function ComplaintsPage() {
     return isNaN(date.getTime()) ? null : date;
   };
 
+
   // Filtered complaints based on search and filters
   const filteredComplaints = complaints.filter(c => {
     // Text search
@@ -146,7 +164,11 @@ export default function ComplaintsPage() {
     const matchesTerritory = !filters.territory || 
       (c.territory && c.territory.territoryName && c.territory.territoryName.toLowerCase().includes(filters.territory.toLowerCase()));
 
-    return matchesSearch && matchesDateRange && matchesTerritory;
+    // Employee email filter - filter complaints where the contact email matches selected employee email
+    const matchesEmail = !filters.email || 
+      (c.mailId && c.mailId.toLowerCase() === filters.email.toLowerCase());
+
+    return matchesSearch && matchesDateRange && matchesTerritory && matchesEmail;
   });
 
   // Pagination logic
@@ -157,7 +179,7 @@ export default function ComplaintsPage() {
   );
 
   const clearFilters = () => {
-    setFilters({ dateFrom: '', dateTo: '', territory: '', status: '' });
+    setFilters({ dateFrom: '', dateTo: '', territory: '', status: '', email: '' });
     setSearchTerm('');
     setCurrentPage(1);
   };
@@ -244,7 +266,7 @@ export default function ComplaintsPage() {
             </div>
 
             {/* Filter Controls */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-4">
               <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-700">From Date</label>
                 <Input
@@ -290,6 +312,25 @@ export default function ComplaintsPage() {
                 </select>
               </div>
 
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">Employee</label>
+                <select
+                  value={filters.email}
+                  onChange={(e) => {
+                    setFilters(prev => ({ ...prev, email: e.target.value }));
+                    setCurrentPage(1);
+                  }}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:border-orange-500 focus:ring-2 focus:ring-orange-200"
+                >
+                  <option value="">All Employees</option>
+                  {employees.map((employee) => (
+                    <option key={employee.employeeId} value={employee.email}>
+                      {employee.fullName} - {employee.email}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
               <div className="flex items-end">
                 <Button
                   onClick={clearFilters}
@@ -308,7 +349,7 @@ export default function ComplaintsPage() {
                 <Filter className="mr-2 w-4 h-4" />
                 Showing {filteredComplaints.length} of {complaints.length} complaints
               </div>
-              {(searchTerm || filters.dateFrom || filters.dateTo || filters.territory) && (
+              {(searchTerm || filters.dateFrom || filters.dateTo || filters.territory || filters.email) && (
                 <div className="text-sm text-orange-600 font-medium flex items-center">
                   <Search className="mr-1 w-4 h-4" />
                   Filters active
@@ -361,16 +402,16 @@ export default function ComplaintsPage() {
                   <FileText className="w-8 h-8 text-gray-400" />
                 </div>
                 <h3 className="text-xl font-semibold text-gray-800 mb-2">
-                  {searchTerm || filters.dateFrom || filters.dateTo || filters.territory ? 
+                  {searchTerm || filters.dateFrom || filters.dateTo || filters.territory || filters.email ? 
                     "No complaints found" : "No complaints yet"}
                 </h3>
                 <p className="text-gray-600 mb-6">
-                  {searchTerm || filters.dateFrom || filters.dateTo || filters.territory ?
+                  {searchTerm || filters.dateFrom || filters.dateTo || filters.territory || filters.email ?
                     "No complaints match your current filters" :
                     "Complaints will appear here when submitted through your forms"
                   }
                 </p>
-                {(searchTerm || filters.dateFrom || filters.dateTo || filters.territory) && (
+                {(searchTerm || filters.dateFrom || filters.dateTo || filters.territory || filters.email) && (
                   <Button
                     onClick={clearFilters}
                     className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700"
