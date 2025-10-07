@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { sendComplaintNotification, sendUserThankYouEmail, sendManagerApprovalEmail, sendEmployeeAssignmentEmail } from "@/lib/email";
+import { sendComplaintNotification, sendUserThankYouEmail } from "@/lib/email";
+
+
 import { generateComplaintId } from "@/lib/complaintIdGenerator";
 
 // CORS headers function
@@ -297,21 +299,31 @@ export async function POST(req) {
 
     console.log('🔥🔥🔥🔥🔥Created new complaint:', newComplaint.complaintId);
 
-    // Send emails: thank you to user, notification to all employees, and manager approval email
+    // Send emails: thank you to user and notification to manager with employees in CC
     let userEmailResult = null;
-    let employeeEmailResults = [];
-    let managerEmailResult = null;
+    let employeeNotificationResult = null;
     
     try {
-      // Get territory name for emails
+      // Get territory and country names for emails
       const territory = await prisma.territories.findUnique({
-        where: { territoryId: parseInt(finalTerritoryId) }
+        where: { territoryId: parseInt(finalTerritoryId) },
+        include: {
+          country: true
+        }
       });
       const territoryName = territory?.territoryName || 'Unknown Territory';
+      const countryName = territory?.country?.countryName || 'Unknown Country';
+      
+      console.log('Territory lookup result:', {
+        territoryId: finalTerritoryId,
+        territoryName,
+        countryName,
+        territory: territory
+      });
 
       // Send thank you email to the user who submitted the complaint
       console.log(`Sending thank you email to user: ${mappedData.contactPersonName} (${mappedData.mailId})`);
-      userEmailResult = await sendUserThankYouEmail(newComplaint, territoryName);
+      userEmailResult = await sendUserThankYouEmail(newComplaint, territoryName, countryName);
       
       if (userEmailResult.success) {
         console.log('User thank you email sent successfully:', userEmailResult.messageId);
@@ -337,41 +349,43 @@ export async function POST(req) {
       if (employeeAssignments && employeeAssignments.length > 0) {
         const employees = employeeAssignments.map(assignment => assignment.employee);
         const employeeNames = employees.map(emp => `${emp.fullName} (${emp.email})`).join(', ');
-        console.log(`Sending notification emails to all employees: ${employeeNames}`);
+        console.log(`Sending notification email to manager with employees in CC: ${employeeNames}`);
+        console.log('Manager email from env:', process.env.COMPLAINT_CC_EMAIL);
         
-        // Send notification email to all employees immediately
-        const employeeNotificationResult = await sendComplaintNotification(
-          newComplaint, 
-          employees, 
-          territoryName
-        );
-        
-        if (employeeNotificationResult.success) {
-          console.log(`✅ SUCCESS: Notification emails sent to ALL ${employees.length} employees`);
-          console.log('Employee Message IDs:', employeeNotificationResult.employeeMessageIds);
-          employeeEmailResults = employeeNotificationResult.employeeMessageIds || [];
-        } else {
-          console.warn('Failed to send employee notification emails:', employeeNotificationResult.error);
-        }
-        
-        // Send manager approval email
-        const managerEmail = process.env.COMPLAINT_CC_EMAIL || 'swethabellan@gmail.com';
-        console.log(`Sending manager approval email to: ${managerEmail}`);
-        
-        managerEmailResult = await sendManagerApprovalEmail(
+        // Send notification email to manager with employees in CC
+        employeeNotificationResult = await sendComplaintNotification(
           newComplaint, 
           employees, 
           territoryName,
-          managerEmail
+          countryName
         );
-        if (managerEmailResult.success) {
-          console.log(`✅ SUCCESS: Manager approval email sent to ${managerEmail}`);
-          console.log('Manager Message ID:', managerEmailResult.messageId);
+        
+        if (employeeNotificationResult.success) {
+          console.log(`✅ SUCCESS: Notification email sent to manager with ${employees.length} employees in CC`);
+          console.log('Manager Message ID:', employeeNotificationResult.messageId);
+          console.log('CC Recipients:', employeeNotificationResult.ccRecipients);
         } else {
-          console.warn('Failed to send manager approval email:', managerEmailResult.error);
+          console.warn('Failed to send employee notification email:', employeeNotificationResult.error);
         }
       } else {
         console.warn(`No active employees found for territory ID: ${finalTerritoryId}`);
+        console.log('Available territories with employees:');
+        const allAssignments = await prisma.employeeTerritories.findMany({
+          where: {
+            employee: {
+              status: 'ACTIVE'
+            }
+          },
+          include: {
+            employee: true,
+            territory: true
+          }
+        });
+        console.log('All active assignments:', allAssignments.map(a => ({
+          territory: a.territory.territoryName,
+          employee: a.employee.fullName,
+          territoryId: a.territoryId
+        })));
       }
     } catch (emailError) {
       console.error('Error sending emails:', emailError);
@@ -389,15 +403,12 @@ export async function POST(req) {
           recipient: userEmailResult.recipient || null,
           error: userEmailResult.error || null
         } : null,
-        employeeNotifications: employeeEmailResults.length > 0 ? {
-          sent: true,
-          count: employeeEmailResults.length,
-          messageIds: employeeEmailResults
-        } : null,
-        managerApproval: managerEmailResult ? {
-          sent: managerEmailResult.success,
-          recipient: managerEmailResult.recipient || null,
-          error: managerEmailResult.error || null
+        managerNotification: employeeNotificationResult ? {
+          sent: employeeNotificationResult.success,
+          recipient: employeeNotificationResult.recipient || null,
+          ccCount: employeeNotificationResult.ccCount || 0,
+          ccRecipients: employeeNotificationResult.ccRecipients || [],
+          error: employeeNotificationResult.error || null
         } : null
       }
     }, { headers: corsHeaders });

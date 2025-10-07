@@ -16,8 +16,8 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-// Email template for complaint notification - Full details for employees
-export function createComplaintEmailTemplate(complaintData, employeeData, territoryName) {
+// Email template for complaint notification - Full details for employees and manager
+export function createComplaintEmailTemplate(complaintData, employeeData, territoryName, countryName) {
   const {
     contactPersonName,
     mailId,
@@ -58,7 +58,7 @@ export function createComplaintEmailTemplate(complaintData, employeeData, territ
   };
 
   return {
-    subject: `New Complaint - ${companyName} (${territoryName})`,
+    subject: `New Complaint - ${companyName} (${territoryName}, ${countryName})`,
     html: `
       <!DOCTYPE html>
       <html>
@@ -134,7 +134,7 @@ export function createComplaintEmailTemplate(complaintData, employeeData, territ
         <div class="container">
           <div class="header">
             <h1>🚨 New Complaint Received</h1>
-            <p>Territory: ${territoryName}</p>
+            <p>Territory: ${territoryName}, ${countryName}</p>
             <p>Complaint ID: ${complaintData.complaintId}</p>
           </div>
 
@@ -163,7 +163,7 @@ export function createComplaintEmailTemplate(complaintData, employeeData, territ
 
             <div class="field">
               <span class="field-label">Territory:</span>
-              <div class="field-value">${territoryName}</div>
+              <div class="field-value">${territoryName}, ${countryName}</div>
             </div>
           </div>
 
@@ -314,7 +314,7 @@ export function createComplaintEmailTemplate(complaintData, employeeData, territ
       </html>
     `,
     text: `
-NEW COMPLAINT RECEIVED - Territory: ${territoryName}
+NEW COMPLAINT RECEIVED - Territory: ${territoryName}, ${countryName}
 
 Complaint ID: ${complaintData.complaintId}
 
@@ -323,7 +323,7 @@ CUSTOMER INFORMATION:
 - Company: ${companyName}
 - Email: ${mailId}
 - Mobile: ${mobileNumber || 'Not provided'}
-- Territory: ${territoryName}
+- Territory: ${territoryName}, ${countryName}
 
 GEARBOX INFORMATION:
 - Serial Number: ${gearboxSerialNumber || 'Not provided'}
@@ -367,7 +367,7 @@ Generated on: ${new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })
 }
 
 // Email template for user thank you message
-export function createUserThankYouEmailTemplate(complaintData, territoryName) {
+export function createUserThankYouEmailTemplate(complaintData, territoryName, countryName) {
   const {
     contactPersonName,
     mailId,
@@ -543,7 +543,7 @@ export function createUserThankYouEmailTemplate(complaintData, territoryName) {
             </div>
             <div class="field">
               <span class="field-label">Territory:</span>
-              <span class="field-value">${territoryName}</span>
+              <span class="field-value">${territoryName}, ${countryName}</span>
             </div>
             <div class="field">
               <span class="field-label">Submission Date:</span>
@@ -699,7 +699,7 @@ Business Hours: Monday - Friday, 9:00 AM - 6:00 PM
 YOUR COMPLAINT DETAILS
 Complaint ID: ${complaintData.complaintId}
 Company: ${companyName}
-Territory: ${territoryName}
+Territory: ${territoryName}, ${countryName}
 Submission Date: ${formatDate(complaintDate)}
 
 GEARBOX INFORMATION
@@ -752,7 +752,7 @@ Generated on: ${new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })
 }
 
 // Function to send thank you email to user
-export async function sendUserThankYouEmail(complaintData, territoryName) {
+export async function sendUserThankYouEmail(complaintData, territoryName, countryName) {
   try {
     // Check if SMTP credentials are configured
     if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
@@ -760,7 +760,7 @@ export async function sendUserThankYouEmail(complaintData, territoryName) {
       return { success: false, error: 'SMTP credentials not configured' };
     }
 
-    const emailTemplate = createUserThankYouEmailTemplate(complaintData, territoryName);
+    const emailTemplate = createUserThankYouEmailTemplate(complaintData, territoryName, countryName);
     
     const mailOptions = {
       from: `"Shanthi Gears Customer Service" <${process.env.SMTP_USER}>`,
@@ -787,8 +787,8 @@ export async function sendUserThankYouEmail(complaintData, territoryName) {
   }
 }
 
-// Function to send complaint notification email to multiple employees
-export async function sendComplaintNotification(complaintData, employeesData, territoryName) {
+// Function to send complaint notification email to manager with employees in CC
+export async function sendComplaintNotification(complaintData, employeesData, territoryName, countryName) {
   try {
     // Check if SMTP credentials are configured
     if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
@@ -805,48 +805,33 @@ export async function sendComplaintNotification(complaintData, employeesData, te
     }
 
     const employeeEmails = employees.map(emp => emp.email).filter(email => email);
+    const managerEmail = process.env.COMPLAINT_CC_EMAIL || 'swethabellan@gmail.com';
     
-    const ccEmail = process.env.COMPLAINT_CC_EMAIL || 'swethabellan@gmail.com';
+    console.log(`Sending notification email to manager: ${managerEmail}`);
+    console.log(`CC'ing ${employees.length} employees: ${employeeEmails.join(', ')}`);
     
-    // Send individual emails to each employee for better deliverability
-    console.log(`Sending individual emails to ${employees.length} employees...`);
+    // Create email template with country information
+    const emailTemplate = createComplaintEmailTemplate(complaintData, employees[0], territoryName, countryName);
     
-    const employeeEmailPromises = employees.map(async (employee, index) => {
-      try {
-        console.log(`Preparing email ${index + 1}/${employees.length} for ${employee.fullName} (${employee.email})`);
-        
-        const employeeEmailTemplate = createComplaintEmailTemplate(complaintData, employee, territoryName);
-        
-        const employeeMailOptions = {
-          from: `"Shanthi Gears Complaint System" <${process.env.SMTP_USER}>`,
-          to: employee.email,
-          subject: employeeEmailTemplate.subject,
-          text: employeeEmailTemplate.text,
-          html: employeeEmailTemplate.html,
-        };
-console.log(employeeMailOptions ,'employeeMailOptions');
+    const mailOptions = {
+      from: `"Shanthi Gears Complaint System" <${process.env.SMTP_USER}>`,
+      to: managerEmail,
+      cc: employeeEmails,
+      subject: emailTemplate.subject,
+      text: emailTemplate.text,
+      html: emailTemplate.html,
+    };
 
-        const result = await transporter.sendMail(employeeMailOptions);
-        console.log(`✅ Email sent successfully to ${employee.fullName} (${employee.email}): ${result.messageId}`);
-        return result;
-      } catch (error) {
-        console.error(`❌ Failed to send email to ${employee.fullName} (${employee.email}):`, error.message);
-        throw error;
-      }
-    });
-
-    // Send employee emails
-    const employeeResults = await Promise.all(employeeEmailPromises);
-
-    console.log(`✅ Individual employee notification emails sent successfully to ${employees.length} employees:`);
-    employeeResults.forEach((result, index) => {
-      console.log(`  - ${employees[index].fullName} (${employees[index].email}): ${result.messageId}`);
-    });
+    const result = await transporter.sendMail(mailOptions);
+    console.log(`✅ Notification email sent successfully to manager: ${result.messageId}`);
+    console.log(`✅ CC'd to ${employees.length} employees`);
     
     return { 
       success: true, 
-      employeeMessageIds: employeeResults.map(result => result.messageId),
-      recipients: employeeEmails
+      messageId: result.messageId,
+      recipient: managerEmail,
+      ccRecipients: employeeEmails,
+      ccCount: employees.length
     };
   } catch (error) {
     console.error('Error sending complaint notification email:', error);
