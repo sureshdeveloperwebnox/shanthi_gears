@@ -143,17 +143,31 @@ export async function POST(req) {
       failureHistoryDetails: body.failure_history_details || body.failureHistoryDetails || ''
     };
 
+    console.log('Mapped data:', mappedData);
+
     // Validate required fields
     if (!mappedData.contactPersonName || !mappedData.mailId || !mappedData.companyName) {
+      console.log('Validation failed: Missing required fields');
       return NextResponse.json(
         { error: 'Missing required fields: contact_person_name, email, company_name' },
         { status: 400, headers: corsHeaders }
       );
     }
 
+    // Debug: Check what territories exist in the database
+    console.log('Checking existing territories...');
+    const allTerritories = await prisma.territories.findMany();
+    console.log('All territories in database:', allTerritories);
+
+    // Debug: Check what countries exist in the database
+    console.log('Checking existing countries...');
+    const allCountries = await prisma.country.findMany();
+    console.log('All countries in database:', allCountries);
+
     // Find country ID if country name is provided
     let finalCountryId = mappedData.countryId;
     if (!finalCountryId && mappedData.countryName) {
+      console.log(`Looking for country by name: ${mappedData.countryName}`);
       const country = await prisma.country.findFirst({
         where: {
           countryName: {
@@ -162,11 +176,13 @@ export async function POST(req) {
         }
       });
       finalCountryId = country?.countryId;
+      console.log('Found country:', country);
     }
 
     // Find territory ID if territory name is provided
     let finalTerritoryId = mappedData.territoryId;
     if (!finalTerritoryId && mappedData.territoryName) {
+      console.log(`Looking for territory by name: ${mappedData.territoryName}`);
       const territoryWhere = {
         territoryName: {
           contains: mappedData.territoryName
@@ -182,16 +198,40 @@ export async function POST(req) {
         where: territoryWhere
       });
       finalTerritoryId = territory?.territoryId;
+      console.log('Found territory:', territory);
+    }
+
+    // If we have a territory ID from the request, verify it exists
+    if (mappedData.territoryId) {
+      console.log(`Verifying territory ID ${mappedData.territoryId} exists...`);
+      const territory = await prisma.territories.findUnique({
+        where: { territoryId: parseInt(mappedData.territoryId) }
+      });
+      if (territory) {
+        finalTerritoryId = territory.territoryId;
+        finalCountryId = territory.countryId;
+        console.log('Verified territory exists:', territory);
+      } else {
+        console.log(`Territory with ID ${mappedData.territoryId} not found`);
+      }
     }
 
     // Use the first territory if none found
     if (!finalTerritoryId) {
+      console.log('No territory found, using first available territory...');
       const firstTerritory = await prisma.territories.findFirst();
-      finalTerritoryId = firstTerritory?.territoryId;
-      finalCountryId = firstTerritory?.countryId;
+      if (firstTerritory) {
+        finalTerritoryId = firstTerritory.territoryId;
+        finalCountryId = firstTerritory.countryId;
+        console.log('Using first territory:', firstTerritory);
+      }
     }
 
+    console.log('Final territory ID:', finalTerritoryId);
+    console.log('Final country ID:', finalCountryId);
+
     if (!finalTerritoryId) {
+      console.log('ERROR: No territory found');
       return NextResponse.json(
         { error: 'No territory found. Please ensure territories exist in the database.' },
         { status: 400, headers: corsHeaders }
@@ -199,6 +239,7 @@ export async function POST(req) {
     }
 
     if (!finalCountryId) {
+      console.log('ERROR: No country found');
       return NextResponse.json(
         { error: 'No country found. Please ensure countries exist in the database.' },
         { status: 400, headers: corsHeaders }
@@ -211,41 +252,47 @@ export async function POST(req) {
 
     // Generate custom complaint ID
     const customComplaintId = await generateComplaintId();
+    console.log('Generated complaint ID:', customComplaintId);
+
+    // Prepare data for database insertion
+    const complaintData = {
+      complaintId: customComplaintId,
+      contactPersonName: mappedData.contactPersonName,
+      mailId: mappedData.mailId,
+      mobileNumber: mappedData.mobileNumber,
+      companyName: mappedData.companyName,
+      territoryId: parseInt(finalTerritoryId),
+      countryId: parseInt(finalCountryId),
+      gearboxSerialNumber: mappedData.gearboxSerialNumber,
+      dateOfCommissioning: mappedData.dateOfCommissioning ? new Date(mappedData.dateOfCommissioning) : new Date(),
+      complaintDate: mappedData.complaintDate ? new Date(mappedData.complaintDate) : new Date(),
+      applicationDetails: mappedData.applicationDetails,
+      natureOfComplaintWithPhotos: mappedData.natureOfComplaintWithPhotos,
+      inputMotorDetailsKw: parseFloat(mappedData.inputMotorDetailsKw) || 0,
+      inputOutputConnectionDetails: mappedData.inputOutputConnectionDetails,
+      oilLevelDetails: mappedData.oilLevelDetails,
+      gradeOfOilUsed: mappedData.gradeOfOilUsed,
+      conditionOfOil: mappedData.conditionOfOil,
+      conditionOfBreather: mappedData.conditionOfBreather,
+      sedimentInOilBottom: mappedData.sedimentInOilBottom,
+      alignmentInputOutput: mappedData.alignmentInputOutput,
+      runningHoursPerDay: parseInt(mappedData.runningHoursPerDay) || 0,
+      startStopPerDay: parseInt(mappedData.startStopPerDay) || 0,
+      dismantledBeforeFailure: mappedData.dismantledBeforeFailure,
+      ambientConditions: mappedData.ambientConditions,
+      loadSpectrum: mappedData.loadSpectrum,
+      forcedLubricationPhotos: mappedData.forcedLubricationPhotos,
+      conditionOfOtherParts: mappedData.conditionOfOtherParts,
+      lubricationCheckDetails: mappedData.lubricationCheckDetails,
+      inputSpeedDetails: mappedData.inputSpeedDetails,
+      failureHistoryDetails: mappedData.failureHistoryDetails
+    };
+
+    console.log('Prepared complaint data for database:', complaintData);
 
     // Create new complaint in database
     const newComplaint = await prisma.complaints.create({
-      data: {
-        complaintId: customComplaintId,
-        contactPersonName: mappedData.contactPersonName,
-        mailId: mappedData.mailId,
-        mobileNumber: mappedData.mobileNumber,
-        companyName: mappedData.companyName,
-        territoryId: parseInt(finalTerritoryId),
-        countryId: parseInt(finalCountryId),
-        gearboxSerialNumber: mappedData.gearboxSerialNumber,
-        dateOfCommissioning: mappedData.dateOfCommissioning ? new Date(mappedData.dateOfCommissioning) : new Date(),
-        complaintDate: mappedData.complaintDate ? new Date(mappedData.complaintDate) : new Date(),
-        applicationDetails: mappedData.applicationDetails,
-        natureOfComplaintWithPhotos: mappedData.natureOfComplaintWithPhotos,
-        inputMotorDetailsKw: parseFloat(mappedData.inputMotorDetailsKw) || 0,
-        inputOutputConnectionDetails: mappedData.inputOutputConnectionDetails,
-        oilLevelDetails: mappedData.oilLevelDetails,
-        gradeOfOilUsed: mappedData.gradeOfOilUsed,
-        conditionOfOil: mappedData.conditionOfOil,
-        conditionOfBreather: mappedData.conditionOfBreather,
-        sedimentInOilBottom: mappedData.sedimentInOilBottom,
-        alignmentInputOutput: mappedData.alignmentInputOutput,
-        runningHoursPerDay: parseInt(mappedData.runningHoursPerDay) || 0,
-        startStopPerDay: parseInt(mappedData.startStopPerDay) || 0,
-        dismantledBeforeFailure: mappedData.dismantledBeforeFailure,
-        ambientConditions: mappedData.ambientConditions,
-        loadSpectrum: mappedData.loadSpectrum,
-        forcedLubricationPhotos: mappedData.forcedLubricationPhotos,
-        conditionOfOtherParts: mappedData.conditionOfOtherParts,
-        lubricationCheckDetails: mappedData.lubricationCheckDetails,
-        inputSpeedDetails: mappedData.inputSpeedDetails,
-        failureHistoryDetails: mappedData.failureHistoryDetails
-      }
+      data: complaintData
     });
 
     console.log('🔥🔥🔥🔥🔥Created new complaint:', newComplaint.complaintId);
@@ -357,11 +404,20 @@ export async function POST(req) {
 
   } catch (error) {
     console.error('Error creating complaint in database:', error);
+    console.error('Error stack:', error.stack);
+    console.error('Error details:', {
+      name: error.name,
+      message: error.message,
+      code: error.code,
+      meta: error.meta
+    });
     return NextResponse.json(
       { 
         success: false,
         error: 'Failed to create complaint', 
-        details: error.message 
+        details: error.message,
+        code: error.code,
+        meta: error.meta
       }, 
       { status: 500, headers: corsHeaders }
     );
