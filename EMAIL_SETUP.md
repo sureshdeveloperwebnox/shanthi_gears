@@ -16,6 +16,13 @@ SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587
 SMTP_USER=your-email@gmail.com
 SMTP_PASS=your-app-password
+
+# Email Configuration for Different Countries
+COMPLAINT_CC_EMAIL=manager@company.com
+
+# For other countries (non-India): Use dedicated TO and CC emails (supports multiple emails separated by commas)
+OTHER_COUNTRY_TO_EMAIL=other-countries-to1@company.com,other-countries-to2@company.com
+OTHER_COUNTRY_CC_EMAIL=other-countries-cc1@company.com,other-countries-cc2@company.com,other-countries-cc3@company.com
 ```
 
 ## Gmail Setup (Recommended)
@@ -49,11 +56,14 @@ SMTP_PASS=your-password
 
 1. **Complaint Creation**: When a new complaint is submitted via the API
 2. **Territory Lookup**: System finds the territory associated with the complaint
-3. **Dual Email Sending**:
+3. **Country-Based Email Routing**:
+   - **India**: Sends notification TO manager (COMPLAINT_CC_EMAIL) with employees in CC
+   - **Other Countries**: Sends notification TO other country emails (OTHER_COUNTRY_TO_EMAIL) with other country CC emails (OTHER_COUNTRY_CC_EMAIL) - both support multiple emails separated by commas
+4. **Dual Email Sending**:
    - **Thank You Email**: Sends a professional thank you email to the user who submitted the complaint
-   - **Employee Notification**: Sends a detailed notification to the employee assigned to that territory
-4. **Email Generation**: Creates professional HTML emails with all complaint details
-5. **Email Sending**: Both emails are sent simultaneously
+   - **Employee Notification**: Sends a detailed notification based on country-specific routing
+5. **Email Generation**: Creates professional HTML emails with all complaint details
+6. **Email Sending**: Both emails are sent simultaneously
 
 ## Email Template Features
 

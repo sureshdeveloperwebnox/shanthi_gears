@@ -23,8 +23,12 @@ SMTP_PORT=587
 SMTP_USER=your-actual-email@gmail.com
 SMTP_PASS=your-app-password
 
-# CC Email for complaint notifications
+# CC Email for complaint notifications (India)
 COMPLAINT_CC_EMAIL=swethabellan@gmail.com
+
+# Other Country Emails for non-India territories (supports multiple emails separated by commas)
+OTHER_COUNTRY_TO_EMAIL=other-country-to1@company.com,other-country-to2@company.com
+OTHER_COUNTRY_CC_EMAIL=other-country-cc1@company.com,other-country-cc2@company.com,other-country-cc3@company.com
 
 # NextAuth Configuration
 NEXTAUTH_URL=http://localhost:3000

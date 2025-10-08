@@ -799,39 +799,94 @@ export async function sendComplaintNotification(complaintData, employeesData, te
     // Ensure employeesData is an array
     const employees = Array.isArray(employeesData) ? employeesData : [employeesData];
     
-    if (employees.length === 0) {
-      console.warn('No employees provided for email notification');
-      return { success: false, error: 'No employees provided' };
+    // For other countries, we don't require employees - we use environment variables
+    const isIndiaTerritory = countryName && countryName.toLowerCase() === 'india';
+    
+    if (employees.length === 0 && isIndiaTerritory) {
+      console.warn('No employees provided for India territory email notification');
+      return { success: false, error: 'No employees provided for India territory' };
     }
 
     const employeeEmails = employees.map(emp => emp.email).filter(email => email);
-    const managerEmail = process.env.COMPLAINT_CC_EMAIL || 'swethabellan@gmail.com';
     
-    console.log(`Sending notification email to manager: ${managerEmail}`);
-    console.log(`CC'ing ${employees.length} employees: ${employeeEmails.join(', ')}`);
+    // Debug: Log country and environment variables
+    console.log(`🔍 Email Debug Info:`);
+    console.log(`- Country: ${countryName}`);
+    console.log(`- Country (lowercase): ${countryName ? countryName.toLowerCase() : 'null'}`);
+    console.log(`- Is India Territory: ${isIndiaTerritory}`);
+    console.log(`- COMPLAINT_CC_EMAIL: ${process.env.COMPLAINT_CC_EMAIL ? 'configured' : 'not configured'}`);
+    console.log(`- OTHER_COUNTRY_TO_EMAIL: ${process.env.OTHER_COUNTRY_TO_EMAIL ? 'configured' : 'not configured'}`);
+    console.log(`- OTHER_COUNTRY_CC_EMAIL: ${process.env.OTHER_COUNTRY_CC_EMAIL ? 'configured' : 'not configured'}`);
+    console.log(`- Employees provided: ${employees.length}`);
+    
+    // Country-specific email logic
+    let managerEmail, ccEmails;
+    
+    if (countryName && countryName.toLowerCase() === 'india') {
+      // For India: Manager gets TO, employees get CC
+      managerEmail = process.env.COMPLAINT_CC_EMAIL;
+      ccEmails = employeeEmails;
+      console.log(`India territory: Sending TO manager (${managerEmail}), CC employees (${ccEmails.length})`);
+    } else {
+      // For other countries: Use dedicated TO and CC emails for other countries
+      const otherCountryToEmail = process.env.OTHER_COUNTRY_TO_EMAIL;
+      const otherCountryCCEmail = process.env.OTHER_COUNTRY_CC_EMAIL;
+      
+      // Parse TO emails if they contain comma-separated values
+      if (otherCountryToEmail) {
+        const toEmails = otherCountryToEmail.split(',').map(email => email.trim()).filter(email => email);
+        managerEmail = toEmails.join(', '); // Join multiple TO emails with comma
+        console.log(`Parsed TO emails: ${toEmails.join(', ')}`);
+      } else {
+        console.warn('OTHER_COUNTRY_TO_EMAIL not configured. Email will not be sent for other countries.');
+        return { success: false, error: 'OTHER_COUNTRY_TO_EMAIL not configured' };
+      }
+      
+      // Parse CC emails if they contain comma-separated values
+      if (otherCountryCCEmail) {
+        ccEmails = otherCountryCCEmail.split(',').map(email => email.trim()).filter(email => email);
+        console.log(`Parsed CC emails: ${ccEmails.join(', ')}`);
+      } else {
+        ccEmails = [];
+        console.log('No CC emails configured for other countries');
+      }
+      
+      console.log(`Non-India territory: Sending TO other country emails (${managerEmail}), CC other country emails (${ccEmails.length} emails)`);
+    }
+    
+    // Validate that we have a valid email to send to
+    if (!managerEmail) {
+      console.error('No valid email address found for sending notification');
+      return { success: false, error: 'No valid email address found' };
+    }
+    
+    console.log(`Sending notification email to: ${managerEmail}`);
+    console.log(`CC'ing: ${ccEmails.join(', ')}`);
     
     // Create email template with country information
-    const emailTemplate = createComplaintEmailTemplate(complaintData, employees[0], territoryName, countryName);
+    // For other countries, use a dummy employee object if no employees provided
+    const employeeForTemplate = employees.length > 0 ? employees[0] : { fullName: 'System', email: 'system@shanthigears.com' };
+    const emailTemplate = createComplaintEmailTemplate(complaintData, employeeForTemplate, territoryName, countryName);
     
     const mailOptions = {
       from: `"Shanthi Gears Complaint System" <${process.env.SMTP_USER}>`,
       to: managerEmail,
-      cc: employeeEmails,
+      cc: ccEmails.length > 0 ? ccEmails : undefined, // Only include CC if there are emails
       subject: emailTemplate.subject,
       text: emailTemplate.text,
       html: emailTemplate.html,
     };
 
     const result = await transporter.sendMail(mailOptions);
-    console.log(`✅ Notification email sent successfully to manager: ${result.messageId}`);
-    console.log(`✅ CC'd to ${employees.length} employees`);
+    console.log(`✅ Notification email sent successfully: ${result.messageId}`);
+    console.log(`✅ CC'd to ${ccEmails.length} recipients`);
     
     return { 
       success: true, 
       messageId: result.messageId,
       recipient: managerEmail,
-      ccRecipients: employeeEmails,
-      ccCount: employees.length
+      ccRecipients: ccEmails,
+      ccCount: ccEmails.length
     };
   } catch (error) {
     console.error('Error sending complaint notification email:', error);

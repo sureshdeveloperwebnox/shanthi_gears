@@ -157,14 +157,23 @@ export async function POST(req) {
     }
 
     // Debug: Check what territories exist in the database
-    console.log('Checking existing territories...');
-    const allTerritories = await prisma.territories.findMany();
-    console.log('All territories in database:', allTerritories);
+    console.log('🔍 Checking existing territories...');
+    const allTerritories = await prisma.territories.findMany({
+      include: {
+        country: true
+      }
+    });
+    console.log('All territories in database:', allTerritories.map(t => ({ 
+      territoryId: t.territoryId, 
+      territoryName: t.territoryName, 
+      countryId: t.countryId, 
+      countryName: t.country?.countryName 
+    })));
 
     // Debug: Check what countries exist in the database
-    console.log('Checking existing countries...');
+    console.log('🔍 Checking existing countries...');
     const allCountries = await prisma.country.findMany();
-    console.log('All countries in database:', allCountries);
+    console.log('All countries in database:', allCountries.map(c => ({ id: c.countryId, name: c.countryName })));
 
     // Find country ID if country name is provided
     let finalCountryId = mappedData.countryId;
@@ -181,8 +190,27 @@ export async function POST(req) {
       console.log('Found country:', country);
     }
 
-    // Find territory ID if territory name is provided
+    // If we have a territory ID from the request, verify it exists
     let finalTerritoryId = mappedData.territoryId;
+    if (mappedData.territoryId) {
+      console.log(`Verifying territory ID ${mappedData.territoryId} exists...`);
+      const territory = await prisma.territories.findUnique({
+        where: { territoryId: parseInt(mappedData.territoryId) }
+      });
+      if (territory) {
+        finalTerritoryId = territory.territoryId;
+        // Only use territory's country if no country was provided in the form
+        if (!finalCountryId) {
+          finalCountryId = territory.countryId;
+        }
+        console.log('Verified territory exists:', territory);
+      } else {
+        console.log(`Territory with ID ${mappedData.territoryId} not found`);
+        finalTerritoryId = null;
+      }
+    }
+
+    // Find territory ID if territory name is provided (only if no territory ID was provided)
     if (!finalTerritoryId && mappedData.territoryName) {
       console.log(`Looking for territory by name: ${mappedData.territoryName}`);
       const territoryWhere = {
@@ -203,34 +231,73 @@ export async function POST(req) {
       console.log('Found territory:', territory);
     }
 
-    // If we have a territory ID from the request, verify it exists
-    if (mappedData.territoryId) {
-      console.log(`Verifying territory ID ${mappedData.territoryId} exists...`);
-      const territory = await prisma.territories.findUnique({
-        where: { territoryId: parseInt(mappedData.territoryId) }
+    // If we have a country ID but no territory, find a territory for that country
+    if (finalCountryId && !finalTerritoryId) {
+      console.log(`🔍 Looking for territory in country ID ${finalCountryId}...`);
+      
+      // First, verify the country exists
+      const countryExists = await prisma.country.findUnique({
+        where: { countryId: finalCountryId }
       });
-      if (territory) {
-        finalTerritoryId = territory.territoryId;
-        finalCountryId = territory.countryId;
-        console.log('Verified territory exists:', territory);
+      console.log(`Country ID ${finalCountryId} exists:`, countryExists);
+      
+      if (countryExists) {
+        const territory = await prisma.territories.findFirst({
+          where: { countryId: finalCountryId }
+        });
+        console.log(`Territories found for country ${finalCountryId}:`, territory);
+        
+        if (territory) {
+          finalTerritoryId = territory.territoryId;
+          console.log('✅ Found territory for country:', territory);
+        } else {
+          console.log(`ℹ️ No territories found for country ID ${finalCountryId} - this is expected for non-India countries`);
+          // For non-India countries, we need to create a default territory or use an existing one
+          // Let's create a default territory for this country if it doesn't exist
+          try {
+            const defaultTerritory = await prisma.territories.create({
+              data: {
+                territoryName: `Default Territory - ${countryExists.countryName}`,
+                countryId: finalCountryId,
+                status: 'ACTIVE'
+              }
+            });
+            finalTerritoryId = defaultTerritory.territoryId;
+            console.log(`✅ Created default territory for country ${finalCountryId}:`, defaultTerritory);
+          } catch (error) {
+            console.log(`❌ Failed to create default territory for country ${finalCountryId}:`, error.message);
+            // Fallback to first available territory
+            const firstTerritory = await prisma.territories.findFirst();
+            if (firstTerritory) {
+              finalTerritoryId = firstTerritory.territoryId;
+              console.log(`Using fallback territory:`, firstTerritory);
+            }
+          }
+        }
       } else {
-        console.log(`Territory with ID ${mappedData.territoryId} not found`);
+        console.log(`❌ Country ID ${finalCountryId} does not exist in database`);
       }
     }
 
-    // Use the first territory if none found
+    // Use the first territory if none found (fallback)
     if (!finalTerritoryId) {
       console.log('No territory found, using first available territory...');
       const firstTerritory = await prisma.territories.findFirst();
       if (firstTerritory) {
         finalTerritoryId = firstTerritory.territoryId;
-        finalCountryId = firstTerritory.countryId;
+        // Only use territory's country if no country was provided in the form
+        if (!finalCountryId) {
+          finalCountryId = firstTerritory.countryId;
+        }
         console.log('Using first territory:', firstTerritory);
       }
     }
 
-    console.log('Final territory ID:', finalTerritoryId);
-    console.log('Final country ID:', finalCountryId);
+    console.log('🔍 Territory/Country Resolution:');
+    console.log('- Input country_id:', mappedData.countryId);
+    console.log('- Input territory_id:', mappedData.territoryId);
+    console.log('- Final territory ID:', finalTerritoryId);
+    console.log('- Final country ID:', finalCountryId);
 
     if (!finalTerritoryId) {
       console.log('ERROR: No territory found');
@@ -346,6 +413,9 @@ export async function POST(req) {
       console.log('Employee assignments:', employeeAssignments);
       
 
+      // Check if this is an India territory or other country
+      const isIndiaTerritory = countryName && countryName.toLowerCase() === 'india';
+      
       if (employeeAssignments && employeeAssignments.length > 0) {
         const employees = employeeAssignments.map(assignment => assignment.employee);
         const employeeNames = employees.map(emp => `${emp.fullName} (${emp.email})`).join(', ');
@@ -367,8 +437,27 @@ export async function POST(req) {
         } else {
           console.warn('Failed to send employee notification email:', employeeNotificationResult.error);
         }
+      } else if (!isIndiaTerritory) {
+        // For non-India countries, send notification even if no employees are assigned
+        console.log(`No employees found for territory ${territoryName}, but sending notification for other country: ${countryName}`);
+        
+        // Send notification email using other country email configuration
+        employeeNotificationResult = await sendComplaintNotification(
+          newComplaint, 
+          [], // Empty employees array for other countries
+          territoryName,
+          countryName
+        );
+        
+        if (employeeNotificationResult.success) {
+          console.log(`✅ SUCCESS: Notification email sent for other country: ${countryName}`);
+          console.log('Manager Message ID:', employeeNotificationResult.messageId);
+          console.log('CC Recipients:', employeeNotificationResult.ccRecipients);
+        } else {
+          console.warn('Failed to send other country notification email:', employeeNotificationResult.error);
+        }
       } else {
-        console.warn(`No active employees found for territory ID: ${finalTerritoryId}`);
+        console.warn(`No active employees found for India territory ID: ${finalTerritoryId}`);
         console.log('Available territories with employees:');
         const allAssignments = await prisma.employeeTerritories.findMany({
           where: {
