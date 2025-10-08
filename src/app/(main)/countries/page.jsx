@@ -182,7 +182,6 @@ export default function CountriesPage() {
                   <TableRow>
                     <TableHead>ID</TableHead>
                     <TableHead>Country Name</TableHead>
-                    <TableHead>Created At</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -191,9 +190,6 @@ export default function CountriesPage() {
                     <TableRow key={country.countryId}>
                       <TableCell className="font-medium">{country.countryId}</TableCell>
                       <TableCell>{country.countryName}</TableCell>
-                      <TableCell>
-                        {new Date(country.createdAt).toLocaleDateString()}
-                      </TableCell>
                       <TableCell className="text-right">
                         <Button
                           variant="outline"

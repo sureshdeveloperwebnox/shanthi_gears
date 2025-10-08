@@ -20,7 +20,7 @@ export async function GET() {
     
     const countries = await prisma.country.findMany({
       orderBy: {
-        countryName: 'asc'
+        countryId: 'asc'
       }
     });
     
