@@ -814,6 +814,8 @@ export async function sendComplaintNotification(complaintData, employeesData, te
     console.log(`- Country: ${countryName}`);
     console.log(`- Country (lowercase): ${countryName ? countryName.toLowerCase() : 'null'}`);
     console.log(`- Is India Territory: ${isIndiaTerritory}`);
+    console.log(`- INDIA_TO_EMAIL: ${process.env.INDIA_TO_EMAIL ? 'configured' : 'not configured'}`);
+    console.log(`- INDIA_CC_EMAIL: ${process.env.INDIA_CC_EMAIL ? 'configured' : 'not configured'}`);
     console.log(`- COMPLAINT_CC_EMAIL: ${process.env.COMPLAINT_CC_EMAIL ? 'configured' : 'not configured'}`);
     console.log(`- OTHER_COUNTRY_TO_EMAIL: ${process.env.OTHER_COUNTRY_TO_EMAIL ? 'configured' : 'not configured'}`);
     console.log(`- OTHER_COUNTRY_CC_EMAIL: ${process.env.OTHER_COUNTRY_CC_EMAIL ? 'configured' : 'not configured'}`);
@@ -823,10 +825,30 @@ export async function sendComplaintNotification(complaintData, employeesData, te
     let managerEmail, ccEmails;
     
     if (countryName && countryName.toLowerCase() === 'india') {
-      // For India: Manager gets TO, employees get CC
-      managerEmail = process.env.COMPLAINT_CC_EMAIL;
-      ccEmails = employeeEmails;
-      console.log(`India territory: Sending TO manager (${managerEmail}), CC employees (${ccEmails.length})`);
+      // For India: Use INDIA_TO_EMAIL for TO, INDIA_CC_EMAIL + employees for CC
+      const indiaToEmail = process.env.INDIA_TO_EMAIL;
+      const indiaCCEmail = process.env.INDIA_CC_EMAIL;
+      
+      // Parse TO emails if they contain comma-separated values
+      if (indiaToEmail) {
+        const toEmails = indiaToEmail.split(',').map(email => email.trim()).filter(email => email);
+        managerEmail = toEmails.join(', '); // Join multiple TO emails with comma
+        console.log(`Parsed India TO emails: ${toEmails.join(', ')}`);
+      } else {
+        console.warn('INDIA_TO_EMAIL not configured. Using fallback COMPLAINT_CC_EMAIL.');
+        managerEmail = process.env.COMPLAINT_CC_EMAIL;
+      }
+      
+      // Parse CC emails if they contain comma-separated values
+      let indiaCCEmails = [];
+      if (indiaCCEmail) {
+        indiaCCEmails = indiaCCEmail.split(',').map(email => email.trim()).filter(email => email);
+        console.log(`Parsed India CC emails: ${indiaCCEmails.join(', ')}`);
+      }
+      
+      // Combine India CC emails with employee emails
+      ccEmails = [...indiaCCEmails, ...employeeEmails];
+      console.log(`India territory: Sending TO India emails (${managerEmail}), CC India emails + employees (${ccEmails.length} total)`);
     } else {
       // For other countries: Use dedicated TO and CC emails for other countries
       const otherCountryToEmail = process.env.OTHER_COUNTRY_TO_EMAIL;
