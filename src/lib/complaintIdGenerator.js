@@ -1,8 +1,8 @@
 import prisma from './prisma';
 
 /**
- * Generates a custom complaint ID in format: SGL-YYYY-MM-DD-XXXX
- * Where SGL is static, YYYY-MM-DD is current date, and XXXX is auto-incremented
+ * Generates a custom complaint ID in format: SGL-YYYY-MM-N
+ * Where SGL is static, YYYY-MM is current year-month, and N starts from 1 for each month
  */
 export async function generateComplaintId() {
   try {
@@ -10,10 +10,9 @@ export async function generateComplaintId() {
     const now = new Date();
     const year = now.getFullYear();
     const month = String(now.getMonth() + 1).padStart(2, '0');
-    const day = String(now.getDate()).padStart(2, '0');
     
-    // Create the date prefix
-    const datePrefix = `${year}-${month}-${day}`;
+    // Create the date prefix (year-month only)
+    const datePrefix = `${year}-${month}`;
     
     // Find the highest existing complaint ID with the same date prefix
     const existingComplaints = await prisma.complaints.findMany({
@@ -42,11 +41,8 @@ export async function generateComplaintId() {
       }
     }
     
-    // Format the number with leading zeros (4 digits)
-    const formattedNumber = String(nextNumber).padStart(4, '0');
-    
-    // Generate the final complaint ID
-    const complaintId = `SGL-${datePrefix}-${formattedNumber}`;
+    // Generate the final complaint ID (no padding, just the number)
+    const complaintId = `SGL-${datePrefix}-${nextNumber}`;
     
     console.log(`Generated complaint ID: ${complaintId}`);
     return complaintId;
@@ -54,7 +50,10 @@ export async function generateComplaintId() {
   } catch (error) {
     console.error('Error generating complaint ID:', error);
     // Fallback to UUID if there's an error
-    const fallbackId = `SGL-${new Date().toISOString().split('T')[0]}-${Math.random().toString(36).substr(2, 4).toUpperCase()}`;
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const fallbackId = `SGL-${year}-${month}-${Math.random().toString(36).substr(2, 4).toUpperCase()}`;
     console.log(`Using fallback complaint ID: ${fallbackId}`);
     return fallbackId;
   }
@@ -64,7 +63,7 @@ export async function generateComplaintId() {
  * Validates if a complaint ID follows the correct format
  */
 export function validateComplaintId(complaintId) {
-  const pattern = /^SGL-\d{4}-\d{2}-\d{2}-\d{4}$/;
+  const pattern = /^SGL-\d{4}-\d{2}-\d+$/;
   return pattern.test(complaintId);
 }
 
@@ -72,6 +71,6 @@ export function validateComplaintId(complaintId) {
  * Extracts date from complaint ID
  */
 export function extractDateFromComplaintId(complaintId) {
-  const match = complaintId.match(/^SGL-(\d{4}-\d{2}-\d{2})-\d{4}$/);
+  const match = complaintId.match(/^SGL-(\d{4}-\d{2})-\d+$/);
   return match ? match[1] : null;
 }

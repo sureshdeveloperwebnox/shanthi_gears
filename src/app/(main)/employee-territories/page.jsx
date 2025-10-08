@@ -57,6 +57,7 @@ export default function EmployeeTerritoriesPage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
+  const [territorySearchTerm, setTerritorySearchTerm] = useState("");
 
   const {
     handleSubmit,
@@ -226,6 +227,7 @@ export default function EmployeeTerritoriesPage() {
     setSelectedTerritories([]);
     setEditing(null);
     setError("");
+    setTerritorySearchTerm("");
   };
 
   const handleEdit = (assignment) => {
@@ -313,6 +315,13 @@ export default function EmployeeTerritoriesPage() {
     return employeeName.includes(searchLower) || 
            employeeEmail.includes(searchLower) || 
            territoryNames.includes(searchLower);
+  });
+
+  // Filter territories based on search term
+  const filteredTerritories = territories.filter(territory => {
+    const territoryName = territory.territoryName?.toLowerCase() || '';
+    const searchLower = territorySearchTerm.toLowerCase();
+    return territoryName.includes(searchLower);
   });
 
   if (loading) {
@@ -484,13 +493,29 @@ export default function EmployeeTerritoriesPage() {
                           )}
                         </label>
                         
+                        {/* Territory Search Input */}
+                        <div className="relative">
+                          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <span className="text-gray-400">🔍</span>
+                          </div>
+                          <Input
+                            type="text"
+                            placeholder="Search territories..."
+                            value={territorySearchTerm}
+                            onChange={(e) => setTerritorySearchTerm(e.target.value)}
+                            className="pl-10 pr-4 py-2 border-gray-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-200"
+                          />
+                        </div>
+                        
                         {/* Multi-select checkboxes for both new and editing assignments */}
                         <div className="border border-gray-300 rounded-md p-3 max-h-48 overflow-y-auto bg-white">
-                          {territories.length === 0 ? (
-                            <p className="text-gray-500 text-sm">No territories available</p>
+                          {filteredTerritories.length === 0 ? (
+                            <p className="text-gray-500 text-sm">
+                              {territorySearchTerm ? `No territories found matching "${territorySearchTerm}"` : "No territories available"}
+                            </p>
                           ) : (
                             <div className="space-y-2">
-                              {territories.map((territory) => {
+                              {filteredTerritories.map((territory) => {
                                 // Check if territory is already assigned to other employees (for information only)
                                 const assignedToOthers = assignments.filter(a => 
                                   a.territoryId === territory.territoryId && 
