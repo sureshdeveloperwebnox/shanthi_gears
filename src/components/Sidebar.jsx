@@ -57,7 +57,7 @@ const GearIcon = () => (
 
 const links = [
   { href: "/dashboard", label: "Dashboard", icon: DashboardIcon },
-  { href: "/complaints", label: "Complaints", icon: ComplaintsIcon },
+  { href: "/complaints", label: "Service Requests", icon: ComplaintsIcon },
   { href: "/territories", label: "Territories", icon: TerritoriesIcon },
   { href: "/employees", label: "Employees", icon: EmployeesIcon },
   { href: "/employee-territories", label: "Employee Territories", icon: EmployeeTerritoriesIcon },

@@ -279,8 +279,8 @@ export default function ComplaintsPage() {
               <FileText className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
             </div>
             <div className="min-w-0">
-              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900">Complaints</h1>
-              <p className="text-sm sm:text-base text-gray-600">Track and manage customer complaints and service requests</p>
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900">Service Requests</h1>
+              <p className="text-sm sm:text-base text-gray-600">Track and manage customers service requests</p>
             </div>
           </div>
         </div>
@@ -444,7 +444,7 @@ export default function ComplaintsPage() {
             <div className="flex justify-between items-center">
               <CardTitle className="text-2xl font-bold text-gray-800 flex items-center">
                 <FileText className="mr-3 w-6 h-6" />
-                Complaints List
+                Service Requests List
                 {filteredComplaints.length > 0 && (
                   <span className="ml-3 text-sm font-normal text-gray-500">
                     ({filteredComplaints.length} records)
