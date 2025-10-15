@@ -1018,7 +1018,7 @@ export default function ComplaintsPage() {
                       </div>
                       <div>
                         <label className="text-sm font-medium text-gray-600">Forced Lubrication Photos:</label>
-                        <p className="text-sm text-gray-900">{selectedComplaint.forcedLubricationPhotos || 'N/A'}</p>
+                        <p className="text-sm text-gray-900">{selectedComplaint.forcedLubricationPhotos.f || 'N/A'}</p>
                       </div>
                     </div>
                     {/* Render forced lubrication photos if available */}

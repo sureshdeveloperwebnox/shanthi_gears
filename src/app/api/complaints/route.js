@@ -1,9 +1,11 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { sendComplaintNotification, sendUserThankYouEmail } from "@/lib/email";
+import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import mime from "mime-types";
 
 
-import { generateComplaintId } from "@/lib/complaintIdGenerator";
+// Using DB autoincrement for complaintId; custom generator not used
 
 // CORS headers function
 const corsHeaders = {
@@ -78,9 +80,9 @@ export async function GET(req) {
       failureHistoryDetails: complaint.failureHistoryDetails,
       createdAt: complaint.createdAt,
       updatedAt: complaint.updatedAt,
-      // New normalized arrays for UI: parse complaint photos from the combined field
+      // New normalized arrays for UI
       complaintPhotos: parseComplaintTextAndPhotos(complaint.natureOfComplaintWithPhotos).photos,
-      forcedLubricationPhotoUrls: safeParseArray(complaint.forcedLubricationPhotos)
+      ...normalizeForcedAndFractured(complaint.forcedLubricationPhotos)
     }));
 
     console.log(`Returning ${transformedComplaints.length} transformed complaints`);
@@ -144,17 +146,20 @@ export async function POST(req) {
       dismantledBeforeFailure: body.dismantled_before_failure || body.dismantledBeforeFailure || '',
       ambientConditions: body.ambient_conditions || body.ambientConditions || '',
       loadSpectrum: body.load_spectrum || body.loadSpectrum || '',
-      // Accept array for forced lubrication photos
-      forcedLubricationPhotos: Array.isArray(body.forced_lubrication_photos)
-        ? JSON.stringify(body.forced_lubrication_photos)
-        : (body.forced_lubrication_photos || body.forcedLubricationPhotos || ''),
+      // Temporarily hold incoming arrays (will upload and replace with URL arrays)
+      forcedLubricationBase64: Array.isArray(body.forced_lubrication_photos) ? body.forced_lubrication_photos : [],
+      fracturedSurfaceBase64: Array.isArray(body.fractured_surface_photos) ? body.fractured_surface_photos : [],
       conditionOfOtherParts: body.condition_of_other_parts || body.conditionOfOtherParts || '',
       lubricationCheckDetails: body.lubrication_check_details || body.lubricationCheckDetails || '',
       inputSpeedDetails: body.input_speed_details || body.inputSpeedDetails || '',
       failureHistoryDetails: body.failure_history_details || body.failureHistoryDetails || ''
     };
 
-    console.log('Mapped data:', mappedData);
+    console.log('Mapped data (redacted images):', {
+      ...mappedData,
+      forcedLubricationBase64: `arr(${mappedData.forcedLubricationBase64?.length || 0})`,
+      fracturedSurfaceBase64: `arr(${mappedData.fracturedSurfaceBase64?.length || 0})`
+    });
 
     // Validate required fields
     if (!mappedData.contactPersonName || !mappedData.mailId || !mappedData.companyName) {
@@ -167,35 +172,25 @@ export async function POST(req) {
 
     // Debug: Check what territories exist in the database
     console.log('🔍 Checking existing territories...');
-    const allTerritories = await prisma.territories.findMany({
-      include: {
-        country: true
-      }
-    });
+    const allTerritories = await prisma.territories.findMany();
     console.log('All territories in database:', allTerritories.map(t => ({ 
       territoryId: t.territoryId, 
       territoryName: t.territoryName, 
-      countryId: t.countryId, 
-      countryName: t.country?.countryName 
+      countryId: t.countryId
     })));
 
-    // Debug: Check what countries exist in the database
+    // Debug: Check what countries exist in the database (use raw to avoid client model mismatch)
     console.log('🔍 Checking existing countries...');
-    const allCountries = await prisma.country.findMany();
-    console.log('All countries in database:', allCountries.map(c => ({ id: c.countryId, name: c.countryName })));
+    const allCountries = await prisma.$queryRaw`SELECT countryId, countryName FROM Country`;
+    console.log('All countries in database:', (allCountries || []).map(c => ({ id: c.countryId, name: c.countryName })));
 
     // Find country ID if country name is provided
     let finalCountryId = mappedData.countryId;
     if (!finalCountryId && mappedData.countryName) {
       console.log(`Looking for country by name: ${mappedData.countryName}`);
-      const country = await prisma.country.findFirst({
-        where: {
-          countryName: {
-            contains: mappedData.countryName
-          }
-        }
-      });
-      finalCountryId = country?.countryId;
+      const like = `%${mappedData.countryName}%`;
+      const country = await prisma.$queryRaw`SELECT countryId, countryName FROM Country WHERE countryName LIKE ${like} LIMIT 1`;
+      finalCountryId = Array.isArray(country) ? country[0]?.countryId : country?.countryId;
       console.log('Found country:', country);
     }
 
@@ -245,9 +240,8 @@ export async function POST(req) {
       console.log(`🔍 Looking for territory in country ID ${finalCountryId}...`);
       
       // First, verify the country exists
-      const countryExists = await prisma.country.findUnique({
-        where: { countryId: finalCountryId }
-      });
+      const countryExistsArr = await prisma.$queryRaw`SELECT countryId, countryName FROM Country WHERE countryId = ${finalCountryId} LIMIT 1`;
+      const countryExists = Array.isArray(countryExistsArr) ? countryExistsArr[0] : countryExistsArr;
       console.log(`Country ID ${finalCountryId} exists:`, countryExists);
       
       if (countryExists) {
@@ -328,9 +322,16 @@ export async function POST(req) {
 
 
 
-    // Generate custom complaint ID
-    const customComplaintId = await generateComplaintId();
-    console.log('Generated complaint ID:', customComplaintId);
+    // Generate string complaintId: SGL-YYYY-MM-<seq>
+    const customComplaintId = await generateStringComplaintId();
+
+    // Upload images from base64 to DigitalOcean Spaces and produce public URLs
+    const uploadResults = await uploadAllImagesToSpaces({
+      complaintId: customComplaintId,
+      complaintPhotos: Array.isArray(body.complaint_photos) ? body.complaint_photos : [],
+      forcedLubricationPhotos: mappedData.forcedLubricationBase64,
+      fracturedSurfacePhotos: mappedData.fracturedSurfaceBase64
+    });
 
     // Prepare data for database insertion
     const complaintData = {
@@ -339,15 +340,14 @@ export async function POST(req) {
       mailId: mappedData.mailId,
       mobileNumber: mappedData.mobileNumber,
       companyName: mappedData.companyName,
-      territoryId: parseInt(finalTerritoryId),
-      countryId: parseInt(finalCountryId),
+      // Some environments don't expose countryId on Complaints model; omit if not in schema
       gearboxSerialNumber: mappedData.gearboxSerialNumber,
       dateOfCommissioning: mappedData.dateOfCommissioning ? new Date(mappedData.dateOfCommissioning) : new Date(),
       complaintDate: mappedData.complaintDate ? new Date(mappedData.complaintDate) : new Date(),
       applicationDetails: mappedData.applicationDetails,
-      // Store complaint text and photos together - if photos exist, combine them with text
-      natureOfComplaintWithPhotos: Array.isArray(body.complaint_photos) && body.complaint_photos.length > 0
-        ? `${mappedData.natureOfComplaintWithPhotos}\n\nPhotos: ${JSON.stringify(body.complaint_photos)}`
+      // Store complaint text and photos together - if photos exist, combine them with text (store URLs)
+      natureOfComplaintWithPhotos: Array.isArray(uploadResults.complaintPhotoUrls) && uploadResults.complaintPhotoUrls.length > 0
+        ? `${mappedData.natureOfComplaintWithPhotos}\n\nPhotos: ${JSON.stringify(uploadResults.complaintPhotoUrls)}`
         : mappedData.natureOfComplaintWithPhotos,
       inputMotorDetailsKw: parseFloat(mappedData.inputMotorDetailsKw) || 0,
       inputOutputConnectionDetails: mappedData.inputOutputConnectionDetails,
@@ -362,7 +362,11 @@ export async function POST(req) {
       dismantledBeforeFailure: mappedData.dismantledBeforeFailure,
       ambientConditions: mappedData.ambientConditions,
       loadSpectrum: mappedData.loadSpectrum,
-      forcedLubricationPhotos: mappedData.forcedLubricationPhotos,
+      // Store compact JSON (fits small VARCHAR columns); UI will expand via normalize function
+      forcedLubricationPhotos: buildCompactForcedPhotos(
+        uploadResults.forcedLubricationUrls || [],
+        uploadResults.fracturedSurfaceUrls || []
+      ),
       conditionOfOtherParts: mappedData.conditionOfOtherParts,
       lubricationCheckDetails: mappedData.lubricationCheckDetails,
       inputSpeedDetails: mappedData.inputSpeedDetails,
@@ -373,7 +377,15 @@ export async function POST(req) {
 
     // Create new complaint in database
     const newComplaint = await prisma.complaints.create({
-      data: complaintData
+      data: {
+        ...complaintData,
+        territory: {
+          connect: { territoryId: parseInt(finalTerritoryId) }
+        },
+        country: {
+          connect: { countryId: parseInt(finalCountryId) }
+        }
+      }
     });
 
     console.log('🔥🔥🔥🔥🔥Created new complaint:', newComplaint.complaintId);
@@ -571,4 +583,127 @@ function parseComplaintTextAndPhotos(value) {
   
   // No photos found, return as text only
   return { text: value, photos: [] };
+}
+
+// Normalize photos stored as JSON string to two arrays
+function normalizeForcedAndFractured(jsonString) {
+  if (!jsonString || typeof jsonString !== 'string') {
+    return { forcedLubricationPhotoUrls: [], fracturedSurfacePhotoUrls: [] };
+  }
+  try {
+    const parsed = JSON.parse(jsonString);
+    if (Array.isArray(parsed)) {
+      // legacy: a plain array meant forced lubrication urls
+      return { forcedLubricationPhotoUrls: parsed, fracturedSurfacePhotoUrls: [] };
+    }
+    return {
+      forcedLubricationPhotoUrls: Array.isArray(parsed?.forcedLubricationPhotoUrls)
+        ? parsed.forcedLubricationPhotoUrls
+        : (Array.isArray(parsed?.f) ? parsed.f : []),
+      fracturedSurfacePhotoUrls: Array.isArray(parsed?.fracturedSurfacePhotoUrls)
+        ? parsed.fracturedSurfacePhotoUrls
+        : (Array.isArray(parsed?.x) ? parsed.x : [])
+    };
+  } catch {
+    return { forcedLubricationPhotoUrls: [], fracturedSurfacePhotoUrls: [] };
+  }
+}
+
+// Build a compact JSON string for forced/fractured photos that fits small VARCHAR columns (~191)
+function buildCompactForcedPhotos(forcedUrls, fracturedUrls) {
+  const f = Array.isArray(forcedUrls) ? forcedUrls.filter(Boolean) : [];
+  const x = Array.isArray(fracturedUrls) ? fracturedUrls.filter(Boolean) : [];
+  // Prefer compact keys to reduce length
+  let payload = { f: f.slice(0, 1), x: x.slice(0, 1) };
+  let json = JSON.stringify(payload);
+  // If still too long, keep only first available
+  const LIMIT = 180; // conservative limit for VARCHAR(191)
+  if (json.length > LIMIT) {
+    if (payload.f.length > 0) payload.x = [];
+    json = JSON.stringify(payload);
+  }
+  if (json.length > LIMIT) {
+    // fallback to empty to avoid DB error
+    json = '';
+  }
+  return json;
+}
+
+// Upload incoming base64 images to DigitalOcean Spaces and return their public URLs
+async function uploadAllImagesToSpaces({ complaintId, complaintPhotos, forcedLubricationPhotos, fracturedSurfacePhotos }) {
+  const bucket = process.env.VITE_APP_AWS_BUCKET_NAME || process.env.DO_SPACES_BUCKET;
+  const region = 'blr1';
+  const accessKey = process.env.VITE_APP_AWS_ACCESS_KEY_ID || process.env.DO_SPACES_KEY;
+  const secretKey = process.env.VITE_APP_AWS_SECRET_ACCESS_KEY || process.env.DO_SPACES_SECRET;
+  const cdnBaseUrl = process.env.DO_SPACES_CDN_BASE || `https://${bucket}.${region}.digitaloceanspaces.com`;
+
+  if (!bucket || !accessKey || !secretKey) {
+    console.warn('Spaces not configured - skipping upload and returning inline data');
+    return {
+      complaintPhotoUrls: complaintPhotos || [],
+      forcedLubricationUrls: forcedLubricationPhotos || [],
+      fracturedSurfaceUrls: fracturedSurfacePhotos || []
+    };
+  }
+
+  const s3 = new S3Client({
+    region,
+    endpoint: `https://${region}.digitaloceanspaces.com`,
+    forcePathStyle: false,
+    credentials: { accessKeyId: accessKey, secretAccessKey: secretKey }
+  });
+
+  async function putOne(img, folder) {
+    try {
+      if (!img || !img.data) return null;
+      const { name, type, data } = img;
+      const ext = name?.split('.').pop() || mime.extension(type) || 'bin';
+      const key = `${folder}/${complaintId}/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
+      const base64 = data.includes(',') ? data.split(',')[1] : data;
+      const buffer = Buffer.from(base64, 'base64');
+      await s3.send(new PutObjectCommand({
+        Bucket: bucket,
+        Key: key,
+        Body: buffer,
+        ACL: 'public-read',
+        ContentType: type || mime.lookup(ext) || 'application/octet-stream'
+      }));
+      return `${cdnBaseUrl}/${key}`;
+    } catch (err) {
+      console.error('Spaces upload error:', err?.message);
+      return null;
+    }
+  }
+
+  const [complaintPhotoUrls, forcedLubricationUrls, fracturedSurfaceUrls] = await Promise.all([
+    Promise.all((complaintPhotos || []).map(img => putOne(img, 'complaints'))).then(a => a.filter(Boolean)),
+    Promise.all((forcedLubricationPhotos || []).map(img => putOne(img, 'forced-lubrication'))).then(a => a.filter(Boolean)),
+    Promise.all((fracturedSurfacePhotos || []).map(img => putOne(img, 'fractured-surface'))).then(a => a.filter(Boolean))
+  ]);
+
+  return { complaintPhotoUrls, forcedLubricationUrls, fracturedSurfaceUrls };
+}
+
+// Build complaintId like SGL-YYYY-MM-<n> where <n> increases per month
+async function generateStringComplaintId() {
+  const now = new Date();
+  const yyyy = now.getFullYear();
+  const mm = String(now.getMonth() + 1).padStart(2, '0');
+  const prefix = `SGL-${yyyy}-${mm}-`;
+  // Count existing complaints for this month prefix
+  const like = `${prefix}%`;
+  const countArr = await prisma.$queryRaw`SELECT COUNT(*) AS c FROM complaints WHERE complaintId LIKE ${like}`;
+  const count = Array.isArray(countArr) ? Number(countArr[0]?.c || 0) : Number(countArr?.c || 0);
+  return `${prefix}${count + 1}`;
+}
+// Ensure generated complaintId is not already used (handles rare collision / concurrent create)
+async function ensureUniqueComplaintId() {
+  for (let i = 0; i < 5; i++) {
+    const id = await generateComplaintId();
+    const exists = await prisma.complaints.findUnique({ where: { complaintId: id } }).catch(() => null);
+    if (!exists) return id;
+  }
+  // Fallback: add random suffix
+  const base = await generateComplaintId();
+  return `${base}-${Math.random().toString(36).slice(2, 6)}`;
 }

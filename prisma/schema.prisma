@@ -69,7 +69,7 @@ model Country {
 }
 
 model Complaints {
-  complaintId                  String      @id @default(uuid())
+  complaintId                  String      @id @db.VarChar(50)
   contactPersonName            String
   mailId                       String
   mobileNumber                 String
@@ -80,7 +80,7 @@ model Complaints {
   dateOfCommissioning          DateTime
   complaintDate                DateTime
   applicationDetails           String
-  natureOfComplaintWithPhotos  String
+  natureOfComplaintWithPhotos  String   @db.LongText
   inputMotorDetailsKw          Decimal
   inputOutputConnectionDetails String
   oilLevelDetails              String
@@ -94,7 +94,7 @@ model Complaints {
   dismantledBeforeFailure      String
   ambientConditions            String
   loadSpectrum                 String
-  forcedLubricationPhotos      String
+  forcedLubricationPhotos      String   @db.LongText
   conditionOfOtherParts        String
   lubricationCheckDetails      String
   inputSpeedDetails            String
