@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start -p 6451",
     "test:email": "node test-email.js",
-    "seed": "node prisma/seed.js"
+    "seed": "node prisma/seed.js",
+    "upload:public": "node scripts/upload-public-to-spaces.mjs"
   },
   "prisma": {
     "seed": "node prisma/seed.js"
@@ -31,6 +32,8 @@
     "next-auth": "^4.24.11",
     "node-fetch": "^3.3.2",
     "nodemailer": "^6.9.8",
+    "@aws-sdk/client-s3": "^3.676.0",
+    "mime-types": "^2.1.35",
     "prisma": "^6.16.2",
     "react": "19.1.0",
     "react-chartjs-2": "^5.3.0",

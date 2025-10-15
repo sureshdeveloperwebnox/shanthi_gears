@@ -907,6 +907,21 @@ export default function ComplaintsPage() {
                     <div>
                       <label className="text-sm font-medium text-gray-600">Nature of Complaint (with Photos):</label>
                       <p className="text-sm text-gray-900 mt-1">{selectedComplaint.natureOfComplaintWithPhotos || 'N/A'}</p>
+                      {/* Render complaint photos if available */}
+                      {Array.isArray(selectedComplaint.complaintPhotos) && selectedComplaint.complaintPhotos.length > 0 && (
+                        <div className="mt-3 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                          {selectedComplaint.complaintPhotos.map((url, idx) => (
+                            <a key={idx} href={url} target="_blank" rel="noreferrer" className="block">
+                              <img
+                                src={url}
+                                alt={`Complaint photo ${idx + 1}`}
+                                className="w-full h-28 object-cover rounded border"
+                                loading="lazy"
+                              />
+                            </a>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -1006,6 +1021,21 @@ export default function ComplaintsPage() {
                         <p className="text-sm text-gray-900">{selectedComplaint.forcedLubricationPhotos || 'N/A'}</p>
                       </div>
                     </div>
+                    {/* Render forced lubrication photos if available */}
+                    {Array.isArray(selectedComplaint.forcedLubricationPhotoUrls) && selectedComplaint.forcedLubricationPhotoUrls.length > 0 && (
+                      <div className="mt-3 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                        {selectedComplaint.forcedLubricationPhotoUrls.map((url, idx) => (
+                          <a key={idx} href={url} target="_blank" rel="noreferrer" className="block">
+                            <img
+                              src={url}
+                              alt={`Forced lubrication photo ${idx + 1}`}
+                              className="w-full h-28 object-cover rounded border"
+                              loading="lazy"
+                            />
+                          </a>
+                        ))}
+                      </div>
+                    )}
                     <div>
                       <label className="text-sm font-medium text-gray-600">Ambient Conditions:</label>
                       <p className="text-sm text-gray-900 mt-1">{selectedComplaint.ambientConditions || 'N/A'}</p>

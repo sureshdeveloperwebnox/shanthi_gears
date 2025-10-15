@@ -7,7 +7,7 @@ import { generateComplaintId } from "@/lib/complaintIdGenerator";
 
 // CORS headers function
 const corsHeaders = {
-  'Access-Control-Allow-Origin': 'https://wordpress-1401173-5868949.cloudwaysapps.com',
+  'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type, Authorization',
 };
@@ -55,7 +55,8 @@ export async function GET(req) {
       dateOfCommissioning: complaint.dateOfCommissioning,
       complaintDate: complaint.complaintDate,
       applicationDetails: complaint.applicationDetails,
-      natureOfComplaintWithPhotos: complaint.natureOfComplaintWithPhotos,
+      // Parse complaint text and photos from the combined field
+      natureOfComplaintWithPhotos: parseComplaintTextAndPhotos(complaint.natureOfComplaintWithPhotos).text,
       inputMotorDetailsKw: complaint.inputMotorDetailsKw,
       inputOutputConnectionDetails: complaint.inputOutputConnectionDetails,
       oilLevelDetails: complaint.oilLevelDetails,
@@ -69,13 +70,17 @@ export async function GET(req) {
       dismantledBeforeFailure: complaint.dismantledBeforeFailure,
       ambientConditions: complaint.ambientConditions,
       loadSpectrum: complaint.loadSpectrum,
+      // Preserve original text field (may be a plain text or JSON string)
       forcedLubricationPhotos: complaint.forcedLubricationPhotos,
       conditionOfOtherParts: complaint.conditionOfOtherParts,
       lubricationCheckDetails: complaint.lubricationCheckDetails,
       inputSpeedDetails: complaint.inputSpeedDetails,
       failureHistoryDetails: complaint.failureHistoryDetails,
       createdAt: complaint.createdAt,
-      updatedAt: complaint.updatedAt
+      updatedAt: complaint.updatedAt,
+      // New normalized arrays for UI: parse complaint photos from the combined field
+      complaintPhotos: parseComplaintTextAndPhotos(complaint.natureOfComplaintWithPhotos).photos,
+      forcedLubricationPhotoUrls: safeParseArray(complaint.forcedLubricationPhotos)
     }));
 
     console.log(`Returning ${transformedComplaints.length} transformed complaints`);
@@ -116,6 +121,7 @@ export async function POST(req) {
       
       // Application and complaint details
       applicationDetails: body.application_details || body.applicationDetails || '',
+      // Store complaint text and photos together
       natureOfComplaintWithPhotos: body.nature_of_complaint || body.natureOfComplaintWithPhotos || '',
       
       // Motor and connection details
@@ -138,7 +144,10 @@ export async function POST(req) {
       dismantledBeforeFailure: body.dismantled_before_failure || body.dismantledBeforeFailure || '',
       ambientConditions: body.ambient_conditions || body.ambientConditions || '',
       loadSpectrum: body.load_spectrum || body.loadSpectrum || '',
-      forcedLubricationPhotos: body.forced_lubrication_photos || body.forcedLubricationPhotos || '',
+      // Accept array for forced lubrication photos
+      forcedLubricationPhotos: Array.isArray(body.forced_lubrication_photos)
+        ? JSON.stringify(body.forced_lubrication_photos)
+        : (body.forced_lubrication_photos || body.forcedLubricationPhotos || ''),
       conditionOfOtherParts: body.condition_of_other_parts || body.conditionOfOtherParts || '',
       lubricationCheckDetails: body.lubrication_check_details || body.lubricationCheckDetails || '',
       inputSpeedDetails: body.input_speed_details || body.inputSpeedDetails || '',
@@ -336,7 +345,10 @@ export async function POST(req) {
       dateOfCommissioning: mappedData.dateOfCommissioning ? new Date(mappedData.dateOfCommissioning) : new Date(),
       complaintDate: mappedData.complaintDate ? new Date(mappedData.complaintDate) : new Date(),
       applicationDetails: mappedData.applicationDetails,
-      natureOfComplaintWithPhotos: mappedData.natureOfComplaintWithPhotos,
+      // Store complaint text and photos together - if photos exist, combine them with text
+      natureOfComplaintWithPhotos: Array.isArray(body.complaint_photos) && body.complaint_photos.length > 0
+        ? `${mappedData.natureOfComplaintWithPhotos}\n\nPhotos: ${JSON.stringify(body.complaint_photos)}`
+        : mappedData.natureOfComplaintWithPhotos,
       inputMotorDetailsKw: parseFloat(mappedData.inputMotorDetailsKw) || 0,
       inputOutputConnectionDetails: mappedData.inputOutputConnectionDetails,
       oilLevelDetails: mappedData.oilLevelDetails,
@@ -522,4 +534,41 @@ export async function POST(req) {
       { status: 500, headers: corsHeaders }
     );
   }
+}
+
+// Helper to safely parse JSON array stored in text fields
+function safeParseArray(value) {
+  if (!value || typeof value !== 'string') return [];
+  try {
+    const parsed = JSON.parse(value);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+// Helper to parse complaint text and photos from combined field
+function parseComplaintTextAndPhotos(value) {
+  if (!value || typeof value !== 'string') {
+    return { text: '', photos: [] };
+  }
+  
+  // Check if the field contains photos (look for "Photos: [" pattern)
+  const photosMatch = value.match(/Photos:\s*(\[.*\])$/s);
+  if (photosMatch) {
+    const text = value.replace(/\n\nPhotos:\s*\[.*\]$/s, '').trim();
+    const photosJson = photosMatch[1];
+    try {
+      const photos = JSON.parse(photosJson);
+      return {
+        text: text || '',
+        photos: Array.isArray(photos) ? photos : []
+      };
+    } catch {
+      return { text: value, photos: [] };
+    }
+  }
+  
+  // No photos found, return as text only
+  return { text: value, photos: [] };
 }
