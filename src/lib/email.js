@@ -1,5 +1,6 @@
 import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
+import puppeteer from 'puppeteer';
 
 // Load environment variables
 dotenv.config();
@@ -364,6 +365,176 @@ This is an automated notification from the Shanthi Gears Complaint Management Sy
 Generated on: ${new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}
     `
   };
+}
+
+// Small, minimal HTML body for acknowledgement emails (not PDF)
+function buildSimpleAcknowledgementEmailBody({ title, subtitle, complaintId, territoryName, countryName }) {
+  const safe = (v) => (v || '').toString();
+  return `
+  <!doctype html>
+  <html>
+    <head>
+      <meta charset="utf-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1" />
+      <title>${safe(title)}</title>
+    </head>
+    <body style="margin:0;padding:0;background:#f6f7f9;font-family:Arial,Helvetica,sans-serif;">
+      <div style="max-width:560px;margin:24px auto;background:#ffffff;border:1px solid #e5e7eb;border-radius:10px;overflow:hidden;">
+        <div style="background:#111827;color:#ffffff;padding:16px 20px;font-weight:700;font-size:16px;">Shanthi Gears</div>
+        <div style="padding:20px;">
+          <div style="font-size:18px;font-weight:700;color:#111827;">${safe(title)}</div>
+          <div style="margin-top:6px;color:#6b7280;font-size:14px;">${safe(subtitle)}</div>
+          <div style="margin-top:16px;padding:12px;border:1px solid #e5e7eb;border-radius:8px;background:#fafafa;">
+            <div style="display:flex;justify-content:space-between;gap:12px;padding:6px 0;border-bottom:1px dashed #e5e7eb;">
+              <div style="font-weight:600;color:#374151;">Complaint ID</div>
+              <div style="color:#111827;">${safe(complaintId)}</div>
+            </div>
+            <div style="display:flex;justify-content:space-between;gap:12px;padding:6px 0;">
+              <div style="font-weight:600;color:#374151;">Territory</div>
+              <div style="color:#111827;">${safe(territoryName)}${countryName ? `, ${safe(countryName)}` : ''}</div>
+            </div>
+          </div>
+          <div style="margin-top:16px;color:#374151;font-size:14px;">We have received the service request. The detailed acknowledgement is attached as a PDF.</div>
+        </div>
+        <div style="padding:14px 20px;background:#f9fafb;color:#6b7280;font-size:12px;">This is an automated email from the Complaint Management System.</div>
+      </div>
+    </body>
+  </html>`;
+}
+
+// Build complaint PDF (manager/notification) acknowledgement with key details only
+async function buildComplaintNotificationPdf(complaintData, territoryName, countryName) {
+  const formatDate = (date) => {
+    if (!date) return 'Not provided';
+    return new Date(date).toLocaleDateString('en-IN', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  };
+
+  const extractForcedAndFractured = (jsonString) => {
+    if (!jsonString || typeof jsonString !== 'string') return { f: [], x: [] };
+    try {
+      const parsed = JSON.parse(jsonString);
+      if (Array.isArray(parsed)) return { f: parsed, x: [] };
+      const f = Array.isArray(parsed?.forcedLubricationPhotoUrls) ? parsed.forcedLubricationPhotoUrls : (Array.isArray(parsed?.f) ? parsed.f : []);
+      const x = Array.isArray(parsed?.fracturedSurfacePhotoUrls) ? parsed.fracturedSurfacePhotoUrls : (Array.isArray(parsed?.x) ? parsed.x : []);
+      return { f, x };
+    } catch {
+      return { f: [], x: [] };
+    }
+  };
+
+  const extractComplaintBody = (value) => {
+    if (!value || typeof value !== 'string') return { text: 'Not provided', urls: [] };
+    const urls = Array.from(new Set((value.match(/https?:\/\/[^\s"']+/g) || [])));
+    const text = value.replace(/https?:\/\/[^\s"']+/g, '').replace(/Photos?:?\s*\[[^\]]*\]/gi, '').trim() || 'Not provided';
+    return { text, urls };
+  };
+
+  const html = `<!DOCTYPE html>
+  <html>
+    <head>
+      <meta charset="utf-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1" />
+      <title>Complaint Acknowledgement</title>
+      <style>
+        body { font-family: Arial, sans-serif; color: #111827; margin: 24px; }
+        .title { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
+        .subtitle { color: #6b7280; font-size: 12px; margin-bottom: 16px; }
+        .note { background: #f3f4f6; border: 1px solid #e5e7eb; padding: 12px; border-radius: 8px; margin-bottom: 16px; }
+        .section { margin: 16px 0; padding: 12px; border: 1px solid #e5e7eb; border-radius: 8px; }
+        .section h3 { margin: 0 0 8px 0; font-size: 14px; }
+        .row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px dashed #e5e7eb; align-items: flex-start; gap: 12px; }
+        .row:last-child { border-bottom: none; }
+        .label { font-weight: 600; color: #374151; }
+        .value { color: #111827; text-align: left; max-width: 70%; white-space: pre-wrap; word-break: break-word; overflow-wrap: anywhere; }
+        .multiline { background: #fafafa; border: 1px solid #eee; padding: 8px; border-radius: 4px; }
+        .links a { color: #1d4ed8; text-decoration: none; }
+        .links a:hover { text-decoration: underline; }
+      </style>
+    </head>
+    <body>
+      <div class="title">Complaint Acknowledgement</div>
+      <div class="subtitle">Shanthi Gears • ${new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}</div>
+
+      <div class="note">We have received the complaint. Our team will contact the customer shortly.</div>
+
+      <div class="section">
+        <div class="row"><div class="label">Complaint ID</div><div class="value">${complaintData.complaintId}</div></div>
+        <div class="row"><div class="label">Date</div><div class="value">${formatDate(complaintData.complaintDate)}</div></div>
+        <div class="row"><div class="label">Territory</div><div class="value">${territoryName || ''}, ${countryName || ''}</div></div>
+      </div>
+
+      <div class="section">
+        <h3>Customer Information</h3>
+        <div class="row"><div class="label">Customer</div><div class="value">${complaintData.contactPersonName || ''}</div></div>
+        <div class="row"><div class="label">Company</div><div class="value">${complaintData.companyName || ''}</div></div>
+        <div class="row"><div class="label">Email</div><div class="value">${complaintData.mailId || ''}</div></div>
+        <div class="row"><div class="label">Mobile</div><div class="value">${complaintData.mobileNumber || 'Not provided'}</div></div>
+      </div>
+
+      <div class="section">
+        <h3>Gearbox Information</h3>
+        <div class="row"><div class="label">Gearbox Serial</div><div class="value">${complaintData.gearboxSerialNumber || 'Not provided'}</div></div>
+        <div class="row"><div class="label">Commissioning Date</div><div class="value">${formatDate(complaintData.dateOfCommissioning)}</div></div>
+      </div>
+
+      <div class="section">
+        <h3>Complaint Details</h3>
+        <div class="row"><div class="label">Application Details</div><div class="value multiline">${complaintData.applicationDetails || 'Not provided'}</div></div>
+        ${(() => { const { text, urls } = extractComplaintBody(complaintData.natureOfComplaintWithPhotos); const links = (urls||[]).map((u,i)=>`<a href=\"${u}\" target=\"_blank\">Photo ${i+1}</a>`).join(' · '); return `<div class=\"row\"><div class=\"label\">Nature of Complaint</div><div class=\"value\"><div class=\"multiline\">${text}</div>${urls.length?`<div class=\"links\" style=\"margin-top:6px;\">${links}</div>`:''}</div></div>`; })()}
+        <div class="row"><div class="label">Input/Output Connection</div><div class="value multiline">${complaintData.inputOutputConnectionDetails || 'Not provided'}</div></div>
+        <div class="row"><div class="label">Alignment Input/Output</div><div class="value multiline">${complaintData.alignmentInputOutput || 'Not provided'}</div></div>
+        <div class="row"><div class="label">Input Speed Details</div><div class="value multiline">${complaintData.inputSpeedDetails || 'Not provided'}</div></div>
+        <div class="row"><div class="label">Input Motor (kW)</div><div class="value">${complaintData.inputMotorDetailsKw || 'Not provided'}</div></div>
+      </div>
+
+      <div class="section">
+        <h3>Oil & Lubrication</h3>
+        <div class="row"><div class="label">Oil Level</div><div class="value">${complaintData.oilLevelDetails || 'Not provided'}</div></div>
+        <div class="row"><div class="label">Grade of Oil</div><div class="value">${complaintData.gradeOfOilUsed || 'Not provided'}</div></div>
+        <div class="row"><div class="label">Condition of Oil</div><div class="value">${complaintData.conditionOfOil || 'Not provided'}</div></div>
+        <div class="row"><div class="label">Condition of Breather</div><div class="value">${complaintData.conditionOfBreather || 'Not provided'}</div></div>
+        <div class="row"><div class="label">Sediment in Oil Bottom</div><div class="value">${complaintData.sedimentInOilBottom || 'Not provided'}</div></div>
+        <div class="row"><div class="label">Lubrication Check</div><div class="value">${complaintData.lubricationCheckDetails || 'Not provided'}</div></div>
+      </div>
+
+      <div class="section">
+        <h3>Operational Details</h3>
+        <div class="row"><div class="label">Running Hours/Day</div><div class="value">${complaintData.runningHoursPerDay || 'Not provided'}</div></div>
+        <div class="row"><div class="label">Start/Stop per Day</div><div class="value">${complaintData.startStopPerDay || 'Not provided'}</div></div>
+        <div class="row"><div class="label">Ambient Conditions</div><div class="value">${complaintData.ambientConditions || 'Not provided'}</div></div>
+        <div class="row"><div class="label">Load Spectrum</div><div class="value">${complaintData.loadSpectrum || 'Not provided'}</div></div>
+      </div>
+
+      <div class="section">
+        <h3>Maintenance & Failure</h3>
+        <div class="row"><div class="label">Dismantled Before Failure</div><div class="value">${complaintData.dismantledBeforeFailure || 'Not provided'}</div></div>
+        <div class="row"><div class="label">Condition of Other Parts</div><div class="value">${complaintData.conditionOfOtherParts || 'Not provided'}</div></div>
+        <div class="row"><div class="label">Failure History</div><div class="value">${complaintData.failureHistoryDetails || 'Not provided'}</div></div>
+      </div>
+
+      <div class="section">
+        <h3>Photos/Attachments</h3>
+        ${(() => { const { f, x } = extractForcedAndFractured(complaintData.forcedLubricationPhotos); const mk = (arr) => (arr && arr.length) ? arr.map((u,i)=>`<div style=\"padding:4px 0;\"><a href=\"${u}\" target=\"_blank\">Photo ${i+1}</a></div>`).join('') : 'Not provided'; return `<div class=\"row\"><div class=\"label\">Forced Lubrication</div><div class=\"value\">${mk(f)}</div></div><div class=\"row\"><div class=\"label\">Fractured Surface</div><div class=\"value\">${mk(x)}</div></div>`; })()}
+      </div>
+
+      <div style="color:#6b7280; font-size: 12px;">This PDF acknowledges receipt of the complaint.</div>
+    </body>
+  </html>`;
+
+  const browser = await puppeteer.launch({ headless: 'new', args: ['--no-sandbox', '--disable-setuid-sandbox'] });
+  try {
+    const page = await browser.newPage();
+    await page.setContent(html, { waitUntil: 'load' });
+    const pdf = await page.pdf({ format: 'A4', printBackground: true, margin: { top: '16mm', right: '12mm', bottom: '16mm', left: '12mm' } });
+    await page.close();
+    return pdf;
+  } finally {
+    await browser.close();
+  }
 }
 
 // Email template for user thank you message
@@ -888,15 +1059,32 @@ export async function sendComplaintNotification(complaintData, employeesData, te
     // Create email template with country information
     // For other countries, use a dummy employee object if no employees provided
     const employeeForTemplate = employees.length > 0 ? employees[0] : { fullName: 'System', email: 'system@shanthigears.com' };
-    const emailTemplate = createComplaintEmailTemplate(complaintData, employeeForTemplate, territoryName, countryName);
-    
+    // Build acknowledgement PDF and minimal body
+    const pdfBuffer = await buildComplaintNotificationPdf(complaintData, territoryName, countryName);
+    const subject = `New Service Request - ${complaintData.companyName} (${territoryName}, ${countryName}) [${complaintData.complaintId}]`;
+    const textBody = `Service request received. See attached acknowledgement PDF.\n\nComplaint ID: ${complaintData.complaintId}\nTerritory: ${territoryName}, ${countryName}`;
+    const htmlBody = buildSimpleAcknowledgementEmailBody({
+      title: 'Service Request Received',
+      subtitle: 'Acknowledgement attached as PDF',
+      complaintId: complaintData.complaintId,
+      territoryName,
+      countryName
+    });
+
     const mailOptions = {
       from: `"Shanthi Gears Complaint System" <${process.env.SMTP_USER}>`,
       to: managerEmail,
-      cc: ccEmails.length > 0 ? ccEmails : undefined, // Only include CC if there are emails
-      subject: emailTemplate.subject,
-      text: emailTemplate.text,
-      html: emailTemplate.html,
+      cc: ccEmails.length > 0 ? ccEmails : undefined,
+      subject,
+      text: textBody,
+      html: htmlBody,
+      attachments: [
+        {
+          filename: `Complaint_${complaintData.complaintId || 'acknowledgement'}.pdf`,
+          content: pdfBuffer,
+          contentType: 'application/pdf'
+        }
+      ]
     };
 
     const result = await transporter.sendMail(mailOptions);
