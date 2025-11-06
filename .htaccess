@@ -1,5 +1,5 @@
 DirectoryIndex disabled                                                               
-# Redirect traffic to your port 6451                                                 
+# Redirect traffic to your port 6458                                                 
 RewriteEngine On                                                                     
 RewriteBase /                                                                         
-RewriteRule ^(.*)?$ http://127.0.0.1:6451/$1 [P,L]    
+RewriteRule ^(.*)?$ http://127.0.0.1:6458/$1 [P,L]    
