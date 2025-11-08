@@ -525,15 +525,27 @@ async function buildComplaintNotificationPdf(complaintData, territoryName, count
     </body>
   </html>`;
 
-  const browser = await puppeteer.launch({ headless: 'new', args: ['--no-sandbox', '--disable-setuid-sandbox'] });
+  let browser;
   try {
+    browser = await puppeteer.launch({ 
+      headless: 'new', 
+      args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'] 
+    });
     const page = await browser.newPage();
     await page.setContent(html, { waitUntil: 'load' });
     const pdf = await page.pdf({ format: 'A4', printBackground: true, margin: { top: '16mm', right: '12mm', bottom: '16mm', left: '12mm' } });
     await page.close();
     return pdf;
+  } catch (error) {
+    console.error('Error generating PDF with Puppeteer:', error.message);
+    if (error.message.includes('Could not find Chrome')) {
+      throw new Error('Chrome browser not found. Please run: npx puppeteer browsers install chrome');
+    }
+    throw error;
   } finally {
-    await browser.close();
+    if (browser) {
+      await browser.close().catch(err => console.error('Error closing browser:', err));
+    }
   }
 }
 
