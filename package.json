@@ -3,9 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev -p 6451",
+    "dev": "next dev -p 6455",
     "build": "next build",
-    "start": "next start -p 6451",
+    "start": "next start -p 6455",
     "test:email": "node test-email.js",
     "seed": "node prisma/seed.js",
     "upload:public": "node scripts/upload-public-to-spaces.mjs"
