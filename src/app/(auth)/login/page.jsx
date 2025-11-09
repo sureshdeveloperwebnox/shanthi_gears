@@ -110,9 +110,18 @@ export default function LoginPage() {
         <Button type="submit" disabled={submitting}>{submitting ? "Logging in..." : "Login"}</Button>
       </form>
 
+      {/* Forgot Password Link */}
+      <button
+        type="button"
+        onClick={() => router.push("/forgot-password")}
+        className="text-sm text-orange-500 hover:underline mt-2"
+      >
+        Forgot Password?
+      </button>
+
       {/* Add redirect to signup */}
       <p className="mt-4 text-sm text-gray-600">
-        Don’t have an account?{" "}
+        Don't have an account?{" "}
         <span
           className="text-orange-500 cursor-pointer hover:underline"
           onClick={() => router.push("/signup")}

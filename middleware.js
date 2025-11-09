@@ -9,7 +9,9 @@ export default withAuth(
       authorized: ({ token, req }) => {
         // Allow access to auth pages without token
         if (req.nextUrl.pathname.startsWith("/login") || 
-            req.nextUrl.pathname.startsWith("/signup")) {
+            req.nextUrl.pathname.startsWith("/signup") ||
+            req.nextUrl.pathname.startsWith("/forgot-password") ||
+            req.nextUrl.pathname.startsWith("/reset-password")) {
           return true;
         }
         
