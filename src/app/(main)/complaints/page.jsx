@@ -30,8 +30,10 @@ import {
   CheckCircle,
   Clock,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Download
 } from "lucide-react";
+import * as XLSX from 'xlsx';
 
 export default function ComplaintsPage() {
   const [complaints, setComplaints] = useState([]);
@@ -246,6 +248,116 @@ export default function ComplaintsPage() {
     fetchTerritories();
   };
 
+  // Export complaints to Excel
+  const exportToExcel = () => {
+    try {
+      // Export all complaints (not filtered)
+      const dataToExport = complaints;
+      
+      if (dataToExport.length === 0) {
+        alert('No complaints to export');
+        return;
+      }
+
+      // Prepare data for Excel export
+      const excelData = dataToExport.map((complaint) => {
+        return {
+          'Complaint ID': complaint.complaintId || 'N/A',
+          'Contact Person Name': complaint.contactPersonName || 'N/A',
+          'Email': complaint.mailId || 'N/A',
+          'Mobile Number': complaint.mobileNumber || 'N/A',
+          'Company Name': complaint.companyName || 'N/A',
+          'Country': complaint.country?.countryName || 'N/A',
+          'Territory': complaint.territory?.territoryName || 'N/A',
+          'Gearbox Serial Number': complaint.gearboxSerialNumber || 'N/A',
+          'Date of Commissioning': complaint.dateOfCommissioning 
+            ? new Date(complaint.dateOfCommissioning).toLocaleDateString() 
+            : 'N/A',
+          'Complaint Date': complaint.complaintDate 
+            ? new Date(complaint.complaintDate).toLocaleDateString() 
+            : 'N/A',
+          'Application Details': complaint.applicationDetails || 'N/A',
+          'Nature of Complaint': complaint.natureOfComplaintWithPhotos || 'N/A',
+          'Input Motor Details (KW)': complaint.inputMotorDetailsKw || 'N/A',
+          'Input/Output Connection Details': complaint.inputOutputConnectionDetails || 'N/A',
+          'Oil Level Details': complaint.oilLevelDetails || 'N/A',
+          'Grade of Oil Used': complaint.gradeOfOilUsed || 'N/A',
+          'Condition of Oil': complaint.conditionOfOil || 'N/A',
+          'Condition of Breather': complaint.conditionOfBreather || 'N/A',
+          'Sediment in Oil Bottom': complaint.sedimentInOilBottom || 'N/A',
+          'Alignment Input/Output': complaint.alignmentInputOutput || 'N/A',
+          'Running Hours Per Day': complaint.runningHoursPerDay || 'N/A',
+          'Start-Stop Per Day': complaint.startStopPerDay || 'N/A',
+          'Dismantled Before Failure': complaint.dismantledBeforeFailure || 'N/A',
+          'Ambient Conditions': complaint.ambientConditions || 'N/A',
+          'Load Spectrum': complaint.loadSpectrum || 'N/A',
+          'Condition of Other Parts': complaint.conditionOfOtherParts || 'N/A',
+          'Lubrication Check Details': complaint.lubricationCheckDetails || 'N/A',
+          'Input Speed Details': complaint.inputSpeedDetails || 'N/A',
+          'Failure History Details': complaint.failureHistoryDetails || 'N/A',
+          'Forced Lubrication Photos': complaint.forcedLubricationPhotos || 'N/A',
+          'Created At': complaint.createdAt 
+            ? new Date(complaint.createdAt).toLocaleString() 
+            : 'N/A',
+          'Updated At': complaint.updatedAt 
+            ? new Date(complaint.updatedAt).toLocaleString() 
+            : 'N/A',
+        };
+      });
+
+      // Create workbook and worksheet
+      const ws = XLSX.utils.json_to_sheet(excelData);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Complaints');
+
+      // Set column widths for better readability
+      const colWidths = [
+        { wch: 15 }, // Complaint ID
+        { wch: 20 }, // Contact Person Name
+        { wch: 25 }, // Email
+        { wch: 15 }, // Mobile Number
+        { wch: 25 }, // Company Name
+        { wch: 15 }, // Country
+        { wch: 20 }, // Territory
+        { wch: 20 }, // Gearbox Serial Number
+        { wch: 20 }, // Date of Commissioning
+        { wch: 15 }, // Complaint Date
+        { wch: 30 }, // Application Details
+        { wch: 40 }, // Nature of Complaint
+        { wch: 20 }, // Input Motor Details
+        { wch: 30 }, // Input/Output Connection
+        { wch: 20 }, // Oil Level Details
+        { wch: 18 }, // Grade of Oil
+        { wch: 18 }, // Condition of Oil
+        { wch: 20 }, // Condition of Breather
+        { wch: 20 }, // Sediment in Oil
+        { wch: 20 }, // Alignment
+        { wch: 20 }, // Running Hours
+        { wch: 18 }, // Start-Stop
+        { wch: 25 }, // Dismantled Before
+        { wch: 20 }, // Ambient Conditions
+        { wch: 15 }, // Load Spectrum
+        { wch: 25 }, // Condition of Other Parts
+        { wch: 25 }, // Lubrication Check
+        { wch: 20 }, // Input Speed
+        { wch: 25 }, // Failure History
+        { wch: 25 }, // Forced Lubrication
+        { wch: 20 }, // Created At
+        { wch: 20 }, // Updated At
+      ];
+      ws['!cols'] = colWidths;
+
+      // Generate filename with current date
+      const fileName = `Complaints_Export_${new Date().toISOString().split('T')[0]}.xlsx`;
+
+      // Write file and trigger download
+      XLSX.writeFile(wb, fileName);
+    } catch (error) {
+      console.error('Error exporting to Excel:', error);
+      alert('Failed to export complaints. Please try again.');
+    }
+  };
+
   // Handle viewing complaint details
   const handleViewComplaint = (complaint) => {
     setSelectedComplaint(complaint);
@@ -455,6 +567,16 @@ export default function ComplaintsPage() {
                 <span className="text-sm text-gray-600">
                   Total: {complaints.length} complaints
                 </span>
+                <Button
+                  onClick={exportToExcel}
+                  variant="outline"
+                  size="sm"
+                  className="text-green-600 border-green-200 hover:bg-green-50"
+                  disabled={complaints.length === 0}
+                >
+                  <Download className="mr-1 w-4 h-4" />
+                  Export Excel
+                </Button>
                 <Button
                   onClick={async () => {
                     console.log('Manual refresh clicked');
