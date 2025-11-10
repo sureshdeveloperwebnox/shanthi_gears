@@ -296,6 +296,12 @@ export default function ComplaintsPage() {
           'Input Speed Details': complaint.inputSpeedDetails || 'N/A',
           'Failure History Details': complaint.failureHistoryDetails || 'N/A',
           'Forced Lubrication Photos': complaint.forcedLubricationPhotos || 'N/A',
+          'Complaint Photo Links': Array.isArray(complaint.complaintPhotos) && complaint.complaintPhotos.length > 0
+            ? complaint.complaintPhotos.join(', ')
+            : 'N/A',
+          'Forced Lubrication Photo Links': Array.isArray(complaint.forcedLubricationPhotoUrls) && complaint.forcedLubricationPhotoUrls.length > 0
+            ? complaint.forcedLubricationPhotoUrls.join(', ')
+            : 'N/A',
           'Created At': complaint.createdAt 
             ? new Date(complaint.createdAt).toLocaleString() 
             : 'N/A',
@@ -342,6 +348,8 @@ export default function ComplaintsPage() {
         { wch: 20 }, // Input Speed
         { wch: 25 }, // Failure History
         { wch: 25 }, // Forced Lubrication
+        { wch: 50 }, // Complaint Photo Links
+        { wch: 50 }, // Forced Lubrication Photo Links
         { wch: 20 }, // Created At
         { wch: 20 }, // Updated At
       ];

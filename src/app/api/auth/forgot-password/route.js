@@ -25,7 +25,7 @@ export async function POST(req) {
       // Generate reset token
       const resetToken = randomBytes(32).toString("hex");
       const expiresAt = new Date();
-      expiresAt.setHours(expiresAt.getHours() + 1); // Token expires in 1 hour
+      expiresAt.setMinutes(expiresAt.getMinutes() + 5); // Token expires in 5 minutes
 
       // Delete any existing reset tokens for this user
       await prisma.passwordResetToken.deleteMany({
