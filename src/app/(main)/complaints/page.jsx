@@ -302,12 +302,6 @@ export default function ComplaintsPage() {
           'Forced Lubrication Photo Links': Array.isArray(complaint.forcedLubricationPhotoUrls) && complaint.forcedLubricationPhotoUrls.length > 0
             ? complaint.forcedLubricationPhotoUrls.join(', ')
             : 'N/A',
-          'Created At': complaint.createdAt 
-            ? new Date(complaint.createdAt).toLocaleString() 
-            : 'N/A',
-          'Updated At': complaint.updatedAt 
-            ? new Date(complaint.updatedAt).toLocaleString() 
-            : 'N/A',
         };
       });
 
@@ -350,8 +344,6 @@ export default function ComplaintsPage() {
         { wch: 25 }, // Forced Lubrication
         { wch: 50 }, // Complaint Photo Links
         { wch: 50 }, // Forced Lubrication Photo Links
-        { wch: 20 }, // Created At
-        { wch: 20 }, // Updated At
       ];
       ws['!cols'] = colWidths;
 
