@@ -2127,19 +2127,17 @@ export async function sendEmployeeAssignmentEmail(complaintData, employeeData, t
   }
 }
 
-// Password Reset Email Template
-export function createPasswordResetEmailTemplate(resetToken, userName) {
-  const resetUrl = `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/reset-password/${resetToken}`;
-  
+// Password Reset Email Template (OTP-based)
+export function createPasswordResetEmailTemplate(otp, userName) {
   return {
-    subject: 'Password Reset Request - Shanthi Gears',
+    subject: 'Password Reset OTP - Shanthi Gears',
     html: `
       <!DOCTYPE html>
       <html>
       <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Password Reset</title>
+        <title>Password Reset OTP</title>
         <style>
           body {
             font-family: Arial, sans-serif;
@@ -2167,17 +2165,21 @@ export function createPasswordResetEmailTemplate(resetToken, userName) {
           .content {
             margin-bottom: 30px;
           }
-          .button {
-            display: inline-block;
-            padding: 12px 30px;
-            background-color: #f97316;
-            color: white;
-            text-decoration: none;
-            border-radius: 5px;
-            margin: 20px 0;
+          .otp-box {
+            background-color: #fef3c7;
+            border: 3px solid #f59e0b;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            margin: 30px 0;
           }
-          .button:hover {
-            background-color: #ea580c;
+          .otp-code {
+            font-size: 36px;
+            font-weight: bold;
+            color: #f97316;
+            letter-spacing: 8px;
+            font-family: 'Courier New', monospace;
+            margin: 10px 0;
           }
           .footer {
             margin-top: 30px;
@@ -2199,23 +2201,24 @@ export function createPasswordResetEmailTemplate(resetToken, userName) {
       <body>
         <div class="container">
           <div class="header">
-            <h1>Password Reset Request</h1>
+            <h1>Password Reset OTP</h1>
           </div>
           <div class="content">
             <p>Hello ${userName || 'User'},</p>
             <p>We received a request to reset your password for your Shanthi Gears account.</p>
-            <p>Click the button below to reset your password:</p>
-            <div style="text-align: center;">
-              <a href="${resetUrl}" class="button">Reset Password</a>
+            <p>Use the following OTP (One-Time Password) to reset your password:</p>
+            <div class="otp-box">
+              <div style="font-size: 14px; color: #666; margin-bottom: 10px;">Your OTP Code</div>
+              <div class="otp-code">${otp}</div>
+              <div style="font-size: 12px; color: #666; margin-top: 10px;">This code will expire in 10 minutes</div>
             </div>
-            <p>Or copy and paste this link into your browser:</p>
-            <p style="word-break: break-all; color: #f97316;">${resetUrl}</p>
             <div class="warning">
               <strong>⚠️ Important:</strong>
               <ul style="margin: 10px 0; padding-left: 20px;">
-                <li>This link will expire in 1 hour</li>
+                <li>This OTP will expire in 10 minutes</li>
+                <li>Do not share this OTP with anyone</li>
                 <li>If you didn't request this, please ignore this email</li>
-                <li>Your password will remain unchanged if you don't click the link</li>
+                <li>Your password will remain unchanged if you don't use this OTP</li>
               </ul>
             </div>
           </div>
@@ -2228,18 +2231,20 @@ export function createPasswordResetEmailTemplate(resetToken, userName) {
       </html>
     `,
     text: `
-      Password Reset Request - Shanthi Gears
+      Password Reset OTP - Shanthi Gears
       
       Hello ${userName || 'User'},
       
       We received a request to reset your password for your Shanthi Gears account.
       
-      Click the following link to reset your password:
-      ${resetUrl}
+      Your OTP Code: ${otp}
       
-      This link will expire in 1 hour.
+      This OTP will expire in 10 minutes.
       
-      If you didn't request this, please ignore this email. Your password will remain unchanged.
+      ⚠️ Important:
+      - Do not share this OTP with anyone
+      - If you didn't request this, please ignore this email
+      - Your password will remain unchanged if you don't use this OTP
       
       This is an automated email. Please do not reply to this message.
       
@@ -2248,8 +2253,8 @@ export function createPasswordResetEmailTemplate(resetToken, userName) {
   };
 }
 
-// Function to send password reset email
-export async function sendPasswordResetEmail(userEmail, resetToken, userName) {
+// Function to send password reset email (OTP-based)
+export async function sendPasswordResetEmail(userEmail, otp, userName) {
   try {
     // Check if SMTP credentials are configured
     if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
@@ -2257,7 +2262,7 @@ export async function sendPasswordResetEmail(userEmail, resetToken, userName) {
       return { success: false, error: 'SMTP credentials not configured' };
     }
 
-    const emailTemplate = createPasswordResetEmailTemplate(resetToken, userName);
+    const emailTemplate = createPasswordResetEmailTemplate(otp, userName);
     
     const mailOptions = {
       from: `"Shanthi Gears" <${process.env.SMTP_USER}>`,
@@ -2268,7 +2273,7 @@ export async function sendPasswordResetEmail(userEmail, resetToken, userName) {
     };
 
     const result = await transporter.sendMail(mailOptions);
-    console.log('Password reset email sent successfully:', result.messageId);
+    console.log('Password reset OTP email sent successfully:', result.messageId);
     
     return { 
       success: true, 

@@ -1,15 +1,16 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter, useParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Eye, EyeOff } from "lucide-react";
 
 export default function ResetPasswordPage() {
   const router = useRouter();
-  const params = useParams();
-  const token = params?.token;
+  const searchParams = useSearchParams();
+  const email = searchParams?.get("email");
+  const otp = searchParams?.get("otp");
 
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -21,10 +22,10 @@ export default function ResetPasswordPage() {
   const [passwordError, setPasswordError] = useState("");
 
   useEffect(() => {
-    if (!token) {
-      setError("Invalid reset link");
+    if (!email || !otp) {
+      setError("Invalid reset link. Please request a new OTP.");
     }
-  }, [token]);
+  }, [email, otp]);
 
   const validatePassword = (pwd) => {
     const passwordRegex =
@@ -61,7 +62,7 @@ export default function ResetPasswordPage() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ token, password }),
+        body: JSON.stringify({ email, otp, password }),
       });
 
       const data = await response.json();
@@ -82,13 +83,16 @@ export default function ResetPasswordPage() {
     }
   };
 
-  if (!token) {
+  if (!email || !otp) {
     return (
       <div className="flex flex-col items-center justify-center h-screen bg-white">
         <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-md text-sm">
-          Invalid reset link
+          Invalid reset link. Please request a new OTP.
         </div>
-        <Button onClick={() => router.push("/login")} className="mt-4">
+        <Button onClick={() => router.push("/forgot-password")} className="mt-4">
+          Request New OTP
+        </Button>
+        <Button onClick={() => router.push("/login")} className="mt-2" variant="outline">
           Back to Login
         </Button>
       </div>

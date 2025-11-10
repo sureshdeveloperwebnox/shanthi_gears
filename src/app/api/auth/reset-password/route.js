@@ -4,11 +4,11 @@ import { hash } from "bcryptjs";
 
 export async function POST(req) {
   try {
-    const { token, password } = await req.json();
+    const { email, otp, password } = await req.json();
 
-    if (!token || !password) {
+    if (!email || !otp || !password) {
       return NextResponse.json(
-        { error: "Token and password are required" },
+        { error: "Email, OTP, and password are required" },
         { status: 400 }
       );
     }
@@ -26,31 +26,46 @@ export async function POST(req) {
       );
     }
 
-    // Find the reset token
-    const resetToken = await prisma.passwordResetToken.findUnique({
-      where: { token },
+    // Find user by email
+    const user = await prisma.users.findUnique({
+      where: { email: email.toLowerCase().trim() },
+    });
+
+    if (!user) {
+      return NextResponse.json(
+        { error: "Invalid email or OTP" },
+        { status: 400 }
+      );
+    }
+
+    // Find the reset token with matching OTP for this user
+    const resetToken = await prisma.passwordResetToken.findFirst({
+      where: {
+        userId: user.userId,
+        otp: otp,
+      },
       include: { user: true },
     });
 
     if (!resetToken) {
       return NextResponse.json(
-        { error: "Invalid or expired reset token" },
+        { error: "Invalid or expired OTP" },
         { status: 400 }
       );
     }
 
-    // Check if token is already used
+    // Check if OTP is already used
     if (resetToken.used) {
       return NextResponse.json(
-        { error: "This reset token has already been used" },
+        { error: "This OTP has already been used" },
         { status: 400 }
       );
     }
 
-    // Check if token is expired
+    // Check if OTP is expired
     if (new Date() > resetToken.expiresAt) {
       return NextResponse.json(
-        { error: "This reset token has expired" },
+        { error: "This OTP has expired. Please request a new one." },
         { status: 400 }
       );
     }

@@ -22,33 +22,37 @@ export async function POST(req) {
     // Always return success to prevent email enumeration
     // But only send email if user exists
     if (user) {
-      // Generate reset token
-      const resetToken = randomBytes(32).toString("hex");
+      // Generate 6-digit OTP
+      const otp = Math.floor(100000 + Math.random() * 900000).toString();
       const expiresAt = new Date();
-      expiresAt.setMinutes(expiresAt.getMinutes() + 5); // Token expires in 5 minutes
+      expiresAt.setMinutes(expiresAt.getMinutes() + 10); // OTP expires in 10 minutes
+
+      // Generate a unique token for database record (still needed for uniqueness)
+      const resetToken = randomBytes(32).toString("hex");
 
       // Delete any existing reset tokens for this user
       await prisma.passwordResetToken.deleteMany({
         where: { userId: user.userId },
       });
 
-      // Create new reset token
+      // Create new reset token with OTP
       await prisma.passwordResetToken.create({
         data: {
           userId: user.userId,
           token: resetToken,
+          otp: otp,
           expiresAt,
         },
       });
 
-      // Send password reset email
-      await sendPasswordResetEmail(user.email, resetToken, user.username);
+      // Send password reset email with OTP
+      await sendPasswordResetEmail(user.email, otp, user.username);
     }
 
     // Always return success message (security best practice)
     return NextResponse.json({
       message:
-        "If an account with that email exists, we've sent a password reset link.",
+        "If an account with that email exists, we've sent a password reset OTP to your email.",
     });
   } catch (error) {
     console.error("Forgot password error:", error);
