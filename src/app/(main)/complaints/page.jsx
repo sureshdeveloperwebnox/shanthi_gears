@@ -33,7 +33,7 @@ import {
   ChevronRight,
   Download
 } from "lucide-react";
-import * as XLSX from 'xlsx';
+import ExcelJS from 'exceljs';
 
 export default function ComplaintsPage() {
   const [complaints, setComplaints] = useState([]);
@@ -248,8 +248,47 @@ export default function ComplaintsPage() {
     fetchTerritories();
   };
 
+  // Helper function to get column width based on header name
+  const getColumnWidth = (header) => {
+    const widthMap = {
+      'Complaint ID': 15,
+      'Contact Person Name': 20,
+      'Email': 25,
+      'Mobile Number': 15,
+      'Company Name': 25,
+      'Country': 15,
+      'Territory': 20,
+      'Gearbox Serial Number': 20,
+      'Date of Commissioning': 20,
+      'Complaint Date': 15,
+      'Application Details': 30,
+      'Nature of Complaint': 40,
+      'Input Motor Details (KW)': 20,
+      'Input/Output Connection Details': 30,
+      'Oil Level Details': 20,
+      'Grade of Oil Used': 18,
+      'Condition of Oil': 18,
+      'Condition of Breather': 20,
+      'Sediment in Oil Bottom': 20,
+      'Alignment Input/Output': 20,
+      'Running Hours Per Day': 20,
+      'Start-Stop Per Day': 18,
+      'Dismantled Before Failure': 25,
+      'Ambient Conditions': 20,
+      'Load Spectrum': 15,
+      'Condition of Other Parts': 25,
+      'Lubrication Check Details': 25,
+      'Input Speed Details': 20,
+      'Failure History Details': 25,
+      'Forced Lubrication Photos': 25,
+      'Complaint Photo Links': 50,
+      'Forced Lubrication Photo Links': 50,
+    };
+    return widthMap[header] || 15;
+  };
+
   // Export complaints to Excel
-  const exportToExcel = () => {
+  const exportToExcel = async () => {
     try {
       // Export all complaints (not filtered)
       const dataToExport = complaints;
@@ -306,52 +345,44 @@ export default function ComplaintsPage() {
       });
 
       // Create workbook and worksheet
-      const ws = XLSX.utils.json_to_sheet(excelData);
-      const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, 'Complaints');
+      const workbook = new ExcelJS.Workbook();
+      const worksheet = workbook.addWorksheet('Complaints');
 
-      // Set column widths for better readability
-      const colWidths = [
-        { wch: 15 }, // Complaint ID
-        { wch: 20 }, // Contact Person Name
-        { wch: 25 }, // Email
-        { wch: 15 }, // Mobile Number
-        { wch: 25 }, // Company Name
-        { wch: 15 }, // Country
-        { wch: 20 }, // Territory
-        { wch: 20 }, // Gearbox Serial Number
-        { wch: 20 }, // Date of Commissioning
-        { wch: 15 }, // Complaint Date
-        { wch: 30 }, // Application Details
-        { wch: 40 }, // Nature of Complaint
-        { wch: 20 }, // Input Motor Details
-        { wch: 30 }, // Input/Output Connection
-        { wch: 20 }, // Oil Level Details
-        { wch: 18 }, // Grade of Oil
-        { wch: 18 }, // Condition of Oil
-        { wch: 20 }, // Condition of Breather
-        { wch: 20 }, // Sediment in Oil
-        { wch: 20 }, // Alignment
-        { wch: 20 }, // Running Hours
-        { wch: 18 }, // Start-Stop
-        { wch: 25 }, // Dismantled Before
-        { wch: 20 }, // Ambient Conditions
-        { wch: 15 }, // Load Spectrum
-        { wch: 25 }, // Condition of Other Parts
-        { wch: 25 }, // Lubrication Check
-        { wch: 20 }, // Input Speed
-        { wch: 25 }, // Failure History
-        { wch: 25 }, // Forced Lubrication
-        { wch: 50 }, // Complaint Photo Links
-        { wch: 50 }, // Forced Lubrication Photo Links
-      ];
-      ws['!cols'] = colWidths;
+      // Get column headers from the first data row
+      const headers = Object.keys(excelData[0]);
+      
+      // Add headers
+      worksheet.columns = headers.map(header => ({
+        header: header,
+        key: header,
+        width: getColumnWidth(header)
+      }));
+
+      // Add data rows
+      excelData.forEach(row => {
+        worksheet.addRow(row);
+      });
+
+      // Style the header row
+      worksheet.getRow(1).font = { bold: true };
+      worksheet.getRow(1).fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FFE0E0E0' }
+      };
 
       // Generate filename with current date
       const fileName = `Complaints_Export_${new Date().toISOString().split('T')[0]}.xlsx`;
 
       // Write file and trigger download
-      XLSX.writeFile(wb, fileName);
+      const buffer = await workbook.xlsx.writeBuffer();
+      const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = fileName;
+      link.click();
+      window.URL.revokeObjectURL(url);
     } catch (error) {
       console.error('Error exporting to Excel:', error);
       alert('Failed to export complaints. Please try again.');
