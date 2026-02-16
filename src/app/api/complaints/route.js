@@ -245,6 +245,20 @@ export async function POST(req) {
       console.log(`Country ID ${finalCountryId} exists:`, countryExists);
       
       if (countryExists) {
+        // ✅ VALIDATION: If country is India, territory_id is MANDATORY
+        const isIndia = countryExists.countryName && countryExists.countryName.toLowerCase() === 'india';
+        
+        if (isIndia) {
+          console.log('❌ ERROR: India selected but no territory/state provided');
+          return NextResponse.json(
+            { 
+              error: 'State/Territory is required for India. Please select a state.',
+              field: 'territory_id'
+            },
+            { status: 400, headers: corsHeaders }
+          );
+        }
+        
         const territory = await prisma.territories.findFirst({
           where: { countryId: finalCountryId }
         });
@@ -254,9 +268,8 @@ export async function POST(req) {
           finalTerritoryId = territory.territoryId;
           console.log('✅ Found territory for country:', territory);
         } else {
-          console.log(`ℹ️ No territories found for country ID ${finalCountryId} - this is expected for non-India countries`);
-          // For non-India countries, we need to create a default territory or use an existing one
-          // Let's create a default territory for this country if it doesn't exist
+          console.log(`ℹ️ No territories found for country ID ${finalCountryId} - creating default territory for non-India country`);
+          // For non-India countries ONLY, create a default territory
           try {
             const defaultTerritory = await prisma.territories.create({
               data: {

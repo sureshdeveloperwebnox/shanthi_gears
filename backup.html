@@ -59,7 +59,7 @@
             <div class="col-lg-12">
                 <div class="formdata">
                     <select id="states-dropdown">
-                        <option value="">Choose State *</option>
+                        <option value="">Choose State</option>
                         <!-- States will be populated here by JavaScript -->
                     </select>
                     <span id="states-error" class="error-message"></span>
@@ -306,6 +306,65 @@
 
     </div>
     <script>
+		
+		
+// Validate complaint photos/videos
+const complaintFileInput = document.getElementById('complaintFile');
+
+if (!complaintFileInput || !complaintFileInput.files || complaintFileInput.files.length === 0) {
+    $('#complaint-error');
+    isValid = false;
+} else {
+    const files = Array.from(complaintFileInput.files);
+
+    let invalidType = false;
+    let largeVideos = false;
+
+    files.forEach(file => {
+        const name = file.name.toLowerCase();
+
+        // Allow only image and video extensions
+        const isImage = (file.type.startsWith('image/'));
+        const isVideo = (
+            file.type.startsWith('video/') ||
+            name.endsWith('.mp4') ||
+            name.endsWith('.mov') ||
+            name.endsWith('.avi') ||
+            name.endsWith('.mkv') ||
+            name.endsWith('.wmv')
+        );
+
+        if (!isImage && !isVideo) {
+            invalidType = true;
+        }
+
+        // Video size check (30MB max)
+        if (isVideo && file.size > 30 * 1024 * 1024) {
+            largeVideos = true;
+        }
+    });
+
+    if (invalidType) {
+        $('#complaint-error').text('Only images and videos are allowed');
+        isValid = false;
+    } else if (largeVideos) {
+        $('#complaint-error').text('Each video must be less than 30 MB');
+        isValid = false;
+    }
+}
+
+
+		
+
+		
+		
+		
+		
+
+
+		
+		
+		
 		
         // Initialize on page load
         document.addEventListener("DOMContentLoaded", function () {
@@ -666,7 +725,7 @@ function fetchStates(countryId) {
 
     $.ajax({
        url: `https://servicerequest.shanthigears.com/api/territories?countryId=${countryId}`,
-	//    url: `http://localhost:6451/api/territories?countryId=${countryId}`,
+	//    url: `https://servicerequest.shanthigears.com/api/territories?countryId=${countryId}`,
         type: 'GET',
         dataType: 'json',
         success: function (response) {
@@ -829,50 +888,42 @@ function collectFormData() {
                 isValid = false;
             }
 
-            // Validate complaint photos (REQUIRED check + file type check)
-            const complaintFileInput = document.getElementById('complaintFile');
+			// Validate complaint photos
+// Validate complaint photos (REQUIRED check + file type check)
+const complaintFileInput = document.getElementById('complaintFile');
 
-            if (!complaintFileInput || !complaintFileInput.files || complaintFileInput.files.length === 0) {
-                $('#complaint-error').text('Please upload at least one complaint photo or video');
-                isValid = false;
-            } else {
-                const files = Array.from(complaintFileInput.files);
-                const invalidFiles = files.filter(file => !file.type.startsWith('image/'));
+if (!complaintFileInput || !complaintFileInput.files || complaintFileInput.files.length === 0) {
+    $('#complaint-error') .text('Please upload at least one complaint photo or video');
+    isValid = false;
+} else {
+    const files = Array.from(complaintFileInput.files);
+    const invalidFiles = files.filter(file => !file.type.startsWith('image/'));
 
-                if (invalidFiles.length > 0) {
-                    $('#complaint-error').text('Please upload only image files for complaint photos');
-                    isValid = false;
-                }
-            }
+    if (invalidFiles.length > 0) {
+        $('#complaint-error').text('Please upload only image files for complaint photos');
+        isValid = false;
+    }
+}
 
-            // Validate forced lubrication files
-            if (data.forced_lubrication_selection === 'yes') {
-                const fileInput = document.getElementById('forcedLubricationFile');
-                if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
-                    $('#forcedLubricationFile-error').text('Please upload photos or video for forced lubrication');
-                    isValid = false;
-                } else {
-                    // Validate file types
-                    const files = Array.from(fileInput.files);
-                    const invalidFiles = files.filter(file => !file.type.startsWith('image/'));
-                    if (invalidFiles.length > 0) {
-                        $('#forcedLubricationFile-error').text('Please upload only image files');
-                        isValid = false;
-                    }
-                }
-            }
 
-			// Country is always required
-			if (!data.country_id) {
-				$('#location-error').text('Please select a country');
-				isValid = false;
-			}
 
-			// State required only for India
-			if ($('#location option:selected').text() === 'India' && !data.territory_id) {
-				$('#states-error').text('Please select a state for India');
-				isValid = false;
-			}
+
+			// Validate forced lubrication files
+			if (data.forced_lubrication_selection === 'yes') {
+				const fileInput = document.getElementById('forcedLubricationFile');
+				if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
+					$('#forcedLubricationFile-error').text('Please upload photos or video for forced lubrication');
+					isValid = false;
+				} else {
+					// Validate file types
+					const files = Array.from(fileInput.files);
+					const invalidFiles = files.filter(file => !file.type.startsWith('image/'));
+					if (invalidFiles.length > 0) {
+						$('#forcedLubricationFile-error').text('Please upload only image files');
+						isValid = false;
+					}
+				}
+			}	
 
             if (!isValid) {
                 jSuites.notification({
@@ -1062,3 +1113,17 @@ function resetForm() {
 	
 
 </html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
