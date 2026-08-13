@@ -1,0 +1,133 @@
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "debian-openssl-1.1.x", "debian-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model EmployeeTerritories {
+  id          String      @id @default(uuid())
+  employeeId  String
+  territoryId Int
+  assignedAt  DateTime
+  employee    Employees   @relation(fields: [employeeId], references: [employeeId])
+  territory   Territories @relation(fields: [territoryId], references: [territoryId])
+
+  @@index([employeeId], map: "employee_territories_employeeId_fkey")
+  @@index([territoryId], map: "employee_territories_territoryId_fkey")
+  @@map("employee_territories")
+}
+
+model Employees {
+  employeeId          String                @id @default(uuid())
+  fullName            String
+  designation         String
+  email               String                @unique
+  status              EmployeeStatus
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime              @updatedAt
+  employeeTerritories EmployeeTerritories[]
+}
+
+model Users {
+  userId            String              @id @default(uuid())
+  roleId            String
+  username          String              @unique
+  email             String              @unique
+  passwordHash      String
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  passwordResetTokens PasswordResetToken[]
+}
+
+model PasswordResetToken {
+  id        String   @id @default(uuid())
+  userId    String
+  token     String   @unique
+  otp       String?
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+  user      Users    @relation(fields: [userId], references: [userId], onDelete: Cascade)
+
+  @@index([token])
+  @@index([otp])
+  @@index([userId])
+  @@map("password_reset_tokens")
+}
+
+model Roles {
+  roleId    String   @id @default(uuid())
+  roleName  String   @unique
+  createdAt DateTime @default(now())
+}
+
+model Territories {
+  territoryId         Int                   @id @default(autoincrement())
+  territoryName       String                @unique
+  countryId           Int
+  createdAt           DateTime              @default(now())
+  status              String                @default("ACTIVE")
+  updatedAt           DateTime              @updatedAt
+  complaints          Complaints[]
+  employeeTerritories EmployeeTerritories[]
+  country Country @relation(fields: [countryId], references: [countryId])
+}
+
+model Country {
+  countryId   Int      @id @default(autoincrement())
+  countryName String   @db.VarChar(250)
+  createdAt   DateTime @default(now()) @db.Timestamp(0)
+  updatedAt   DateTime @default(dbgenerated("('0000-00-00 00:00:00')")) @updatedAt @db.Timestamp(0)
+  complaints Complaints[]
+  territories Territories[]
+}
+
+model Complaints {
+  complaintId                  String      @id @db.VarChar(50)
+  contactPersonName            String
+  mailId                       String
+  mobileNumber                 String
+  companyName                  String
+  territoryId                  Int
+  countryId                    Int
+  gearboxSerialNumber          String
+  dateOfCommissioning          DateTime
+  complaintDate                DateTime
+  applicationDetails           String
+  natureOfComplaintWithPhotos  String   @db.LongText
+  inputMotorDetailsKw          Decimal
+  inputOutputConnectionDetails String
+  oilLevelDetails              String
+  gradeOfOilUsed               String
+  conditionOfOil               String
+  conditionOfBreather          String
+  sedimentInOilBottom          String
+  alignmentInputOutput         String
+  runningHoursPerDay           Int
+  startStopPerDay              Int
+  dismantledBeforeFailure      String
+  ambientConditions            String
+  loadSpectrum                 String
+  forcedLubricationPhotos      String   @db.LongText
+  conditionOfOtherParts        String
+  lubricationCheckDetails      String
+  inputSpeedDetails            String
+  failureHistoryDetails        String
+  createdAt                    DateTime    @default(now())
+  updatedAt                    DateTime    @updatedAt
+  territory                    Territories @relation(fields: [territoryId], references: [territoryId])
+  country                      Country     @relation(fields: [countryId], references: [countryId])
+
+  @@index([territoryId], map: "complaints_territoryId_fkey")
+  @@map("complaints")
+}
+
+enum EmployeeStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+}

@@ -1,0 +1,1064 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Gearbox Failure Form</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://jsuites.net/v4/jsuites.js"></script>
+    <link rel="stylesheet" href="https://jsuites.net/v4/jsuites.css" />
+</head>
+
+<body>
+    <div class="techForm">
+        <!-- Row 1 -->
+        <div class="row">
+            <div class="col-lg-6">
+                <div class="formdata">
+					
+                    	<input type="text" class="form-control height-change" 
+       					placeholder="Contact Person Name *" 
+       					id="personName" maxlength="100" required>
+						<span id="personName-error" class="error-message"></span>
+		
+
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="formdata">
+			
+                    <input type="email" class="form-control height-change" placeholder="Mail Id *" id="email" 
+                        maxlength="100" required>
+                    <span id="email-error" class="error-message"></span>
+				
+	                </div>
+            </div>
+        </div>
+        <!-- Row 2 -->
+        <div class="row">
+            <div class="col-lg-6">
+                <div class="formdata">
+                    <input type="tel" class="form-control height-change" placeholder="Mobile Number *" id="phone"
+                        maxlength="15" required>
+                    <span id="phone-error" class="error-message"></span>
+                </div>
+            </div>
+
+            <div class="col-lg-6">
+                <div class="formdata">
+              
+                    <select id="location" name="location" onchange="toggleStateDropdown()" >
+                        <option value="">Choose Country *</option>
+                    </select>
+                    <span id="location-error" class="error-message"></span>
+
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-lg-12">
+                <div class="formdata">
+                    <select id="states-dropdown">
+                        <option value="">Choose State *</option>
+                        <!-- States will be populated here by JavaScript -->
+                    </select>
+                    <span id="states-error" class="error-message"></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Row 3 -->
+        <div class="row">
+            <div class="col-lg-6">
+                <div class="formdata">
+                    <input type="text" class="form-control height-change" placeholder="Company Name *" id="companyName"
+                        maxlength="100" required>
+                    <span id="companyName-error" class="error-message"></span>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="formdata">
+                    <input type="text" class="form-control height-change" placeholder="Gearbox Serial Number *"
+                        id="gearboxSerial" maxlength="100" required>
+                    <span id="gearboxSerial-error" class="error-message"></span>
+                </div>
+            </div>
+        </div>
+        <!-- Row 4 -->
+        <div class="row">
+            <div class="col-lg-6">
+                <div class="formdata">
+                    <label for="commissionDate">Date of Commissioning *:</label>
+                    <input type="date" class="form-control height-change" id="commissionDate" required>
+                    <span id="commissionDate-error" class="error-message"></span>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="formdata">
+                    <textarea placeholder="Application Details" id="application" class="form-control"
+                        maxlength="500"></textarea>
+                    <span id="application-error" class="error-message"></span>
+                </div>
+            </div>
+        </div>
+        <!-- Row 5 -->
+	 <div class="row">
+            <div class="col-lg-12">
+                <div class="formdata">
+                    <textarea placeholder="Nature of Complaint (Attach Photos) *" id="complaint" class="form-control"
+                        maxlength="500"></textarea>
+                    <span id="complaint-error" class="error-message"></span>
+					 <label style="font-size: 13px;"> (Attach Photos & Videos) – Upload images up to 18 MB and videos up to 30 MB.*</label>
+					<input type="file" id="complaintFile" accept="image/*,video/*" multiple required>
+                </div>	
+            </div>
+        </div>
+
+
+
+
+
+        <!-- Technical details rows -->
+        <div class="row">
+            <div class="col-lg-6">
+                <div class="formdata">
+                    <input type="number" class="form-control height-change" placeholder="Input Motor Details (KW) *"
+                        id="motorDetails" step="0.01" min="0" required>
+                    <span id="motorDetails-error" class="error-message"></span>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="formdata">
+                    <input type="text" class="form-control height-change" placeholder="Input/Output Connection Details *"
+                        id="connectionDetails" maxlength="200" required>
+                    <span id="connectionDetails-error" class="error-message"></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Oil details -->
+        <div class="row">
+            <div class="col-lg-6">
+                <div class="formdata">
+                    <input type="text" class="form-control height-change" placeholder="Oil Level Details *" id="oilLevel"
+                        maxlength="100" required>
+                    <span id="oilLevel-error" class="error-message"></span>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="formdata">
+                    <input type="text" class="form-control height-change" placeholder="Grade of Oil Used" id="oilGrade"
+                        maxlength="100">
+                    <span id="oilGrade-error" class="error-message"></span>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-lg-6">
+                <div class="formdata">
+                    <input type="text" class="form-control height-change" placeholder="Condition of Oil"
+                        id="oilCondition" maxlength="100">
+                    <span id="oilCondition-error" class="error-message"></span>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="formdata">
+                    <input type="text" class="form-control height-change" placeholder="Condition of Breather *"
+                        id="breatherCondition" maxlength="100" required>
+                    <span id="breatherCondition-error" class="error-message"></span>
+                </div>
+            </div>
+        </div>
+        <!-- Additional fields -->
+        <div class="row">
+            <div class="col-lg-6">
+                <div class="formdata">
+                    <input type="text" class="form-control height-change" placeholder="Sediment at the Bottom of Oil at the gearbox"
+                        id="oilSediment" maxlength="100">
+                    <span id="oilSediment-error" class="error-message"></span>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="formdata">
+                    <input type="text" class="form-control height-change" placeholder="Alignment – Input & Output *"
+                        id="alignment" maxlength="100" required>
+                    <span id="alignment-error" class="error-message"></span>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-lg-6">
+                <div class="formdata">
+                    <input type="number" class="form-control height-change" placeholder="Number of Hours Running/Day *"
+                        id="runningHours" min="0" max="24" required>
+                    <span id="runningHours-error" class="error-message"></span>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="formdata">
+                    <input type="number" class="form-control height-change" placeholder="Number of Start-Stop/Day"
+                        id="startStop" min="0">
+                    <span id="startStop-error" class="error-message"></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Gearbox dismantled YES/NO -->
+        <div class="row">
+
+            <div class="col-lg-6">
+                <div class="formdata">
+                    <input type="text" class="form-control height-change"
+                        placeholder="Input Speed – Variable or Constant *" id="inputSpeed" maxlength="100" required>
+                    <span id="inputSpeed-error" class="error-message"></span>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="formdata">
+                    <input type="text" class="form-control height-change"
+                        placeholder="Atmospheric Conditions with Ambient *" id="atmosphere" maxlength="200" required>
+                    <span id="atmosphere-error" class="error-message"></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Remaining technical fields -->
+        <div class="row">
+            <div class="col-lg-6">
+                <label>Gearbox dismantled by customer before failure? *</label>
+                <div class="formdata">
+                    <label>
+                        <input type="radio" name="dismantled" value="YES"> YES</label>
+                    <label><input type="radio" name="dismantled" value="NO"> NO</label>
+                    <span id="dismantled-error" class="error-message"></span>
+                </div>
+            </div>
+
+
+            <div class="col-lg-6">
+                <div class="formdata">
+                    <label for="forcedLubricationSelect">If forced lubrication -If any parts shreared off : * </label>
+                    <select id="forcedLubricationSelect" class="form-control" required>
+                        <option value="">Select</option>
+                        <option value="yes">Yes</option>
+                        <option value="no">No</option>
+                    </select>
+                    <span id="forcedLubricationSelect-error" class="error-message"></span>
+
+                    <!-- Hidden upload field (inside same col) -->
+                    <div id="forcedLubricationUpload" style="display:none; margin-top:10px;"> 
+						 <label for="forcedLubricationFile">need closeup photos of the fractured surface: *</label> 
+						<label style="font-size: 13px;" for="forcedLubricationFile">(Attach Photos & Videos) – Upload images up to 18 MB and videos up to 30 MB</label> 
+						<input type="file" id="forcedLubricationFile" class="form-control" accept="image/*,video/*" multiple required>                             <span id="forcedLubricationFile-error" class="error-message"></span></div>
+                </div>
+
+            </div>
+        </div>
+
+
+        <div class="row">
+            <div class="col-lg-6">
+                <div class="formdata">
+                    <textarea id="otherPartsCondition" placeholder="Condition of Other Parts (Other than Failed Part)"
+                        class="form-control" maxlength="500"></textarea>
+                    <span id="otherPartsCondition-error" class="error-message"></span>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="formdata">
+                    <textarea id="lubricationCheck" placeholder="if forced lubrication – Check inlet LPM, Inlet oil Temperature" class="form-control"
+                        maxlength="500"></textarea>
+                    <span id="lubricationCheck-error" class="error-message"></span>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-lg-6">
+                <div class="formdata">
+                    <textarea id="loadSpectrum" placeholder="Load Spectrum during Failure / Breakdown"
+                        class="form-control" maxlength="500"></textarea>
+                    <span id="loadSpectrum-error" class="error-message"></span>
+                </div>
+            </div>
+
+            <div class="col-lg-6">
+                <div class="formdata">
+                    <textarea id="failureType" placeholder="First Time Failure or Repetitive – Details *"
+                        class="form-control" maxlength="500" required></textarea>
+                    <span id="failureType-error" class="error-message"></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Submit Button -->
+        <div class="row">
+            <div class="col-lg-12">
+                <div class="formbutton">
+                    <button type="button" id="submitBtn" onclick="handleSubmit()">
+                        <span id="submitText">Submit</span>
+                        <span id="submitLoader" style="display:none;">Submitting...</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+    <script>
+		
+        // Initialize on page load
+        document.addEventListener("DOMContentLoaded", function () {
+            fetchCountries();
+            fetchStates();
+            initializeForm();
+        });
+		
+
+//===========================
+// File processing helpers
+// ===========================
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = error => reject(error);
+  });
+}
+
+//===========================
+// File upload helpers (DEPRECATED - keeping for reference)
+// ===========================
+async function getUploadUrl(file, folder) {
+  const qs = new URLSearchParams({
+    fileName: file.name,
+    contentType: file.type,
+    folder: folder || 'complaints'
+  });
+  
+  const url = 'https://servicerequest.shanthigears.com/api/upload-url?' + qs.toString();
+  console.log('Requesting upload URL from:', url);
+  
+  try {
+    const res = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      },
+      mode: 'cors',
+      credentials: 'omit'
+    });
+    
+    console.log('Upload URL response status:', res.status);
+    
+    if (!res.ok) {
+      const errorText = await res.text();
+      console.error('Upload URL request failed:', errorText);
+      throw new Error(`Failed to get upload URL: ${res.status} - ${errorText}`);
+    }
+    
+    const result = await res.json();
+    console.log('Upload URL response:', result);
+    return result; // { uploadUrl, publicUrl }
+  } catch (error) {
+    console.error('Network error getting upload URL:', error);
+    throw new Error(`Network error: ${error.message}`);
+  }
+}
+
+async function uploadToSpaces(file, folder, retryCount = 0) {
+  const maxRetries = 2;
+  
+  try {
+    console.log(`Starting upload for ${file.name} to folder ${folder} (attempt ${retryCount + 1})`);
+    const { uploadUrl, publicUrl } = await getUploadUrl(file, folder);
+    console.log('Got upload URL:', uploadUrl);
+    console.log('Expected public URL:', publicUrl);
+    
+    const putRes = await fetch(uploadUrl, {
+      method: 'PUT',
+      headers: { 
+        'Content-Type': file.type,
+        'x-amz-acl': 'public-read'
+      },
+      body: file,
+      mode: 'cors',
+      credentials: 'omit'
+    });
+    
+    console.log('Upload response status:', putRes.status);
+    console.log('Upload response headers:', putRes.headers);
+    
+    if (!putRes.ok) {
+      const errorText = await putRes.text();
+      console.error('Upload failed response:', errorText);
+      throw new Error(`Upload failed with status: ${putRes.status} - ${errorText}`);
+    }
+    
+    console.log(`Successfully uploaded ${file.name}`);
+    return publicUrl;
+  } catch (error) {
+    console.error('Upload error:', error);
+    
+    // Retry logic for network errors
+    if (error.message.includes('Failed to fetch') && retryCount < maxRetries) {
+      console.log(`Retrying upload for ${file.name} (attempt ${retryCount + 2})`);
+      await new Promise(resolve => setTimeout(resolve, 1000 * (retryCount + 1))); // Wait before retry
+      return uploadToSpaces(file, folder, retryCount + 1);
+    }
+    
+    if (error.message.includes('Failed to fetch')) {
+      throw new Error(`Network error uploading ${file.name}. Please check your internet connection and try again.`);
+    }
+    throw new Error(`Failed to upload ${file.name}: ${error.message}`);
+  }
+}
+
+// ===========================
+// Initialization
+// ===========================
+		
+		
+		
+
+        // Initialize form interactions
+        function initializeForm() {
+            // Handle forced lubrication dropdown
+            $('#forcedLubricationSelect').change(function () {
+                if ($(this).val() === 'yes') {
+                    $('#forcedLubricationUpload').show();
+                } else {
+                    $('#forcedLubricationUpload').hide();
+                    $('#forcedLubricationFile').val('');
+                }
+            });
+			
+			
+
+            // Clear error messages on input
+            $('input, textarea, select').on('input change', function () {
+                const fieldId = $(this).attr('id');
+                $(`#${fieldId}-error`).text('');
+            });
+            // Handle radio button changes
+            $('input[name="dismantled"]').change(function () {
+                $('#dismantled-error').text('');
+            });
+			
+							// Handle country selection changes
+				$('#location').on('change', function() {
+					const selectedCountryName = $(this).find('option:selected').text();
+					const countryId = $(this).val();
+
+					if (selectedCountryName === 'India') {
+						$('#states-dropdown').show();
+						fetchStates(countryId);
+					} else {
+						$('#states-dropdown').hide();
+						$('#states-dropdown').val(''); // reset state
+					}
+				});
+
+			
+			
+			
+			
+			
+			
+        }
+        document.getElementById("forcedLubricationSelect").addEventListener("change", function () {
+            const uploadDiv = document.getElementById("forcedLubricationUpload");
+            if (this.value === "yes") {
+                uploadDiv.style.display = "block";
+            } else {
+                uploadDiv.style.display = "none";
+            }
+        });
+
+				// Main submit handler
+		async function handleSubmit() {
+			console.log('Submit button clicked');
+
+			// Disable submit button and show loading
+			$('#submitBtn').prop('disabled', true);
+			$('#submitText').hide();
+			$('#submitLoader').show();
+
+			try {
+				const formData = collectFormData();
+				console.log('Form data collected:', formData);
+
+				if (!validateFormData(formData)) {
+					console.log('Validation failed');
+					// Re-enable submit button on validation failure
+					$('#submitBtn').prop('disabled', false);
+					$('#submitText').show();
+					$('#submitLoader').hide();
+					return;
+				}
+
+				// Convert complaint photos to base64
+				const complaintFiles = Array.from(document.getElementById('complaintFile').files || []);
+				const complaintPhotos = [];
+				console.log(`Found ${complaintFiles.length} complaint files to process`);
+				
+				if (complaintFiles.length > 0) {
+					for (const f of complaintFiles) {
+						console.log(`Processing complaint file: ${f.name} (${f.size} bytes, ${f.type})`);
+						try {
+							const base64 = await fileToBase64(f);
+							complaintPhotos.push({
+								name: f.name,
+								type: f.type,
+								size: f.size,
+								data: base64
+							});
+							console.log(`Successfully processed complaint photo: ${f.name}`);
+						} catch (error) {
+							console.error('Error processing complaint photo:', error);
+							jSuites.notification({
+								name: "Gearbox Form",
+								message: `Error processing ${f.name}. Please try again.`,
+								type: 'error'
+							});
+							// Re-enable submit button on error
+							$('#submitBtn').prop('disabled', false);
+							$('#submitText').show();
+							$('#submitLoader').hide();
+							return;
+						}
+					}
+				}
+
+				// Convert forced lubrication photos to base64 if applicable
+				let forcedLubricationPhotos = [];
+				let fracturedSurfacePhotos = [];
+				
+				if (formData.forced_lubrication_selection === 'yes') {
+					const forcedFiles = Array.from(document.getElementById('forcedLubricationFile').files || []);
+					console.log(`Found ${forcedFiles.length} forced lubrication files to process`);
+					
+					if (forcedFiles.length > 0) {
+						for (const f of forcedFiles) {
+							console.log(`Processing forced lubrication file: ${f.name} (${f.size} bytes, ${f.type})`);
+							try {
+								const base64 = await fileToBase64(f);
+								const fileData = {
+									name: f.name,
+									type: f.type,
+									size: f.size,
+									data: base64
+								};
+								
+								// Add to both arrays
+								forcedLubricationPhotos.push(fileData);
+								fracturedSurfacePhotos.push(fileData);
+								
+								console.log(`Successfully processed forced lubrication photo: ${f.name}`);
+							} catch (error) {
+								console.error('Error processing forced lubrication photo:', error);
+								jSuites.notification({
+									name: "Gearbox Form",
+									message: `Error processing ${f.name}. Please try again.`,
+									type: 'error'
+								});
+								// Re-enable submit button on error
+								$('#submitBtn').prop('disabled', false);
+								$('#submitText').show();
+								$('#submitLoader').hide();
+								return;
+							}
+						}
+					}
+				}
+
+				// Add image data to payload
+				formData.complaint_photos = complaintPhotos;
+				formData.forced_lubrication_photos = forcedLubricationPhotos;
+				formData.fractured_surface_photos = fracturedSurfacePhotos;
+
+				console.log('Validation passed, submitting...');
+
+				const response = await fetch('https://servicerequest.shanthigears.com/api/complaints', {
+				//const response = await fetch('http://localhost:6451/api/complaints', {
+					
+				method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+						'Accept': 'application/json'
+					},
+					body: JSON.stringify(formData)
+				});
+
+				console.log('Response status:', response.status);
+				const result = await response.json();
+				console.log('Response data:', result);
+				if (response.ok && result.success) {
+					jSuites.notification({
+						name: "Gearbox Form",
+						message: "Complaint submitted successfully! Thank you for your submission.",
+						type: 'success'
+					});
+					resetForm();
+				} else {
+					const errorMessage = result.error || result.message || "Submission failed. Please try again.";
+					jSuites.notification({
+						name: "Gearbox Form",
+						message: errorMessage,
+						type: 'error'
+					});
+					console.error('Submission failed:', result);
+				}
+			} catch (err) {
+				console.error("Submit error:", err);
+				jSuites.notification({
+					name: "Gearbox Form",
+					message: "Network error. Please check your connection and try again.",
+					type: 'error'
+				});
+			} finally {
+				// Re-enable submit button
+				$('#submitBtn').prop('disabled', false);
+				$('#submitText').show();
+				$('#submitLoader').hide();
+			}
+		}
+
+        function fetchCountries() {
+            $.ajax({
+                url: 'https://servicerequest.shanthigears.com/api/countries',
+                // url: 'http://localhost:6451/api/countries',
+                type: 'GET',
+                dataType: 'json',
+                success: function (response) {
+                    console.log("response", response);
+                    //if (response.status && Array.isArray(response.data)) {
+                    const countries = response;
+                    const select = $('#location'); // ✅ Correct dropdown ID
+                    select.find('option:not(:first)').remove(); // keep "Choose Country" only
+
+                    countries.forEach(country => {
+                        const option = $('<option></option>')
+                            .val(country.countryId) // ✅ use numeric ID for backend consistency
+                            .text(country.countryName);
+                        select.append(option);
+                    });
+                    //  } else {
+                    //  console.warn("No country data received or invalid response format.");
+                    // }
+                },
+                error: function (xhr, status, error) {
+                    console.error('Error fetching countries:', error);
+                }
+            });
+        }
+
+
+
+
+function fetchStates(countryId) {
+    if (!countryId) {
+        $('#states-dropdown').find('option:not(:first)').remove();
+        return;
+    }
+
+    $.ajax({
+       url: `https://servicerequest.shanthigears.com/api/territories?countryId=${countryId}`,
+	//    url: `http://localhost:6451/api/territories?countryId=${countryId}`,
+        type: 'GET',
+        dataType: 'json',
+        success: function (response) {
+            const states = response;
+            const select = $('#states-dropdown');
+            select.find('option:not(:first)').remove();
+
+            if (Array.isArray(states) && states.length > 0) {
+                states.forEach(state => {
+                    const option = $('<option></option>')
+                        .val(state.territoryId)
+                        .text(state.territoryName);
+                    select.append(option);
+                });
+            } else {
+                const option = $('<option></option>').text('No states available').attr('disabled', true);
+                select.append(option);
+            }
+        },
+        error: function (xhr, status, error) {
+            console.error('Error fetching states:', error);
+        }
+    });
+}
+
+    function toggleStateDropdown() {
+    const locationSelect = document.getElementById('location');
+    const countryId = locationSelect.value; // ✅ Country ID
+    const selectedCountryName = locationSelect.options[locationSelect.selectedIndex].text;
+    const statesDropdown = document.getElementById('states-dropdown');
+
+    if (selectedCountryName === 'India') {
+        $('#states-dropdown').show();
+        fetchStates(countryId);
+    } else {
+        $('#states-dropdown').hide();
+        $('#states-dropdown').find('option:not(:first)').remove();
+    }
+}
+
+
+
+        // Collect form data with proper field mapping
+function collectFormData() {
+    return {
+        // Map to API expected field names
+        contact_person_name: $('#personName').val().trim(),
+        email: $('#email').val().trim(),
+        mobile_number: $('#phone').val().trim(),
+        company_name: $('#companyName').val().trim(),
+        // ✅ Add country_id here
+        country_id: parseInt($('#location').val()) || null,
+
+        // State only for India
+        territory_id: $('#location option:selected').text() === 'India' ? parseInt($('#states-dropdown').val()) || null : null,
+        gearbox_serial_number: $('#gearboxSerial').val().trim(),
+        date_of_commissioning: $('#commissionDate').val(),
+        complaint_date: new Date().toISOString().split('T')[0], // Current date
+        application_details: $('#application').val().trim(),
+        nature_of_complaint: $('#complaint').val().trim(),
+        input_motor_details_kw: parseFloat($('#motorDetails').val()) || 0,
+        input_output_connection_details: $('#connectionDetails').val().trim(),
+        oil_level_details: $('#oilLevel').val().trim(),
+        grade_of_oil_used: $('#oilGrade').val().trim(),
+        condition_of_oil: $('#oilCondition').val().trim(),
+        condition_of_breather: $('#breatherCondition').val().trim(),
+        sediment_in_oil_bottom: $('#oilSediment').val().trim(),
+        alignment_input_output: $('#alignment').val().trim(),
+        running_hours_per_day: parseInt($('#runningHours').val()) || 0,
+        start_stop_per_day: parseInt($('#startStop').val()) || 0,
+        dismantled_before_failure: $('input[name="dismantled"]:checked').val() || '',
+        ambient_conditions: $('#atmosphere').val().trim(),
+        load_spectrum: $('#loadSpectrum').val().trim(),
+        forced_lubrication_selection: $('#forcedLubricationSelect').val() || '',
+        condition_of_other_parts: $('#otherPartsCondition').val().trim(),
+        lubrication_check_details: $('#lubricationCheck').val().trim(),
+        input_speed_details: $('#inputSpeed').val().trim(),
+        failure_history_details: $('#failureType').val().trim(),
+        // Photo arrays will be added by handleSubmit() after processing
+        complaint_photos: [], // Will be populated with base64 data
+        forced_lubrication_photos: [], // Will be populated with base64 data
+        fractured_surface_photos: [] // Will be populated with base64 data
+    };
+}
+        // Enhanced validation function
+        function validateFormData(data) {
+            let isValid = true;
+            $('.error-message').text('');
+
+            const requiredFields = [
+                ['contact_person_name', 'personName', 'Contact Person Name is required'],
+                ['email', 'email', 'Email is required'],
+                ['mobile_number', 'phone', 'Mobile Number is required'],
+                ['company_name', 'companyName', 'Company Name is required'],
+               // ['location', 'location', 'Country selection is required'],
+                ['gearbox_serial_number', 'gearboxSerial', 'Gearbox Serial Number is required'],
+                ['date_of_commissioning', 'commissionDate', 'Date of Commissioning is required'],
+                ['nature_of_complaint', 'complaint', 'Nature of Complaint is required'],
+                ['input_motor_details_kw', 'motorDetails', 'Input Motor Details is required'],
+                ['input_output_connection_details', 'connectionDetails', 'Connection Details is required'],
+                ['oil_level_details', 'oilLevel', 'Oil Level Details is required'],
+                ['condition_of_breather', 'breatherCondition', 'Breather Condition is required'],
+                ['alignment_input_output', 'alignment', 'Alignment details are required'],
+                ['running_hours_per_day', 'runningHours', 'Running Hours is required'],
+                ['dismantled_before_failure', 'dismantled', 'Please specify if gearbox was dismantled'],
+                ['ambient_conditions', 'atmosphere', 'Atmospheric conditions are required'],
+                ['forced_lubrication_selection', 'forcedLubricationSelect', 'Forced lubrication selection is required'],
+                ['input_speed_details', 'inputSpeed', 'Input speed details are required'],
+                ['failure_history_details', 'failureType', 'Failure history details are required']
+            ];
+            requiredFields.forEach(([dataKey, elementId, message]) => {
+                const value = data[dataKey];
+                if (!value || (typeof value === 'string' && value.trim() === '') ||
+                    (typeof value === 'number' && value === 0 && dataKey.includes('details'))) {
+                    $(`#${elementId}-error`).text(message);
+                    isValid = false;
+                }
+            });
+				
+
+						// Country is always required
+			if (!data.country_id) {
+				$('#location-error').text('Please select a country');
+				isValid = false;
+			}
+
+			// State required only for India
+			if ($('#location option:selected').text() === 'India' && !data.territory_id) {
+				$('#states-error').text('Please select a state for India');
+				isValid = false;
+			}
+
+			
+			
+            // Email format validation
+            const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (data.email && !emailPattern.test(data.email)) {
+                $('#email-error').text('Please enter a valid email address');
+                isValid = false;
+            }
+
+            // Phone number validation
+            if (data.mobile_number && data.mobile_number.length < 10) {
+                $('#phone-error').text('Please enter a valid mobile number');
+                isValid = false;
+            }
+            // Date validation
+            if (data.date_of_commissioning) {
+                const commissionDate = new Date(data.date_of_commissioning);
+                const today = new Date();
+                if (commissionDate > today) {
+                    $('#commissionDate-error').text('Commissioning date cannot be in the future');
+                    isValid = false;
+                }
+            }
+
+            // Numeric validations
+            if (data.running_hours_per_day > 24) {
+                $('#runningHours-error').text('Running hours cannot exceed 24 hours per day');
+                isValid = false;
+            }
+
+            // Validate complaint photos (REQUIRED check + file type check)
+            const complaintFileInput = document.getElementById('complaintFile');
+
+            if (!complaintFileInput || !complaintFileInput.files || complaintFileInput.files.length === 0) {
+                $('#complaint-error').text('Please upload at least one complaint photo or video');
+                isValid = false;
+            } else {
+                const files = Array.from(complaintFileInput.files);
+                const invalidFiles = files.filter(file => !file.type.startsWith('image/'));
+
+                if (invalidFiles.length > 0) {
+                    $('#complaint-error').text('Please upload only image files for complaint photos');
+                    isValid = false;
+                }
+            }
+
+            // Validate forced lubrication files
+            if (data.forced_lubrication_selection === 'yes') {
+                const fileInput = document.getElementById('forcedLubricationFile');
+                if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
+                    $('#forcedLubricationFile-error').text('Please upload photos or video for forced lubrication');
+                    isValid = false;
+                } else {
+                    // Validate file types
+                    const files = Array.from(fileInput.files);
+                    const invalidFiles = files.filter(file => !file.type.startsWith('image/'));
+                    if (invalidFiles.length > 0) {
+                        $('#forcedLubricationFile-error').text('Please upload only image files');
+                        isValid = false;
+                    }
+                }
+            }
+
+			// Country is always required
+			if (!data.country_id) {
+				$('#location-error').text('Please select a country');
+				isValid = false;
+			}
+
+			// State required only for India
+			if ($('#location option:selected').text() === 'India' && !data.territory_id) {
+				$('#states-error').text('Please select a state for India');
+				isValid = false;
+			}
+
+            if (!isValid) {
+                jSuites.notification({
+                    name: "Gearbox Form",
+                    message: "Please fill in all required fields correctly",
+                    type: "error"
+                });
+            }
+
+            return isValid;
+        }
+       // Reset form function
+function resetForm() {
+    $('input[type="text"], input[type="email"], input[type="tel"], input[type="number"], input[type="date"], textarea, select').val('');
+    $('input[type="radio"]').prop('checked', false);
+    $('input[type="file"]').val(''); // ✅ Reset file inputs
+    $('#forcedLubricationUpload').hide();
+    $('.error-message').text('');
+
+    // Reset territory dropdown to default
+    $('#location').val('');
+    $('#states-dropdown').val('').hide();
+
+    // Reset forced lubrication selection
+    $('#forcedLubricationSelect').val('');
+
+    // Scroll to top
+    window.scrollTo(0, 0);
+}
+    </script>
+
+
+    <style>
+        #location,
+        #descriptions,
+        #products,
+        #selectCountry,
+        #states-dropdown {
+            width: 100%;
+            height: 50px;
+        }
+
+        #states-dropdown {
+            display: none;
+        }
+
+        .error-message {
+            color: #dc3545;
+            font-size: 0.875em;
+            display: block;
+            margin-top: 5px;
+        }
+
+        .form-control {
+            border: 1px solid #cbcbcb;
+            width: 100%;
+            padding: 10px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+            height: 50px;
+            /* ✅ Uniform height for all controls */
+            box-sizing: border-box;
+        }
+
+        select.form-control {
+            appearance: none;
+            /* ✅ Consistent look */
+            line-height: 28px;
+            background-color: #fff;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L5 5L9 1' stroke='%23333' stroke-width='1.5'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            background-size: 12px 12px;
+            padding-right: 35px;
+            /* ✅ Add space for dropdown icon */
+        }
+
+        .form-control:focus {
+
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(242, 128, 32, 0.2);
+        }
+
+        .form-control::placeholder {
+            color: #424242;
+        }
+
+        textarea.form-control {
+            min-height: 80px;
+            height: auto;
+        }
+
+        .formdata {
+            margin-bottom: 15px;
+        }
+
+        .row {
+            display: flex;
+            flex-wrap: wrap;
+            margin: 0 -10px;
+        }
+
+        .col-lg-6 {
+            flex: 0 0 50%;
+            padding: 0 10px;
+            box-sizing: border-box;
+        }
+
+        .col-lg-12 {
+            flex: 0 0 100%;
+            padding: 0 10px;
+            box-sizing: border-box;
+        }
+
+        .formbutton button {
+            background: #f28020;
+            border: none;
+            padding: 12px 50px;
+            color: white;
+            font-weight: 700;
+            margin-top: 20px;
+            cursor: pointer;
+            border-radius: 5px;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+
+        .formbutton button:hover:not(:disabled) {
+            background: #e67319;
+        }
+
+        .formbutton button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #333;
+        }
+
+        input[type="radio"] {
+            margin-right: 5px;
+        }
+
+        textarea {
+            resize: vertical;
+        }
+		.placeholder-with-star {
+  position: relative;
+  display: inline-block;
+  width: 100%;
+}
+
+.placeholder-with-star::after {
+  content: "*";
+  color: red;
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+ #forcedLubricationUpload {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            border: 1px solid #e9ecef;
+        }
+
+ @media (max-width: 768px) {
+            .col-lg-6 {
+                flex: 0 0 100%;
+            }
+
+            .formbutton button {
+                width: 100%;
+                padding: 15px;
+            }
+        }
+    </style>
+	
+</body>
+	
+
+</html>
