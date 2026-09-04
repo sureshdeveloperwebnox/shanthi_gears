@@ -135,6 +135,7 @@ export default function Sidebar({ session }) {
                 width={120} 
                 height={40} 
                 className="h-8 w-auto"
+                unoptimized
               />
             </div>
             {/* Close button for mobile */}

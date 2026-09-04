@@ -11,10 +11,18 @@ export async function POST(req) {
     }
 
     const normalizedEmail = String(email).toLowerCase().trim();
+    const trimmedName = String(name).trim();
 
     const existingUser = await prisma.users.findUnique({ where: { email: normalizedEmail } });
     if (existingUser) {
-      return NextResponse.json({ error: "User already exists" }, { status: 400 });
+      return NextResponse.json({ error: "User already exists with this email" }, { status: 400 });
+    }
+
+    // Ensure username is unique for the Users table @unique constraint
+    let usernameToUse = trimmedName;
+    const existingUsername = await prisma.users.findUnique({ where: { username: usernameToUse } });
+    if (existingUsername) {
+      usernameToUse = `${trimmedName}-${Math.floor(1000 + Math.random() * 9000)}`;
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -29,7 +37,7 @@ export async function POST(req) {
 
     const newUser = await prisma.users.create({
       data: {
-        username: name,
+        username: usernameToUse,
         email: normalizedEmail,
         passwordHash: hashedPassword,
         roleId: defaultRole.roleId,

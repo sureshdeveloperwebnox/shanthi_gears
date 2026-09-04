@@ -7,6 +7,11 @@ export default withAuth(
   {
     callbacks: {
       authorized: ({ token, req }) => {
+        // Allow access to static image files
+        if (/\.(png|jpg|jpeg|gif|svg|ico|webp)$/i.test(req.nextUrl.pathname)) {
+          return true;
+        }
+
         // Allow access to auth pages without token
         if (req.nextUrl.pathname.startsWith("/login") || 
             req.nextUrl.pathname.startsWith("/signup") ||
@@ -37,14 +42,6 @@ export default withAuth(
 
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - api (API routes)
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - public folder
-     */
-    "/((?!api|_next/static|_next/image|favicon.ico|public).*)",
+    "/((?!api|_next/static|_next/image|favicon.ico).*)",
   ],
 };
